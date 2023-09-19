@@ -4,7 +4,6 @@ search for `"TODO` to rename our language.
 
 ## Motivation
 
-
 The C language, distinguished by its use of pointers, has proven both powerful and problematic. 
 While we appreciate the elegance of C-style syntax, we aim to develop a more user-friendly, high-level language inspired by it. 
 Our proposed language, "TODO, seeks to retain the syntactic style of C/C++ while eliminating pointers. 
@@ -57,13 +56,16 @@ type List<T> = EmptyList() or Cons(T, List<T>);
 One of the compelling features of "TODO is its robust static analysis capabilities, designed to minimize runtime errors, improve performance, and assist in code maintenance.The static type system serves as the foundation for these static analysis features.
 
 ##### Type Safety
+
 "TODO enforces strict type checking at compile-time, mitigating issues such as type coercion. 
 Any type violations are flagged as compile-time errors, ensuring that type-related bugs do not propagate into the runtime environment.
 
 ##### Dead Code Elimination
+
 The static analysis toolchain can identify and flag or remove unreachable code sections, reducing the size of the executable and improving performance.
 
 ##### Constant Propagation
+
 Compile-time evaluation of constant expressions allows for optimizations where values are computed at compile-time instead of runtime, resulting in faster execution.
 
 ### Memory Management Without Pointers
