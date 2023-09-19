@@ -172,6 +172,6 @@ However, while Functional Programming (FP) paradigms offer many advantages, inte
 
 1. Syntax Inconsistency: 
    C-style syntax, particularly function syntax, is not naturally conducive to supporting first-class functions without substantial alteration, it restrict the function's return type to primitive types.
-   But we can still use another keyword like `func` to declare a function and use the type inference to infer it's type.
+   If we finally decide to add FP support, we may use another keyword like `func` to declare a function and use the type inference to infer it's type.
 2. mutable and immutable variables:
-   FP needs immutable variables, I am not sure about how to implement it in C-style syntax.
+   FP needs immutable variables, I am not sure about how to balance and design the grammar without bring more confusion.
