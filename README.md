@@ -4,8 +4,6 @@ search for `"TODO` to rename our language.
 
 ## Motivation
 
-Pointer is why C is C, but it also brings a lot of problems. We love C-Style and we want a more handy and high-level language based on it.  
-Our proposed language, "TODO, aims to maintain the syntactical style of C/C++ while removing pointers and offering some modern language feature, like a strong type system. And we redesign the original C++ Object-Oriented style, omit the support of inheritance to avoid the subtype problem, but introduce the `trait` like Rust to support the polymorphism.
 
 The C language, distinguished by its use of pointers, has proven both powerful and problematic. 
 While we appreciate the elegance of C-style syntax, we aim to develop a more user-friendly, high-level language inspired by it. 
