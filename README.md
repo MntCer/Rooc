@@ -1,12 +1,10 @@
-# "TODO
-
-search for `"TODO` to rename our language.
+# Rooc
 
 ## Motivation
 
 The C language, distinguished by its use of pointers, has proven both powerful and problematic. 
 While we appreciate the elegance of C-style syntax, we aim to develop a more user-friendly, high-level language inspired by it. 
-Our proposed language, "TODO, seeks to retain the syntactic style of C/C++ while eliminating pointers. 
+Our proposed language, Rooc, seeks to retain the syntactic style of C/C++ while eliminating pointers. 
 It also aims to modernize the type system, eschewing inheritance in favor of traits, akin to Rust, to avoid the problems about subtype.
 
 > Another point for discussion is the inconsistent initialization methods prevalent in C-family languages.
@@ -15,11 +13,13 @@ It also aims to modernize the type system, eschewing inheritance in favor of tra
 
 ### Primitive Types
 
-"TODO supports only three primitive types: int, float, and str. 
+Rooc supports only three primitive types: int, float, and str. 
+Boolean values are represented as int, with 0 representing false and others representing true.
+> modified here.
 > not the final version.
 
 Declaration Syntax:
-```
+```c
 int a = 1;
 float b = 1.0;
 str c = "hello world";
@@ -29,11 +29,12 @@ str c = "hello world";
 
 TODO
 
-> the two subsections above maybe too detailed to put in proposal.
+> the two subsections above maybe too detailed to put in proposal?
 
-###  ML-like Type System
+### Type System
+> Modified here
 
-"TODO features a strong, static type system optimized for static analysis. 
+Rooc is a strong typed language. Programmers can also custom their own type.
 
 #### Custom Type
 
@@ -42,7 +43,7 @@ TODO
 type Distance = int;
 type Velocity = float;
 
-// composite type
+// composite type, both declare type and corresponding constructor.
 type Point = Point(int, int);
 type Shape = Circle(Point, int) 
           or Rectangle(Point, Point);
@@ -53,11 +54,11 @@ type List<T> = EmptyList() or Cons(T, List<T>);
 
 #### static analysis
 
-One of the compelling features of "TODO is its robust static analysis capabilities, designed to minimize runtime errors, improve performance, and assist in code maintenance.The static type system serves as the foundation for these static analysis features.
+We want to give Rooc a robust static analysis capabilities, designed to minimize runtime errors, improve performance, and assist in code maintenance.
 
 ##### Type Safety
 
-"TODO enforces strict type checking at compile-time, mitigating issues such as type coercion. 
+Just like rust, we want let all thing could be check at compile-time checked at compile-time. 
 Any type violations are flagged as compile-time errors, ensuring that type-related bugs do not propagate into the runtime environment.
 
 ##### Dead Code Elimination
@@ -68,32 +69,44 @@ The static analysis toolchain can identify and flag or remove unreachable code s
 
 Compile-time evaluation of constant expressions allows for optimizations where values are computed at compile-time instead of runtime, resulting in faster execution.
 
-### Memory Management Without Pointers
+### Without Pointers
+> Modified here
 
-One of the key goals of "TODO is to eliminate pointers to simplify the language and enhance safety. 
-To compensate for the lack of pointers, "TODO introduces several high-level abstractions and safe alternatives.
+One of the key goals of Rooc is to eliminate pointers to simplify the language and enhance safety. 
+To compensate for the lack of pointers, Rooc introduces several high-level abstractions and safe alternatives.
 
 #### Safe References
 
-In "TODO, we introduce a Safe Reference type to substitute for pointers. The `Reference` type encapsulates the logic for referencing variables, while also performing safety checks to avoid issues like null pointer exceptions or dangling references.
+In Rooc, we introduce a Safe Reference type to substitute for pointers, with c-style syntax.
+```c
+// Declaration
+type Reference<T>;
 
-> Concrete design needs further discussion.
+// Usage
+int d=42;
+Reference<T> ref_d= &a;
+```
+
+The `Reference` type encapsulates the logic for referencing variables, while also performing safety checks to avoid issues like null pointer exceptions or dangling references.  
+
+We might also introduce safe, high-level abstractions for common data structures that work well with this reference types.
 
 #### Garbage Collection
 
-Eliminating pointers means you can't manually free allocated memory. 
-Therefore, "TODO would feature automatic memory management.
+Eliminating pointers means programmer can't manually free allocated memory. 
+Therefore, Rooc would feature automatic memory management.
 
 ### OO feature
 
-The Object-Oriented design of "TODO is influenced by the desire to simplify and modernize C++'s OO mechanisms. 
+The Object-Oriented design of Rooc is influenced by the desire to simplify and modernize C++'s OO mechanisms. 
 To provide encapsulation and polymorphism without inheritance and the issues it entails, we introduce Rust-like traits. 
 
 #### struct
 
-Unlike in C++, structs in "TODO do not contain methods within their definitions. 
+Unlike in C++, structs in Rooc do not contain methods within their definitions. 
 This separation makes them function as composite types. 
-Methods can be added to structs using a separate impl block, offering a clean separation of data and behavior.
+Methods can be added to structs using a separate `impl` block, offering a clean separation of data and behavior.
+> Modified here, the format of `impl`
 
 ```c
 struct Point {
@@ -121,7 +134,7 @@ Point p = Point.new(1, 2);  // a uniform style to initialize struct.
 
 #### Polymorphism
 
-In "TODO, polymorphism is supported through the use of traits, rather than class inheritance. 
+In Rooc, polymorphism is supported through the use of traits, rather than class inheritance. 
 Traits define a set of methods that multiple structs can implement. This allows for type-safe, flexible code without the complications that inheritance can bring.
 
 ```c
@@ -163,11 +176,12 @@ render(p);  // Calls Point's draw method
 render(c);  // Calls Circle's draw method
 ```
 
-> This form of polymorphism is resolved at compile-time, the runtime version still needs further discussion.
+We might also introduce the runtime polymorphism just like `trait obj` in Rust.
+> Modified here.
 
 ### Discussion of FP feature
 
-The initial motivation for "TODO is to create a language that maintains the syntactical style of C/C++ while introducing modern features and omitting some of the older, more problematic aspects like pointers. 
+The initial motivation for Rooc is to create a language that maintains the syntactical style of C/C++ while introducing modern features and omitting some of the older, more problematic aspects like pointers. 
 However, while Functional Programming (FP) paradigms offer many advantages, integrating them into this language poses a few significant challenges:
 
 1. Syntax Inconsistency: 
