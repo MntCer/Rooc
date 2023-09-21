@@ -34,7 +34,8 @@ TODO
 ### Type System
 > Modified here
 
-Rooc is a strong typed language. Programmers can also custom their own type.
+Rooc is a statically typed language. Declarations must include a type specifier.
+Programmers can also custom their own type.
 
 #### Custom Type
 
