@@ -101,7 +101,7 @@ struct Point {
     public int y;
 }
 
-impl Point {
+impl Point as Point_impl{
     public new(int x, int y) { 
         this.x = x;
         this.y = y;
@@ -116,7 +116,11 @@ impl Point {
     }
 }
 
-Point p = Point.new(1, 2);  // a uniform style to initialize struct.
+// a uniform style to initialize struct with specified implementation
+Point p = Point@Point_impl.new(1, 2);
+
+// if no implementation is specified, a default implementation will be used
+Point pp = Point.new(1, 2);
 ```
 
 #### Polymorphism
@@ -131,7 +135,7 @@ trait Drawable {
 }
 
 // Implement the Drawable trait for the Point struct
-impl Drawable for Point {
+impl Drawable for Point as Point_painter{
     public void draw() {
         // Drawing logic for Point
     }
@@ -142,7 +146,7 @@ struct Circle {
     public int radius;
 }
 
-impl Drawable for Circle {
+impl Drawable for Circle as Circle_painter{
     public void draw() {
         // Drawing logic for Circle
     }
