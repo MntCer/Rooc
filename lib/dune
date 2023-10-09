@@ -1,0 +1,4 @@
+(library
+ (name Rooc)
+ (libraries llvm llvm.analysis))
+

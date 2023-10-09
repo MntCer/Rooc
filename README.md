@@ -1,136 +1,129 @@
 # Rooc
 
-## Motivation
+## Quick Start
 
-The C language, distinguished by its use of pointers, has proven both powerful and problematic. 
-While we appreciate the elegance of C-style syntax, we aim to develop a more user-friendly, high-level language inspired by it. 
-Our proposed language, Rooc, seeks to retain the syntactic style of C/C++ while eliminating pointers. 
-It also aims to modernize the type system, eschewing inheritance in favor of traits, akin to Rust, to avoid the problems about subtype.
+<!-- ;TODO -->
 
-> Another point for discussion is the inconsistent initialization methods prevalent in C-family languages.
+## Syntax
 
-## Features
+### Variables
 
-### Primitive Types
+```plaintext
+var <var_name>:<type>=<value>;
 
-Rooc supports only three primitive types: int, float, and str. 
-Boolean values are represented as int, with 0 representing false and others representing true.
-> modified here.
-> not the final version.
-
-Declaration Syntax:
-```c
-int a = 1;
-float b = 1.0;
-str c = "hello world";
+var a:int = 1;
+var b:int = 2;
+var c:float = 3.0;
+var d:string = "a";
 ```
 
-### support of built-in list?
+### Data type
 
-TODO
+#### primitive types
 
-> the two subsections above maybe too detailed to put in proposal?
+`int`, `float`, `string`
 
-### Type System
-> Modified here
+#### compound types
 
-Rooc is a statically typed language. Declarations must include a type specifier.
-Programmers can also custom their own type.
+##### built-in list
 
-#### Custom Type
+Because we didn't include type inference now, we need to explicitly specfy the type of list. All the element in the list should be with same type.
 
-```c
-// type alias
-type Distance = int;
-type Velocity = float;
+```
+var <list_name>:<type> = [<ele_list>];
+<ele_list>=<ele>,<ele>,...
+<ele>:=
+    <var_id>
+   |<literal>
 
-// composite type, both declare type and corresponding constructor.
-type Point = Point(int, int);
-type Shape = Circle(Point, int) 
-          or Rectangle(Point, Point);
-
-// parameterized type
-type List<T> = EmptyList() or Cons(T, List<T>);
+var list_a:int = [1,2,3];
+var list_b:int = [a,b];
 ```
 
-#### static analysis
+### Function
 
-We want to give Rooc a robust static analysis capabilities, designed to minimize runtime errors, improve performance, and assist in code maintenance.
+```
+fun <fun_name> (<param_list>) -> <return_type> {<function_body>}
+<param_list>::=<param>:<type>,....
 
-##### Type Safety
-
-Just like rust, we want let all thing could be check at compile-time checked at compile-time. 
-Any type violations are flagged as compile-time errors, ensuring that type-related bugs do not propagate into the runtime environment.
-
-##### Dead Code Elimination
-
-The static analysis toolchain can identify and flag or remove unreachable code sections, reducing the size of the executable and improving performance.
-
-##### Constant Propagation
-
-Compile-time evaluation of constant expressions allows for optimizations where values are computed at compile-time instead of runtime, resulting in faster execution.
-
-### Without Pointers
-> Modified here
-
-One of the key goals of Rooc is to eliminate pointers to simplify the language and enhance safety. 
-To compensate for the lack of pointers, Rooc introduces several high-level abstractions and safe alternatives.
-
-#### Safe References
-
-In Rooc, we introduce a Safe Reference type to substitute for pointers, with c-style syntax.
-```c
-// Declaration
-type Reference<T>;
-
-// Usage
-int d=42;
-Reference<T> ref_d= &a;
+fun get_second (x:int,y:float) -> float
+{
+    return y;
+}
 ```
 
-The `Reference` type encapsulates the logic for referencing variables, while also performing safety checks to avoid issues like null pointer exceptions or dangling references.  
+### Control flow
 
-We might also introduce safe, high-level abstractions for common data structures that work well with this reference types.
+We didn't treat the `if-else` as expression, just like C.
+The curly braces are required to avoid potential problem.
 
-#### Garbage Collection
+```
+if(<expr>){
+    <stmt_list>
+}
+<elif(<expr>){
+    <stmt_list>
+}>
+<else{
+    <stmt_list>
+}>
+```
 
-Eliminating pointers means programmer can't manually free allocated memory. 
-Therefore, Rooc would feature automatic memory management.
+Rooc support 2 kinds of loop design.  
 
-### OO feature
+```
+for(<expr>;<expr>;<expr>){
+    <stmt_list>
+}
 
-The Object-Oriented design of Rooc is influenced by the desire to simplify and modernize C++'s OO mechanisms. 
-To provide encapsulation and polymorphism without inheritance and the issues it entails, we introduce Rust-like traits. 
+while (<expr>){
+    <stmt_list>
+}
+```
 
-#### struct
 
-Unlike in C++, structs in Rooc do not contain methods within their definitions. 
-This separation makes them function as composite types. 
-Methods can be added to structs using a separate `impl` block, offering a clean separation of data and behavior.
-> Modified here, the format of `impl`
+<!-- ``` ;TODO: need to support the type-inference first;
+for(<id> in <list_id>){
+    <stmt_list>
+}
+``` -->
 
-```c
+### Struct
+
+<!-- ;TODO: encapsulation -->
+
+```
+struct <struct_name>
+{
+    <var_declaration_stmt_list>
+}
+
 struct Point {
-    private int x;
-    public int y;
+    var m:int;
+    var n:int;
+}
+```
+
+```
+impl <id> {
+    <fun_definition_stmt_list>
 }
 
 impl Point {
-    public new(int x, int y) { 
+    fun new(x:int, y:int) -> Point { 
         this.x = x;
         this.y = y;
+        return this;
     }
 
-    public int getX() {
+    fun getX() -> int {
         return this.x;
     }
 
-    public int getY() {
+    fun getY() -> int {
         return this.y;
     }
 }
-
-Point p = Point.new(1, 2);  // a uniform style to initialize struct.
 ```
 
 #### Polymorphism
@@ -138,26 +131,38 @@ Point p = Point.new(1, 2);  // a uniform style to initialize struct.
 In Rooc, polymorphism is supported through the use of traits, rather than class inheritance. 
 Traits define a set of methods that multiple structs can implement. This allows for type-safe, flexible code without the complications that inheritance can bring.
 
-```c
-// Define a trait with methods that return values; no implementation is given
+```
+
+trait <trait_id> {
+    <fun_declaration_stmt_list>;
+}
+
 trait Drawable {
     public void draw();
 }
+```
+
+```
+impl <trait_id> for <struct_id> {
+    <fun_definition_stmt_list>;
+} 
 
 // Implement the Drawable trait for the Point struct
 impl Drawable for Point {
-    public void draw() {
+    fun draw() -> void {
         // Drawing logic for Point
     }
 }
 
-// Implement the Drawable trait for a new Circle struct
+// Implement the Drawable trait for the Circle struct
 struct Circle {
-    public int radius;
+    var x:int;
+    var y:int;
+    var radius:int;
 }
 
 impl Drawable for Circle {
-    public void draw() {
+    fun draw() -> void {
         // Drawing logic for Circle
     }
 }
@@ -166,27 +171,17 @@ impl Drawable for Circle {
 With traits, you can write functions that operate on any type that implements a specific trait:
 
 ```c
-public void render(Drawable d) {
+fun render(d: Drawable) -> void {
     d.draw();
 }
 
-Point p = Point.new(1, 2);
-Circle c = Circle.new(5);
+var p:Point = Point.new(1, 2);
+var c:Circle = Circle.new(3, 4, 5);
 
 render(p);  // Calls Point's draw method
 render(c);  // Calls Circle's draw method
 ```
 
-We might also introduce the runtime polymorphism just like `trait obj` in Rust.
-> Modified here.
+## TODO
 
-### Discussion of FP feature
-
-The initial motivation for Rooc is to create a language that maintains the syntactical style of C/C++ while introducing modern features and omitting some of the older, more problematic aspects like pointers. 
-However, while Functional Programming (FP) paradigms offer many advantages, integrating them into this language poses a few significant challenges:
-
-1. Syntax Inconsistency: 
-   C-style syntax, particularly function syntax, is not naturally conducive to supporting first-class functions without substantial alteration, it restrict the function's return type to primitive types.
-   If we finally decide to add FP support, we may use another keyword like `func` to declare a function and use the type inference to infer it's type.
-2. mutable and immutable variables:
-   FP needs immutable variables, I am not sure about how to balance and design the grammar without bring more confusion.
+- [ ] Choose a LRM presentation style.
