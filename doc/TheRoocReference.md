@@ -4,7 +4,9 @@
 
 ## Notation
 
-The syntax is specified using [Wirth syntax notation](https://en.wikipedia.org/wiki/Wirth_syntax_notation) to express the Extended Backus-Naur Form (EBNF):
+### Syntax notation
+
+The syntax grammar is specified using [Wirth syntax notation](https://en.wikipedia.org/wiki/Wirth_syntax_notation) to express the Extended Backus-Naur Form (EBNF):
 
 ```ebnf
 Syntax      = { Production } .
@@ -27,8 +29,7 @@ The element on the left is defined to be the combination of elements on the righ
 
 A production is terminated by a full stop (period).
 
-Lowercase production names are used to identify lexical (terminal) tokens. Non-terminals are in CamelCase. 
-Tokens which are enclosed in double quotes "" are also lexical tokens.
+Lowercase production names and elements quoted in `""` are used to identify lexical (terminal) tokens. Non-terminals are in CamelCase. 
 
 The three operators below are in increasing precedence.
 
@@ -39,81 +40,98 @@ The three operators below are in increasing precedence.
 {}  repetition (0 to n times)
 ```
 
-## Lexical elements
+### Lexical notation
 
-### Characters, Letters and Digits
+The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions). Within these expressions, "named subpatterns" are used to enhance clarity and modularity.
 
-```ebnf
-// lexical rules
-digit     = "0" … "9" .
-digits    = digit { digit } .
-letter    = "a" … "z" | "A" … "Z" .
-character = /* All printable ASCII characters from value 0 to 127 */ .
+A subpattern is a part of the regular expression that can be considered as a unit. It is delineated by parentheses and can be referred to or reused within the expression.
+
+```
+pattern1 = (a|b)
+pattern2 = pattern1 (c|d)
 ```
 
-The notation `a … b` denotes the set of characters ranging from `a` to `b` inclusively. The horizontal ellipsis `…` is employed elsewhere in this reference as an informal representation of unspecified enumerations or code snippets. 
+The `pattern2` expression is equivalent to `(a|b)(c|d)`.
 
-In Rooc, comments are denoted using `/* … */` and `//`. These comment styles will also be utilized in this reference to provide clearer rule explanations or to simplify lengthy enumerations.
 
+## Lexical elements
+
+### Alphabet
+
+Rooc uses the ASCII character set as its alphabet. This consists of all characters with values from 0 to 127 in the ASCII table, encompassing:
+
+* Control characters (0-31)
+* Standard printable characters including:
+    * Uppercase alphabets (A-Z)
+    * Lowercase alphabets (a-z)
+    * Digits (0-9)
+    * Punctuation symbols (e.g., !, @, #, etc.)
+    * Special characters (e.g., [, ], {, }, etc.)
+    * Space
+* The DEL character (127)
+
+### Letters and Digits
+
+```
+digit     = [0-9]
+digits    = digit+
+letter    = [a-zA-Z]
+```
 
 ### Comments
 
-Comments will not be parsed by the compiler. There are two forms:
+Comments will not be parsed by the compiler. Rooc has two comment styles:
 
 1. _Line comments_ start with the character sequence `//` and stop at the end of the line.
 2. _General comments_ start with the character sequence `/*` and stop with the first subsequent character sequence `*/`.
 
-```ebnf
-// lexical rules
-eol       = "\n" | "\r\n" .
-comment = line_comment | general_comment .
-line_comment = "//" { character } eol .
-general_comment = "/*" { character } "*/" .
+```
+line_comment = \/\/.*(\r?\n)
+general_comment = \/\*.*?\*\/
+comment = line_comment | general_comment 
 ```
 
 ### Semicolon
 
 To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
 
-```ebnf
+```
 // lexical rules
-semi = ";" .
+semi = ;
 ```
 
 ### Identifiers
 
-Identifiers name program entities such as variables and functions. An identifier is a sequence of one or more letters, digits and underscores, but the first character must be a letter.
+Identifiers name program entities such as variables and functions. An identifier is a sequence of one or more letters, digits and underscores, but the *first* character must be a letter.
 
-```ebnf
-// lexical rules
-identifier = letter { letter | digit | "_" } .
+```
+identifier = letter ( letter | digit |_)*
 ```
 
 ### Operators and punctuation
 
 ```
-// lexical rules
-assign = "=" .
-plus = "+" .
-minus = "-" .
-times = "*" .
-divide = "/" .
-lparen = "(" .
-rparen = ")" .
+assign  = =
+plus    = \+
+minus   = -
+times   = \*
+divide  = /
+lparen  = \(
+rparen  = \)
 
-eq= "==" .
-neq = "!=" .
-lt = "<" .
-leq = "<=" .
-gt = ">" .
-geq = ">=" .
-and = "&&" .
-or = "||" .
-not = "!" .
+eq      = ==
+neq     = !=
+lt      = <
+leq     = <=
+gt      = >
+geq     = >=
+and     = &&
+or      = \|\|
+not     = !
 
-lbrace = "{" .
-rbrace = "}" .
-comma = "," .
+lbrace  = {
+rbrace  = }
+comma   = ,
 ```
 
 ### Keywords
@@ -123,20 +141,43 @@ The following keywords are reserved and may not be used as identifiers.
 ```ebnf
 // lexical rules
 // ;TODO
+var = "var" 
+fun = "fun" 
+let = "let" 
+
 break
 case
 ```
 
 ### Integer literals
 
+An integer literal is a sequence of digits representing an integer constant. Now only support decimal integer.
+
+```ebnf
+// lexical rules
+// ;TODO
+```
+
+
 ### Floating-point literals
+
+A floating-point literal is a decimal of a floating-point constant.
+
+
+```ebnf
+// lexical rules
+// ;TODO
+```
+
 
 ### String literals
 
-### Constants
+A string literal represents a string constant obtained from concatenating a sequence of characters.
+
+## Constants
 
 
-### Variables
+## Variables
 
 
 ## Types
