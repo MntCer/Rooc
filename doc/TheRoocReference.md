@@ -42,17 +42,23 @@ The three operators below are in increasing precedence.
 
 ### Lexical notation
 
-The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions). Within these expressions, "named subpatterns" are used to enhance clarity and modularity.
+The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions).
 
-A subpattern is a part of the regular expression that can be considered as a unit. It is delineated by parentheses and can be referred to or reused within the expression.
+In our notation, expressions are named to represent specific tokens, and can be referenced in other expressions as patterns by enclosing the name with `<` and `>` brackets. 
+A pattern is a segment of the regular expression treated as a single unit.
+
+To match the raw "<" and ">" characters in a string, use `\<` and `\>` respectively.
 
 ```
-pattern1 = (a|b)
-pattern2 = pattern1 (c|d)
+token1 = (a|\<)
+token2 = <pattern1>(b|\>)
 ```
 
-The `pattern2` expression is equivalent to `(a|b)(c|d)`.
+The `token2` expression expands to `(a|<)(b|>)` in standard ERE.
 
+In ERE, a raw space character is a valid element. 
+However, in most cases, Rooc will not allow to include a "space" as part of lexical tokens(not for string literal, comments, etc.) So, the spaces present in the following regular expressions are for readability and don't denote actual space characters.
+To represent a "space" explicitly in the following regular expressions, we will utilize `\s`.
 
 ## Lexical elements
 
@@ -73,9 +79,9 @@ Rooc uses the ASCII character set as its alphabet. This consists of all characte
 ### Letters and Digits
 
 ```
-digit     = [0-9]
-digits    = digit+
-letter    = [a-zA-Z]
+digit   = [0-9]
+digits  = digit+
+letter  = [a-zA-Z]
 ```
 
 ### Comments
@@ -86,9 +92,9 @@ Comments will not be parsed by the compiler. Rooc has two comment styles:
 2. _General comments_ start with the character sequence `/*` and stop with the first subsequent character sequence `*/`.
 
 ```
-line_comment = \/\/.*(\r?\n)
+line_comment    = \/\/.*(\r?\n)
 general_comment = \/\*.*?\*\/
-comment = line_comment | general_comment 
+comment         = <line_comment>|<general_comment>
 ```
 
 ### Semicolon
@@ -96,8 +102,7 @@ comment = line_comment | general_comment
 To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
 
 ```
-// lexical rules
-semi = ;
+semi =;
 ```
 
 ### Identifiers
@@ -105,7 +110,7 @@ semi = ;
 Identifiers name program entities such as variables and functions. An identifier is a sequence of one or more letters, digits and underscores, but the *first* character must be a letter.
 
 ```
-identifier = letter ( letter | digit |_)*
+identifier = <letter>(<letter>|<digit>|_)*
 ```
 
 ### Operators and punctuation
@@ -123,8 +128,8 @@ eq      = ==
 neq     = !=
 lt      = <
 leq     = <=
-gt      = >
-geq     = >=
+gt      = \>
+geq     = \>=
 and     = &&
 or      = \|\|
 not     = !
@@ -138,12 +143,11 @@ comma   = ,
 
 The following keywords are reserved and may not be used as identifiers.
 
-```ebnf
-// lexical rules
+```
 // ;TODO
-var = "var" 
-fun = "fun" 
-let = "let" 
+var = var 
+fun = fun 
+let = let 
 
 break
 case
@@ -153,8 +157,7 @@ case
 
 An integer literal is a sequence of digits representing an integer constant. Now only support decimal integer.
 
-```ebnf
-// lexical rules
+```
 // ;TODO
 ```
 
@@ -164,8 +167,7 @@ An integer literal is a sequence of digits representing an integer constant. Now
 A floating-point literal is a decimal of a floating-point constant.
 
 
-```ebnf
-// lexical rules
+```
 // ;TODO
 ```
 
@@ -173,6 +175,10 @@ A floating-point literal is a decimal of a floating-point constant.
 ### String literals
 
 A string literal represents a string constant obtained from concatenating a sequence of characters.
+
+```
+
+```
 
 ## Constants
 
