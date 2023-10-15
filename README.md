@@ -19,10 +19,6 @@ var d:string = "a";
 
 ### Data type
 
-#### primitive types
-
-`int`, `float`, `string`
-
 #### compound types
 
 ##### built-in list

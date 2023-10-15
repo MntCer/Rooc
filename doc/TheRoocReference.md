@@ -44,33 +44,109 @@ The three operators below are in increasing precedence.
 ### Characters, Letters and Digits
 
 ```ebnf
+// lexical rules
 digit     = "0" … "9" .
+digits    = digit { digit } .
 letter    = "a" … "z" | "A" … "Z" .
 character = /* All printable ASCII characters from value 0 to 127 */ .
 ```
 
-The form `a … b` represents the set of characters from a through b as alternatives. The horizontal ellipsis `…` is also used elsewhere in the reference to informally denote various enumerations or code snippets that are not further specified.  
+The notation `a … b` denotes the set of characters ranging from `a` to `b` inclusively. The horizontal ellipsis `…` is employed elsewhere in this reference as an informal representation of unspecified enumerations or code snippets. 
 
-The `/* … */` is one of Rooc's comment styles, which will also be used in the rules to give explicit descriptions and avoid too many enumerations.
+In Rooc, comments are denoted using `/* … */` and `//`. These comment styles will also be utilized in this reference to provide clearer rule explanations or to simplify lengthy enumerations.
+
 
 ### Comments
 
+Comments will not be parsed by the compiler. There are two forms:
 
-### Tokens
-### Semicolons
+1. _Line comments_ start with the character sequence `//` and stop at the end of the line.
+2. _General comments_ start with the character sequence `/*` and stop with the first subsequent character sequence `*/`.
+
+```ebnf
+// lexical rules
+eol       = "\n" | "\r\n" .
+comment = line_comment | general_comment .
+line_comment = "//" { character } eol .
+general_comment = "/*" { character } "*/" .
+```
+
+### Semicolon
+
+To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
+
+```ebnf
+// lexical rules
+semi = ";" .
+```
+
 ### Identifiers
-### Keywords
+
+Identifiers name program entities such as variables and functions. An identifier is a sequence of one or more letters, digits and underscores, but the first character must be a letter.
+
+```ebnf
+// lexical rules
+identifier = letter { letter | digit | "_" } .
+```
+
 ### Operators and punctuation
+
+```
+// lexical rules
+assign = "=" .
+plus = "+" .
+minus = "-" .
+times = "*" .
+divide = "/" .
+lparen = "(" .
+rparen = ")" .
+
+eq= "==" .
+neq = "!=" .
+lt = "<" .
+leq = "<=" .
+gt = ">" .
+geq = ">=" .
+and = "&&" .
+or = "||" .
+not = "!" .
+
+lbrace = "{" .
+rbrace = "}" .
+comma = "," .
+```
+
+### Keywords
+
+The following keywords are reserved and may not be used as identifiers.
+
+```ebnf
+// lexical rules
+// ;TODO
+break
+case
+```
+
 ### Integer literals
+
 ### Floating-point literals
+
 ### String literals
+
 ### Constants
+
+
 ### Variables
+
 
 ## Types
 
+### Boolean types
+
 ### Numeric types
+
 ### String types
+
 ### List types
 
 

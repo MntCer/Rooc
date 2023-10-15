@@ -2,23 +2,28 @@
 
 { open Parser }
 
-let digit = ['0' - '9']
+let digit  = ['0' - '9']
 let digits = digit+
+let letter = ['a'-'z' 'A'-'Z']
 
 rule token = parse
-  [' ' '\t' '\r' '\n'] { token lexbuf } (* Whitespace *)
-| "/*"     { comment lexbuf }           (* Comments *)
-| '('      { LPAREN }
-| ')'      { RPAREN }
-| '{'      { LBRACE }
-| '}'      { RBRACE }
+  digits as lxm { LITERAL(int_of_string lxm) }
+| digits '.'  digit* as lxm { FLIT(lxm) }
+| ['a'-'z' 'A'-'Z'] ['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
+(* Comments *)
+| "/*"     { comment lexbuf }
+(* Whitespace *)
+| [' ' '\t' '\r' '\n'] { token lexbuf } 
+(* Semicolon *)
 | ';'      { SEMI }
-| ','      { COMMA }
+(* Operator & punctuation *)
+| '='      { ASSIGN }
 | '+'      { PLUS }
 | '-'      { MINUS }
 | '*'      { TIMES }
 | '/'      { DIVIDE }
-| '='      { ASSIGN }
+| '('      { LPAREN }
+| ')'      { RPAREN }
 | "=="     { EQ }
 | "!="     { NEQ }
 | '<'      { LT }
@@ -28,6 +33,10 @@ rule token = parse
 | "&&"     { AND }
 | "||"     { OR }
 | "!"      { NOT }
+| '{'      { LBRACE }
+| '}'      { RBRACE }
+| ','      { COMMA }
+(* Keywords *)
 | "if"     { IF }
 | "else"   { ELSE }
 | "for"    { FOR }
@@ -39,9 +48,6 @@ rule token = parse
 | "void"   { VOID }
 | "true"   { BLIT(true)  }
 | "false"  { BLIT(false) }
-| digits as lxm { LITERAL(int_of_string lxm) }
-| digits '.'  digit* as lxm { FLIT(lxm) }
-| ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
