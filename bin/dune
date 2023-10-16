@@ -16,6 +16,6 @@
    (:standard -warn-error -A))))
 
 (executable
- (public_name microc)
- (name microc)
- (libraries microc))
+ (public_name rooc)
+ (name rooc)
+ (libraries rooc))

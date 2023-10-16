@@ -3,20 +3,19 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
           And | Or
 
-(* type uop = Neg | Not *)
+type uop = Neg | Not
 
-type typ = Int | Float | String (*| Bool | Void*)
+type typ = Int | Bool | Float | Void
 
 type bind = typ * string
 
 type expr =
     Literal of int
-  | Fliteral of string (*float*)
-  | Sliteral of string (*string*)
-  (* | BoolLit of bool *)
+  | Fliteral of string
+  | BoolLit of bool
   | Id of string
   | Binop of expr * op * expr
-  (* | Unop of uop * expr *)
+  | Unop of uop * expr
   | Assign of string * expr
   | Call of string * expr list
   | Noexpr
@@ -37,31 +36,7 @@ type func_decl = {
     body : stmt list;
   }
 
-(* for trait *)
-type empty_func_decl = {
-    typ : typ
-    fname : string
-    formals : bind list
-}
-
-type trait_decl = {
-    tname : string
-    methods : empty_func_decl list
-}
-
-type struct_decl = {
-    sname : string
-    fields : bind list
-}
-
-type impl_decl = {
-    iname : string
-    forstruct : string
-    methods : func_decl list
-}
-
-type program = func_decl list * trait_decl list * struct_decl list
-                 * impl_decl list
+type program = bind list * func_decl list
 
 (* Pretty-printing functions *)
 
@@ -79,19 +54,19 @@ let string_of_op = function
   | And -> "&&"
   | Or -> "||"
 
-(* let string_of_uop = function
+let string_of_uop = function
     Neg -> "-"
-  | Not -> "!" *)
+  | Not -> "!"
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | Fliteral(l) -> l
-  (* | BoolLit(true) -> "true"
-  | BoolLit(false) -> "false" *)
+  | BoolLit(true) -> "true"
+  | BoolLit(false) -> "false"
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
-  (* | Unop(o, e) -> string_of_uop o ^ string_of_expr e *)
+  | Unop(o, e) -> string_of_uop o ^ string_of_expr e
   | Assign(v, e) -> v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
@@ -112,10 +87,9 @@ let rec string_of_stmt = function
 
 let string_of_typ = function
     Int -> "int"
-  (* | Bool -> "bool" *)
+  | Bool -> "bool"
   | Float -> "float"
-  (* | Void -> "void" *)
-  | String -> "string"
+  | Void -> "void"
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
@@ -130,9 +104,3 @@ let string_of_fdecl fdecl =
 let string_of_program (vars, funcs) =
   String.concat "" (List.map string_of_vdecl vars) ^ "\n" ^
   String.concat "\n" (List.map string_of_fdecl funcs)
-
-let get_4_1 (a, _, _, _) = a
-let get_4_2 (_, a, _, _) = a
-let get_4_3 (_, _, a, _) = a
-let get_4_4 (_, _, _, a) = a
-

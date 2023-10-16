@@ -266,7 +266,6 @@ Use `let` rather than `var` to declare a constant.
 LetDeclaration = "let" IdtyPair "=" Expression ";" .
 ```
 
-
 <!-- ;TODO
 Struct types
 Function types
