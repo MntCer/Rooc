@@ -3,13 +3,17 @@
 %{
 open Ast
 %}
-
-%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA PLUS MINUS TIMES DIVIDE ASSIGN
-%token NOT EQ NEQ LT LEQ GT GEQ AND OR
-%token RETURN IF ELSE FOR WHILE INT BOOL FLOAT VOID
-%token <int> ILIT
+/* operator & punctuation */
+%token SEMI 
+%token ASSIGN PLUS MINUS TIMES DIVIDE LPAREN RPAREN
+%token EQ NEQ LT LEQ GT GEQ AND OR NOT
+%token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
-%token <string> ID FLIT
+%token VAR LET FUN STRUCT IMPL TRAIT
+%token INT BOOL FLOAT STR VOID
+%token RETURN IF ELSE FOR WHILE 
+%token <int> ILIT
+%token <string> FLIT SLIT ID
 %token EOF
 
 %start program
