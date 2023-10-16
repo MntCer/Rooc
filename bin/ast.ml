@@ -30,34 +30,34 @@ type stmt =
   | While of expr * stmt
 
 type func_decl = {
-    typ : typ;
-    fname : string;
-    formals : bind list;
-    locals : bind list;
-    body : stmt list;
+    fd_typ : typ;
+    fd_name : string;
+    fd_formals : bind list;
+    fd_locals : bind list;
+    fd_body : stmt list;
   }
 
 (* for trait *)
-type empty_func_decl = {
-  typ : typ;
-  fname : string;
-  formals : bind list;
+type func_sig = {
+  fs_typ : typ;
+  fs_name : string;
+  fs_formals : bind list;
 }
 
 type trait_decl = {
-  tname : string;
-  methods : empty_func_decl list;
+  tr_name : string;
+  tr_methods : func_sig list;
 }
 
 type struct_decl = {
-  sname : string;
-  fields : bind list;
+  s_name : string;
+  s_fields : bind list;
 }
 
 type impl_decl = {
-  iname : string;
-  forstruct : string;
-  methods : func_decl list;
+  i_name : string;
+  i_forstruct : struct_decl;
+  i_methods : func_decl list;
 }
 
 type program = func_decl list * trait_decl list * struct_decl list
@@ -120,11 +120,11 @@ let string_of_typ = function
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
 let string_of_fdecl fdecl =
-  string_of_typ fdecl.typ ^ " " ^
-  fdecl.fname ^ "(" ^ String.concat ", " (List.map snd fdecl.formals) ^
+  string_of_typ fdecl.fd_typ ^ " " ^
+  fdecl.fd_name ^ "(" ^ String.concat ", " (List.map snd fdecl.fd_formals) ^
   ")\n{\n" ^
-  String.concat "" (List.map string_of_vdecl fdecl.locals) ^
-  String.concat "" (List.map string_of_stmt fdecl.body) ^
+  String.concat "" (List.map string_of_vdecl fdecl.fd_locals) ^
+  String.concat "" (List.map string_of_stmt fdecl.fd_body) ^
   "}\n"
 
 let string_of_program (vars, funcs) =
