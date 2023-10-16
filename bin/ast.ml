@@ -39,25 +39,25 @@ type func_decl = {
 
 (* for trait *)
 type empty_func_decl = {
-    typ : typ
-    fname : string
-    formals : bind list
+  typ : typ;
+  fname : string;
+  formals : bind list;
 }
 
 type trait_decl = {
-    tname : string
-    methods : empty_func_decl list
+  tname : string;
+  methods : empty_func_decl list;
 }
 
 type struct_decl = {
-    sname : string
-    fields : bind list
+  sname : string;
+  fields : bind list;
 }
 
 type impl_decl = {
-    iname : string
-    forstruct : string
-    methods : func_decl list
+  iname : string;
+  forstruct : string;
+  methods : func_decl list;
 }
 
 type program = func_decl list * trait_decl list * struct_decl list
