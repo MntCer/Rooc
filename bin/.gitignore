@@ -1,2 +1,5 @@
 *.cmo
 *.cmi
+scanner.ml
+ast.ml.ml
+*.swp
