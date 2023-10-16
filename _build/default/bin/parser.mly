@@ -31,14 +31,10 @@ open Ast
 program:
   decls EOF { $1 }
 
-/* TODO */
 decls:
-   /* nothing */ { ([], [], [], []) }
-/*  | decls vdecl { (($2 :: fst $1), snd $1) } */
- | decls fdecl { ($2 :: (get_4_1 $1), get_4_2 $1, get_4_3 $1, get_4_4 $1) }
- | decls tdecl { (get_4_1 $1, $2 :: (get_4_2 $1), get_4_3 $1, get_4_4 $1) }
- | decls idecl { (get_4_1 $1, get_4_2 $1, $2 :: (get_4_3 $1), get_4_4 $1) }
- | decls sdecl { (get_4_1 $1, get_4_2 $1, get_4_3 $1, $2 :: (get_4_4 $1)) } 
+   /* nothing */ { ([], [])               }
+ | decls vdecl { (($2 :: fst $1), snd $1) }
+ | decls fdecl { (fst $1, ($2 :: snd $1)) }
 
 fdecl:
    typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
@@ -47,16 +43,6 @@ fdecl:
 	 formals = List.rev $4;
 	 locals = List.rev $7;
 	 body = List.rev $8 } }
-
-tdecl: {}
-/* TODO */
-
-idecl: {}
-/* TODO */
-
-sdecl: {}
-/* TODO */
-
 
 formals_opt:
     /* nothing */ { [] }

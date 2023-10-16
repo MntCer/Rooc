@@ -196,7 +196,6 @@ A string literal represents a string constant obtained from concatenating a sequ
 
 ### List types
 
-
 <!-- ;TODO
 Struct types
 Function types
