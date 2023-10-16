@@ -6,20 +6,6 @@
 
 ## Syntax
 
-### Variables
-
-```plaintext
-var <var_name>:<type>=<value>;
-
-var a:int = 1;
-var b:int = 2;
-var c:float = 3.0;
-var d:string = "a";
-```
-
-### Data type
-
-#### compound types
 
 ##### built-in list
 
