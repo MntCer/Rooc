@@ -1,0 +1,12 @@
+//Test for-loop and int return type
+
+fun main() -> int
+{
+    var sum:int = 1;
+    for(var a:int = 0; a<=2; a = a+1){
+        sum = sum+a;
+    }
+    return sum;
+}
+
+
