@@ -7,16 +7,16 @@ let digits = digit+
 let letter = ['a'-'z' 'A'-'Z']
 
 rule token = parse
-  digits as lxm { LITERAL(int_of_string lxm) }
-| digits '.'  digit* as lxm { FLIT(lxm) }
-| ['a'-'z' 'A'-'Z'] ['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
-(* Comments *)
-| "/*"     { comment lexbuf }
-(* Whitespace *)
+(* comments *)
+| "//" [^ '\n' '\r']* ('\r' '\n' | '\n') { token lexbuf } 
+| "/*"                                   { comment lexbuf }
+(* whitespace *)
 | [' ' '\t' '\r' '\n'] { token lexbuf } 
-(* Semicolon *)
+(* identifier *)
+| ['a'-'z' 'A'-'Z'] ['a'-'z' 'A'-'Z' '0'-'9' '_']* as id_str { ID(id_str) }
+(* semicolon *)
 | ';'      { SEMI }
-(* Operator & punctuation *)
+(* operator & punctuation *)
 | '='      { ASSIGN }
 | '+'      { PLUS }
 | '-'      { MINUS }
@@ -36,21 +36,26 @@ rule token = parse
 | '{'      { LBRACE }
 | '}'      { RBRACE }
 | ','      { COMMA }
-(* Keywords *)
+| ':'      { COLON }
+(* keywords *)
+| "true"   { BLIT(true)  }
+| "false"  { BLIT(false) }
 | "var"    { VAR }
-| "fun"    { FUN }
 | "let"    { LET }
+| "fun"    { FUN }
+| "int"    { INT }
+| "float"  { FLOAT }
+| "bool"   { BOOL }
+| "str"    { STR}
 | "if"     { IF }
 | "else"   { ELSE }
 | "for"    { FOR }
 | "while"  { WHILE }
 | "return" { RETURN }
-| "int"    { INT }
-| "bool"   { BOOL }
-| "float"  { FLOAT }
 | "void"   { VOID }
-| "true"   { BLIT(true)  }
-| "false"  { BLIT(false) }
+(* literals *)
+| digits as int_str { ILIT(int_of_string int_str) }
+| digits '.'  digit* as float_str { FLIT(float_str) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 

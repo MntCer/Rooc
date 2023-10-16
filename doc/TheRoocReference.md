@@ -96,9 +96,9 @@ general_comment : \/\*.*?\*\/
 comment         : <line_comment>|<general_comment>
 ```
 
-### Semicolon
+### Whitespace
 
-To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
+<!-- ;TODO -->
 
 ### Identifiers
 
@@ -110,6 +110,11 @@ identifier : <letter>(<letter>|<digit>|_)*
 
 The `production_name` referred before also follow this rule.
 
+
+### Semicolon
+
+To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
+
 ### Operators and punctuation
 
 ```
@@ -118,7 +123,7 @@ The `production_name` referred before also follow this rule.
 ==      !=      <       <=      >       >=      &&  
 ||      !       
 
-{       }       ,       :       ;
+{       }       ,       : 
 ```
 
 <!-- ```
@@ -154,7 +159,7 @@ The following keywords are reserved and may not be used as identifiers.
 ```
 // ;TODO
 true        false
-let         var         fun  
+var         let         fun  
 
 break
 ```
@@ -175,11 +180,12 @@ int_lit         : <decimal_int_lit>
 
 A floating-point literal is a decimal of a floating-point constant.
 A decimal floating-point literal consists of an integer part (decimal digits), a decimal point, a fractional part (decimal digits).
+The fractional part can be omitted if it is zero.
 
 <!-- ;TODO: exponent part -->
 <!-- ;TODO: omit leading zero -->
 ```
-decimal_float_lit : <digit>+\.<digit>+
+decimal_float_lit : <digit>+\.<digit>*
 float_lit         : <decimal_float_lit>
 ```
 
@@ -274,12 +280,12 @@ trait types
 
 ## Function
 
-```enbf
+```ebnf
 FunDecl      = FunSignature "{" Statements "}" .
 FunSignature = "fun" identifier "(" ParamList ")" "->" Type .
 ParamList    = [IdtyPair] 
              | IdtyPair {"," IdtyPair} .
-Statements = {Statement} .
+Statements   = {Statement} .
 ```
 
 ```
@@ -332,7 +338,7 @@ Traits define a set of methods that multiple structs can implement. This allows 
 
 ```ebnf
 TraitDecl = "trait" identifier "{" FunSignatures "}" .
-FunSignatures = {FunSignature} .
+FunSignatures = {FunSignature ";"} .
 ```
 
 ```
