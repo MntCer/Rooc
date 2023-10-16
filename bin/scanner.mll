@@ -1,6 +1,22 @@
 (* Ocamllex scanner for Rooc *)
 
-{ open Parser }
+(* { open Parser } *)
+{ (* for test *)
+type token = 
+  ID of string
+| SEMI 
+| ASSIGN | PLUS | MINUS | TIMES | DIVIDE | LPAREN | RPAREN
+| EQ | NEQ | LT | LEQ | GT | GEQ | AND | OR | NOT
+| LBRACE | RBRACE | COMMA | COLON | RARROW | DOT
+| BLIT of bool
+| VAR | LET | FUN | STRUCT | IMPL | TRAIT
+| INT | BOOL | FLOAT | STR | VOID
+| RETURN | IF | ELSE | FOR | WHILE 
+| ILIT of int
+| FLIT of string
+| SLIT of string
+| EOF
+}
 
 let digit  = ['0' - '9']
 let digits = digit+
@@ -12,8 +28,6 @@ rule token = parse
 | "/*"                                   { comment lexbuf }
 (* whitespace *)
 | [' ' '\t' '\r' '\n'] { token lexbuf } 
-(* identifier *)
-| ['a'-'z' 'A'-'Z'] ['a'-'z' 'A'-'Z' '0'-'9' '_']* as id_str { ID(id_str) }
 (* semicolon *)
 | ';'      { SEMI }
 (* operator & punctuation *)
@@ -24,6 +38,7 @@ rule token = parse
 | '/'      { DIVIDE }
 | '('      { LPAREN }
 | ')'      { RPAREN }
+(**)
 | "=="     { EQ }
 | "!="     { NEQ }
 | '<'      { LT }
@@ -33,32 +48,47 @@ rule token = parse
 | "&&"     { AND }
 | "||"     { OR }
 | "!"      { NOT }
+(**)
 | '{'      { LBRACE }
 | '}'      { RBRACE }
 | ','      { COMMA }
 | ':'      { COLON }
+| "->"     { RARROW }
+| "."      { DOT }
 (* keywords *)
-| "true"   { BLIT(true)  }
-| "false"  { BLIT(false) }
 | "var"    { VAR }
 | "let"    { LET }
 | "fun"    { FUN }
+| "struct" { STRUCT }
+| "impl"   { IMPL }
+| "trait"  { TRAIT }
+(* *)
 | "int"    { INT }
 | "float"  { FLOAT }
 | "bool"   { BOOL }
 | "str"    { STR}
+| "void"   { VOID }
+(* *)
+| "return" { RETURN }
 | "if"     { IF }
 | "else"   { ELSE }
 | "for"    { FOR }
 | "while"  { WHILE }
-| "return" { RETURN }
-| "void"   { VOID }
 (* literals *)
+| "true"   { BLIT(true)  }
+| "false"  { BLIT(false) }
 | digits as int_str { ILIT(int_of_string int_str) }
 | digits '.'  digit* as float_str { FLIT(float_str) }
+| '"' { string_processor lexbuf }
+(* identifier *)
+| ['a'-'z' 'A'-'Z'] ['a'-'z' 'A'-'Z' '0'-'9' '_']* as id_str { ID(id_str) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
 and comment = parse
   "*/" { token lexbuf }
 | _    { comment lexbuf }
+
+and string_processor = parse
+[^'"']* as str_str '"' { SLIT(str_str) }
+| _ as char { raise (Failure("illegal character " ^ Char.escaped char ^ "in string literal")) }

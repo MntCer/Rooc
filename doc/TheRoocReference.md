@@ -115,6 +115,10 @@ The `production_name` referred before also follow this rule.
 
 To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
 
+```
+;
+```
+
 ### Operators and punctuation
 
 ```
@@ -123,7 +127,7 @@ To allow complex statements to occupy a single line, Rooc use semicolon as the t
 ==      !=      <       <=      >       >=      &&  
 ||      !       
 
-{       }       ,       : 
+{       }       ,       :      ->     .
 ```
 
 <!-- ```
@@ -194,8 +198,7 @@ float_lit         : <decimal_float_lit>
 A boolean literal represents a constant of boolean type and can take one of two values: true or false.
 
 ```
-true_lit    : true
-false_lit   : false
+boolean_lit    : true | false
 ```
 
 
@@ -233,6 +236,7 @@ Int             = "int".
 Float           = "float".
 Bool            = "bool".
 String          = "str".
+Void            = "void".   
 ```
 
 
