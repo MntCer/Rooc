@@ -223,10 +223,10 @@ Type = PrimitiveType | GenericType.
 
 ```ebnf
 PrimitiveType   = Int | Float | Bool | String .
-Int    = "int".
-Float  = "float".
-Bool   = "bool".
-String = "str".
+Int             = "int".
+Float           = "float".
+Bool            = "bool".
+String          = "str".
 ```
 
 
@@ -234,7 +234,7 @@ String = "str".
 
 ```ebnf
 GenericType = List .
-List= "list" "(" Type ")" .
+List        = "list" "(" Type ")" .
 ```
 
 ## Variables
@@ -242,8 +242,8 @@ List= "list" "(" Type ")" .
 A variable is a storage location for holding a value. The set of permissible values is determined by the variable's type.
 
 ```ebnf
-IdtyPair       = identifier ":" Type .
-VarDeclaration = "var" IdtyPair "=" Expression ";" .
+IdtyPair  = identifier ":" Type .
+VarDecl   = "var" IdtyPair "=" Expression ";" .
 ```
 
 The type of expression and variable must be consistent.
@@ -255,7 +255,7 @@ var a:int = 1;
 var b :bool = true;
 var c: float = 3.0;
 var d:string = "a";
-var e:list(int) = [1,2,3];
+var e:list(int) = [a,2,3];
 ```
 
 ### Constants
@@ -263,7 +263,7 @@ var e:list(int) = [1,2,3];
 Use `let` rather than `var` to declare a constant.
 
 ```ebnf
-LetDeclaration = "let" IdtyPair "=" Expression ";" .
+LetDecl = "let" IdtyPair "=" Expression ";" .
 ```
 
 <!-- ;TODO
@@ -272,10 +272,137 @@ Function types
 trait types
  -->
 
+## Function
+
+```enbf
+FunDecl      = FunSignature "{" Statements "}" .
+FunSignature = "fun" identifier "(" ParamList ")" "->" Type .
+ParamList    = [IdtyPair] 
+             | IdtyPair {"," IdtyPair} .
+Statements = {Statement} .
+```
+
+```
+fun get_second (x:int,y:float) -> float
+{
+    return y;
+}
+```
+
+### Control flow
+
+
+```ebnf
+IfStatement = "if" "(" Expression ")" "{" Statements "}" 
+            | "if" "(" Expression ")" "{" Statements "}" "else" "{" Statements "}".
+```
+
+```ebnf
+ForStatement   = "for" "(" Expression ";" Expression ";" Expression ")" "{" Statements "}" .
+WhileStatement = "while" "(" Expression ")" "{" Statements "}" .
+```
+
+
+<!-- ``` ;TODO: need to support the type-inference first;
+for(<id> in <list_id>){
+    <stmt_list>
+}
+``` -->
+
+
 ## Expressions
 
+## Struct
+
+```ebnf
+StructDecl = "struct" identifier "{" VarDecl "}" .
+```
+
+```
+struct Point {
+    var m:int;
+    var n:int;
+}
+```
+
+### Trait
+
+In Rooc, polymorphism is supported through the use of traits, rather than class inheritance. 
+Traits define a set of methods that multiple structs can implement. This allows for type-safe, flexible code without the complications that inheritance can bring.
+
+```ebnf
+TraitDecl = "trait" identifier "{" FunSignatures "}" .
+FunSignatures = {FunSignature} .
+```
+
+```
+trait Drawable {
+    public void draw();
+}
+```
+
+### Impl
+
+```ebnf
+ImplDecl = "impl" identifier "{" FunDecls "}" 
+         | "impl" identifier "for" identifier "{" FunDecls "}" .
+FunDecls = {FunDecl} .
+```
+
+```
+impl Point {
+    fun new(x:int, y:int) -> Point { 
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+
+    fun getX() -> int {
+        return this.x;
+    }
+
+    fun getY() -> int {
+        return this.y;
+    }
+}
+```
+
+```
+// Implement the Drawable trait for the Point struct
+impl Drawable for Point {
+    fun draw() -> void {
+        // Drawing logic for Point
+    }
+}
+
+// Implement the Drawable trait for the Circle struct
+struct Circle {
+    var x:int;
+    var y:int;
+    var radius:int;
+}
+
+impl Drawable for Circle {
+    fun draw() -> void {
+        // Drawing logic for Circle
+    }
+}
+```
+
+With traits, you can write functions that operate on any type that implements a specific trait:
 
 
+```
+fun render(d: Drawable) -> void {
+    d.draw();
+}
+
+var p:Point = Point.new(1, 2);
+var c:Circle = Circle.new(3, 4, 5);
+
+render(p);  // Calls Point's draw method
+render(c);  // Calls Circle's draw method
+```
 
 ## Statements
 
