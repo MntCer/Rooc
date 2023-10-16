@@ -91,5 +91,5 @@ and comment = parse
 | _    { comment lexbuf }
 
 and string_processor = parse
-[^'"']* as str_str '"' { SLIT(str_str) }
+[^'"']* as str_str '"' { SLIT(str_str); token lexbuf }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char ^ "in string literal")) }
