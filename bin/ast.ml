@@ -119,6 +119,10 @@ let string_of_typ = function
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
+let string_of_fsig fsig = 
+  string_of_typ fsig.fs_typ ^ " " ^
+  fsig.fs_name ^ "(" ^ String.concat ", " (List.map snd fsig.fs_formals)
+
 let string_of_fdecl fdecl =
   string_of_typ fdecl.fd_typ ^ " " ^
   fdecl.fd_name ^ "(" ^ String.concat ", " (List.map snd fdecl.fd_formals) ^
@@ -127,9 +131,23 @@ let string_of_fdecl fdecl =
   String.concat "" (List.map string_of_stmt fdecl.fd_body) ^
   "}\n"
 
-let string_of_program (vars, funcs) =
-  String.concat "" (List.map string_of_vdecl vars) ^ "\n" ^
-  String.concat "\n" (List.map string_of_fdecl funcs)
+let string_of_tdecl tdecl =
+  "trait " ^ tdecl.tr_name ^ "\n" ^
+  String.concat "" (List.map string_of_fsig tdecl.tr_methods)
+
+let string_of_sdecl sdecl =
+  "struct " ^ sdecl.s_name ^ "\n" ^
+  String.concat "" (List.map string_of_vdecl sdecl.s_fields)
+
+let string_of_idecl idecl =
+  "impl " ^ idecl.i_name ^ " for " ^ idecl.i_forstruct ^
+  String.concat "" (List.map string_of_fdecl idecl.i_methods)
+
+let string_of_program (fdecls, tdecls, sdecls, idecls) =
+  String.concat "\n" (List.map string_of_fdecl fdecls) ^ "\n" ^
+  String.concat "\n" (List.map string_of_tdecl tdecls) ^ "\n" ^
+  String.concat "\n" (List.map string_of_sdecl sdecls) ^ "\n" ^
+  String.concat "\n" (List.map string_of_idecl idecls)
 
 let get_4_1 (a, _, _, _) = a
 let get_4_2 (_, a, _, _) = a
