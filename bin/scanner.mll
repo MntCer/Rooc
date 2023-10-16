@@ -1,7 +1,8 @@
 (* Ocamllex scanner for Rooc *)
 
-(* { open Parser } *)
-{ (* for test *)
+{ open Parser }
+(* { 
+  (* for test *)
 type token = 
   ID of string
 | SEMI 
@@ -16,7 +17,7 @@ type token =
 | FLIT of string
 | SLIT of string
 | EOF
-}
+} *)
 
 let digit  = ['0' - '9']
 let digits = digit+
