@@ -40,8 +40,8 @@ decls:
 /*  | decls vdecl { (($2 :: fst $1), snd $1) } */
  | decls fdecl { ($2 :: (get_4_1 $1), get_4_2 $1, get_4_3 $1, get_4_4 $1) }
  | decls tdecl { (get_4_1 $1, $2 :: (get_4_2 $1), get_4_3 $1, get_4_4 $1) }
- | decls idecl { (get_4_1 $1, get_4_2 $1, $2 :: (get_4_3 $1), get_4_4 $1) }
- | decls sdecl { (get_4_1 $1, get_4_2 $1, get_4_3 $1, $2 :: (get_4_4 $1)) } 
+ | decls sdecl { (get_4_1 $1, get_4_2 $1, $2 :: (get_4_3 $1), get_4_4 $1) }
+ | decls idecl { (get_4_1 $1, get_4_2 $1, get_4_3 $1, $2 :: (get_4_4 $1)) } 
 
 fdecl:
     FUN ID LPAREN formals_opt RPAREN RARROW typ LBRACE vdecl_list stmt_list RBRACE SEMI
@@ -52,7 +52,7 @@ fdecl:
 	 fd_body = List.rev $10 } }
 
 fdecl_list:
-   \* nothing *\ { [] }
+   /* nothing */ { [] }
   | fdecl_list fdecl { $2 :: $1 }
 
 fsign: 
@@ -62,7 +62,7 @@ fsign:
         fs_formals = $4 } }
 
 fsign_list:
-   \* nothing *\ { [] }
+   /* nothing */ { [] }
   | fsign_list fsign { $2 :: $1 }
 
 tdecl: 
@@ -72,13 +72,13 @@ tdecl:
 
 idecl:
   IMPL ID FOR ID fdecl_list SEMI
-   { { i_name = $2
-       i_forstruct = $4
+{ {    i_name = $2;
+       i_forstruct = $4;
        i_methods = List.rev $5 } }
 
 sdecl: 
   STRUCT ID LBRACE vdecl_list RBRACE SEMI
-{ { s_name = $2
+{ {    s_name = $2;
        s_fields = List.rev $4 } }
 
 formals_opt:
@@ -110,21 +110,21 @@ stmt:
     expr SEMI                               { Expr $1               }
   | RETURN expr_opt SEMI                    { Return $2             }
   | LBRACE stmt_list RBRACE                 { Block(List.rev $2)    }
-  | IF LPAREN expr RPAREN LBRACE stmt_list RBRACE %prec NOELSE
-                                            { If($3, $6, Block([])) }
-  | IF LPAREN expr RPAREN LBRACE stmt_list RBRACE ELSE LBRACE stmt_list RBRACE
-                                            { If($3, $6, $10)       }
-  | FOR LPAREN expr_opt SEMI expr SEMI expr_opt RPAREN LBRACE stmt_list RBRACE
-                                            { For($3, $5, $7, $10)   }
-  | WHILE LPAREN expr RPAREN LBRACE stmt_list RBRACE
-                                            { While($3, $6)         }
+  | IF LPAREN expr RPAREN stmt %prec NOELSE
+                                            { If($3, $5, Block([])) }
+  | IF LPAREN expr RPAREN stmt ELSE stmt
+                                            { If($3, $5, $7)       }
+  | FOR LPAREN expr_opt SEMI expr SEMI expr_opt RPAREN stmt
+                                            { For($3, $5, $7, $9)   }
+  | WHILE LPAREN expr RPAREN stmt
+                                            { While($3, $5)         }
 
 expr_opt:
     /* nothing */ { Noexpr }
   | expr          { $1 }
 
 expr:
-    LITERAL          { Literal($1)            }
+    ILIT             { Literal($1)            }
   | FLIT	     { Fliteral($1)           }
   | BLIT             { BoolLit($1)            }
   | ID               { Id($1)                 }

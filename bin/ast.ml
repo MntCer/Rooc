@@ -3,9 +3,9 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
           And | Or
 
-(* type uop = Neg | Not *)
+type uop = Not | Neg
 
-type typ = Int | Float | String (*| Bool | Void*)
+type typ = Int | Float | String | Bool | Void
 
 type bind = typ * string
 
@@ -13,10 +13,10 @@ type expr =
     Literal of int
   | Fliteral of string (*float*)
   | Sliteral of string (*string*)
-  (* | BoolLit of bool *)
+  | BoolLit of bool
   | Id of string
   | Binop of expr * op * expr
-  (* | Unop of uop * expr *)
+  | Unop of uop * expr
   | Assign of string * expr
   | Call of string * expr list
   | Noexpr
