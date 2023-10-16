@@ -16,6 +16,6 @@
    (:standard -warn-error -A))))
 
 (executable
- (public_name rooc)
- (name rooc)
+ (public_name Rooc)
+ (name Rooc)
  (libraries Rooc))
