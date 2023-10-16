@@ -1,4 +1,4 @@
-(* Ocamllex scanner for rooc *)
+(* Ocamllex scanner for Rooc *)
 
 { open Parser }
 
@@ -37,6 +37,9 @@ rule token = parse
 | '}'      { RBRACE }
 | ','      { COMMA }
 (* Keywords *)
+| "var"    { VAR }
+| "fun"    { FUN }
+| "let"    { LET }
 | "if"     { IF }
 | "else"   { ELSE }
 | "for"    { FOR }
