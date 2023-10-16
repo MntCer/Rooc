@@ -1,0 +1,21 @@
+// Test ifelse and string return type
+
+fun hello_world(mode:int) -> str
+{
+    if(mode == 0){
+        return "Hello";
+    }
+    elif(mode == 1){
+        return "World";
+    }else{
+        return "Hello World";
+    }
+    
+}
+
+fun main() -> str
+{
+    print(hello_world(0));
+    print(hello_world(1));
+    print(hello_world(2));
+}
