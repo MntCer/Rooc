@@ -18,4 +18,4 @@
 (executable
  (public_name rooc)
  (name rooc)
- (libraries rooc))
+ (libraries Rooc))

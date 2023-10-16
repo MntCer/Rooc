@@ -1,4 +1,4 @@
 (library
- (name Rooc)
- (libraries llvm llvm.analysis))
+ (name Rooc))
+ ;; (libraries llvm llvm.analysis)
 
