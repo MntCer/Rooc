@@ -1,0 +1,12 @@
+// Test arithmetic operations
+
+fun main() -> float
+{
+    var a:int = 1;
+    var r:int = 2;
+    let c:float = 0.5;
+    let b:float = 3.14;
+    let e:float = 0.1;
+
+    return b*(r+a-c)/e;
+}

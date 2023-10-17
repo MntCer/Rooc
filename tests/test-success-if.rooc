@@ -1,4 +1,4 @@
-// Test ifelse and string return type
+// Test ifelse and string concatenation and return type
 
 fun hello_world(mode:int) -> str
 {
@@ -13,9 +13,7 @@ fun hello_world(mode:int) -> str
     
 }
 
-fun main() -> str
+fun main() -> int
 {
-    print(hello_world(0));
-    print(hello_world(1));
-    print(hello_world(2));
+    return hello_world(0) + " " + hello_world(1) + " " + hello_world(2);
 }

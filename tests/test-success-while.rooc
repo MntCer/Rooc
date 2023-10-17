@@ -1,0 +1,10 @@
+//Test while loop and negative number
+
+fun main() -> int
+{
+    var count:int = 0;
+    while(count > -3){
+        count = count-1;
+    }
+    return count;
+}
