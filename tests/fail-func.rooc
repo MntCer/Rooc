@@ -1,6 +1,6 @@
-// Test function with wrong return type (int instead of float)
+// Test function without ending semicolon
 
-fun get_second (x:int,y:float) -> float
+fun get_second (x:int,y:float) -> int
 {
     return x;
 }

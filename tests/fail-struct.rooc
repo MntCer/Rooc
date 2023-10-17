@@ -1,7 +1,6 @@
-// Test struct with wrong VarDecl definition
+// Test struct with unsupported intialization
 
 struct Circle {
-    var radius:int;
-    let color:string = "red";
+    var radius:int=1;
 };
 

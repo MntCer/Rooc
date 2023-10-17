@@ -2,11 +2,11 @@
    check the resulting AST and generate an SAST from it, generate LLVM IR,
    and dump the module *)
 
-type action = Ast | Sast | Compile
-            (* | LLVM_IR *)
+type action = Ast | Sast 
+        (* | LLVM_IR | Compile *)
 
 let () =
-  let action = ref Compile in
+  let action = ref Ast in
   let set_action a () = action := a in
   let speclist = [
     ("-a", Arg.Unit (set_action Ast), "Print the AST");
@@ -26,4 +26,3 @@ let () =
       Ast     -> print_string (Ast.string_of_program ast)
     (* | Sast    -> print_string (Sast.string_of_sprogram sast) *)
     | Sast    -> print_string (Ast.string_of_program sast)
-    | Compile -> print_string ("Not implemented yet\n")

@@ -1,4 +1,4 @@
-// Test impl with ambiguous function
+// Test impl without function body; 
 
 struct Circle {
     var x:int;

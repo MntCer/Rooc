@@ -1,0 +1,16 @@
+// Test impl with ambiguous function
+
+struct Circle {
+    var x:int;
+    var y:int;
+    var radius:int;
+};
+
+impl Drawable for Circle {
+    fun draw() -> void {
+        // Draw circle
+        x=x+1;
+        y=y+1;
+        radius=radius*2;
+    };
+};

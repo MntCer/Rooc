@@ -1,10 +1,7 @@
-// Test trait with wrong return type (string instead of void)
+// Test trait with function body (not allowed)
 
 trait Drawable {
-    void draw();
-};
-
-fun draw() -> string
-{
-    return "Here We Come the Best Artist!";
+    fun draw() -> void{
+        return;
+    };
 };

@@ -1,24 +1,14 @@
 #!/bin/sh
 
-# Regression testing script for MicroC
+# Regression testing script for Rooc
 # Step through a list of files
 #  Compile, run, and check the output of each expected-to-work test
 #  Compile and check the error of each expected-to-fail test
 
-# Path to the LLVM interpreter
-LLI="lli"
-#LLI="/usr/local/opt/llvm/bin/lli"
-
-# Path to the LLVM compiler
-LLC="llc"
-
-# Path to the C compiler
-CC="cc"
-
-# Path to the microc compiler.  Usually "./microc.native"
-# Try "_build/microc.native" if ocamlbuild was unable to create a symbolic link.
-MICROC="microc"
-#MICROC="_build/microc.native"
+# Path to the Rooc compiler. 
+# Try "_build/install/default/bin/Rooc.exe" if ocamlbuild was unable to create a symbolic link.
+Rooc="Rooc"
+#Rooc="_build/install/default/bin/Rooc.exe"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -31,11 +21,12 @@ globalerror=0
 keep=0
 
 Usage() {
-    echo "Usage: testall.sh [options] [.mc files]"
+    echo "Usage: testall.sh [options] [.rooc files]"
     echo "-k    Keep intermediate files"
     echo "-h    Print this help"
     exit 1
 }
+
 
 SignalError() {
     if [ $error -eq 0 ] ; then
@@ -80,26 +71,27 @@ RunFail() {
 Check() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
-                             s/.mc//'`
-    reffile=`echo $1 | sed 's/.mc$//'`
+                             s/.rooc//'`
+    reffile=`echo $1 | sed 's/.rooc$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
+    echo $reffile
+    echo $basedir
 
     echo 1>&2
     echo "###### Testing $basename" 1>&2
 
     generatedfiles=""
 
-    generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
-    Run "dune exec $MICROC" "$1" ">" "${basename}.ll" &&
-    Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
-    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "printbig.o" &&
-    Run "./${basename}.exe" > "${basename}.out" &&
+    generatedfiles="$generatedfiles ${basename}.out" &&
+    # echo $generatedfiles &&
+    Run "dune exec $Rooc" "$1" ">" "${basename}.out" && # generate result
+    Run "./${basename}.exe" > "${basename}.out"  # gold standad
     Compare ${basename}.out ${reffile}.out ${basename}.diff
 
     # Report the status and clean up the generated files
-
+	rm -f $generatedfiles
     if [ $error -eq 0 ] ; then
 	if [ $keep -eq 0 ] ; then
 	    rm -f $generatedfiles
@@ -115,8 +107,8 @@ Check() {
 CheckFail() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
-                             s/.mc//'`
-    reffile=`echo $1 | sed 's/.mc$//'`
+                             s/.rooc//'`
+    reffile=`echo $1 | sed 's/.rooc$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
@@ -127,10 +119,11 @@ CheckFail() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
-    RunFail "dune exec $MICROC" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
+    RunFail "dune exec $Rooc" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
     Compare ${basename}.err ${reffile}.err ${basename}.diff
 
     # Report the status and clean up the generated files
+	rm -f $generatedfiles
 
     if [ $error -eq 0 ] ; then
 	if [ $keep -eq 0 ] ; then
@@ -144,6 +137,9 @@ CheckFail() {
     fi
 }
 
+
+# shift `expr $OPTIND - 1`
+
 while getopts kdpsh c; do
     case $c in
 	k) # Keep intermediate files
@@ -152,35 +148,23 @@ while getopts kdpsh c; do
 	h) # Help
 	    Usage
 	    ;;
+    s) 
+        SignalError
     esac
 done
-
-shift `expr $OPTIND - 1`
-
-LLIFail() {
-  echo "Could not find the LLVM interpreter \"$LLI\"."
-  echo "Check your LLVM installation and/or modify the LLI variable in testall.sh"
-  exit 1
-}
-
-which "$LLI" >> $globallog || LLIFail
-
-if [ ! -f printbig.o ]
-then
-    echo "Could not find printbig.o"
-    echo "Try \"make printbig.o\""
-    exit 1
-fi
 
 if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="tests/test-*.mc tests/fail-*.mc"
+    files="tests/test-*.rooc tests/fail-*.rooc"
 fi
+
+# echo $files
 
 for file in $files
 do
+    # echo $file
     case $file in
 	*test-*)
 	    Check $file 2>> $globallog

@@ -1,0 +1,14 @@
+// Test ifelse with declearing a var in condition.
+
+fun main() -> int
+{
+
+    if(var i:int;){
+        return "Hello";
+    }
+    else{
+        return "Hello World";
+    }
+    
+    return 0;
+};

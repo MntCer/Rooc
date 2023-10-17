@@ -142,7 +142,7 @@ let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
 let string_of_fsig fsig = 
   string_of_typ fsig.fs_typ ^ " " ^
-  fsig.fs_name ^ "(" ^ String.concat ", " (List.map snd fsig.fs_formals)
+  fsig.fs_name ^ "(" ^ String.concat ", " (List.map snd fsig.fs_formals) ^ ")\n"
 
 let string_of_fdecl fdecl =
   string_of_typ fdecl.fd_typ ^ " " ^

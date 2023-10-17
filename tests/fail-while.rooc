@@ -2,9 +2,10 @@
 
 fun main() -> int
 {
-    var count:int = 0;
+    var count:int;
+    count=0;
     while(count > -3){
         count = count-1;
     }
     return count;
-}
+};

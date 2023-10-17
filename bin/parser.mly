@@ -72,10 +72,10 @@ tdecl:
        tr_methods = List.rev $4 } }
 
 idecl:
-  IMPL ID FOR ID fdecl_list SEMI
+  IMPL ID FOR ID LBRACE fdecl_list RBRACE SEMI
 { {    i_name = $2;
        i_forstruct = $4;
-       i_methods = List.rev $5 } }
+       i_methods = List.rev $6 } }
 
 sdecl: 
   STRUCT ID LBRACE vdecl_list RBRACE SEMI
