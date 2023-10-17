@@ -1,10 +1,10 @@
-//Test while loop and negative number, fail becau of var count:int = 0 can't be written in one line
+//Test while loop and negative number
 
 fun main() -> int
 {
     var count:int;
     count=0;
-    while(count > -3){
+    while(var n:int > 0){
         count = count-1;
     }
     return count;

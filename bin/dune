@@ -9,7 +9,7 @@
 
 (menhir
   (modules parser)
-  (flags --trace)
+  ; (flags --trace)
   ; (flags --explain)
   )
 

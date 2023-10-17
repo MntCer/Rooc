@@ -1,0 +1,13 @@
+
+
+struct Circle
+int x;
+int y;
+int radius;
+
+impl Drawable for Circlevoid draw()
+{
+x = x + 1;
+y = y + 1;
+radius = radius * 2;
+}

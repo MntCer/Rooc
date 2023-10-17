@@ -3,3 +3,4 @@
 *.out
 _build
 .DS_Store
+*.log

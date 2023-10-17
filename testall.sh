@@ -76,8 +76,8 @@ Check() {
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
-    echo $reffile
-    echo $basedir
+    # echo $reffile
+    # echo $basedir
 
     echo 1>&2
     echo "###### Testing $basename" 1>&2
@@ -85,13 +85,10 @@ Check() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.out" &&
-    # echo $generatedfiles &&
     Run "dune exec $Rooc" "$1" ">" "${basename}.out" && # generate result
-    Run "./${basename}.exe" > "${basename}.out"  # gold standad
-    Compare ${basename}.out ${reffile}.out ${basename}.diff
+    Compare ${basename}.out ${reffile} ${basename}.diff
 
     # Report the status and clean up the generated files
-	rm -f $generatedfiles
     if [ $error -eq 0 ] ; then
 	if [ $keep -eq 0 ] ; then
 	    rm -f $generatedfiles
@@ -120,10 +117,9 @@ CheckFail() {
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
     RunFail "dune exec $Rooc" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
-    Compare ${basename}.err ${reffile}.err ${basename}.diff
+    Compare ${basename}.err ${reffile} ${basename}.diff
 
     # Report the status and clean up the generated files
-	rm -f $generatedfiles
 
     if [ $error -eq 0 ] ; then
 	if [ $keep -eq 0 ] ; then
@@ -138,7 +134,7 @@ CheckFail() {
 }
 
 
-# shift `expr $OPTIND - 1`
+shift `expr $OPTIND - 1`
 
 while getopts kdpsh c; do
     case $c in
