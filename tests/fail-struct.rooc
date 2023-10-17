@@ -1,0 +1,7 @@
+// Test struct with wrong VarDecl definition
+
+struct Circle {
+    var radius:int;
+    let color:string = "red";
+};
+

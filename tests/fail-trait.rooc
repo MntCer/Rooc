@@ -1,0 +1,10 @@
+// Test trait with wrong return type (string instead of void)
+
+trait Drawable {
+    void draw();
+};
+
+fun draw() -> string
+{
+    return "Here We Come the Best Artist!";
+};

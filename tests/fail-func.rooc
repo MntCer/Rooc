@@ -1,0 +1,6 @@
+// Test function with wrong return type (int instead of float)
+
+fun get_second (x:int,y:float) -> float
+{
+    return x;
+};
