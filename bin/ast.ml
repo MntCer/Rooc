@@ -79,19 +79,20 @@ let string_of_op = function
   | And -> "&&"
   | Or -> "||"
 
-(* let string_of_uop = function
+ let string_of_uop = function
     Neg -> "-"
-  | Not -> "!" *)
+  | Not -> "!"
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | Fliteral(l) -> l
-  (* | BoolLit(true) -> "true"
-  | BoolLit(false) -> "false" *)
+  | BoolLit(true) -> "true"
+  | BoolLit(false) -> "false"
+  | Sliteral(s) -> s
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
-  (* | Unop(o, e) -> string_of_uop o ^ string_of_expr e *)
+  | Unop(o, e) -> string_of_uop o ^ string_of_expr e
   | Assign(v, e) -> v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
@@ -112,9 +113,9 @@ let rec string_of_stmt = function
 
 let string_of_typ = function
     Int -> "int"
-  (* | Bool -> "bool" *)
+  | Bool -> "bool"
   | Float -> "float"
-  (* | Void -> "void" *)
+  | Void -> "void" 
   | String -> "string"
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
