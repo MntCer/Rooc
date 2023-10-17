@@ -5,15 +5,13 @@ fun hello_world(mode:int) -> str
     if(mode == 0){
         return "Hello";
     }
-    elif(mode == 1){
-        return "World";
-    }else{
+    else{
         return "Hello World";
     }
     
-}
+};
 
 fun main() -> int
 {
-    return hello_world(0) + " " + hello_world(1) + " " + hello_world(2);
-}
+    return hello_world(0); 
+};

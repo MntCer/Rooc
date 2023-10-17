@@ -17,6 +17,7 @@ type expr =
     Literal of int
   | Fliteral of string (*float*)
   | Sliteral of string (*string*)
+  | Member of string * string
   | BoolLit of bool
   | Id of string
   | Binop of expr * op * expr
@@ -93,6 +94,7 @@ let rec string_of_expr = function
   | BoolLit(true) -> "true"
   | BoolLit(false) -> "false"
   | Sliteral(s) -> s
+  | Member(s1, s2) -> s1 ^ "." ^ s2
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
@@ -121,7 +123,6 @@ let string_of_typ = function
   | Float -> "float"
   | Void -> "void" 
   | String -> "string"
-
 
 (* let rec string_of_typ = function
     Primitive(t) -> string_of_ptyp t

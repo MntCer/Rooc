@@ -1,0 +1,6 @@
+// Test function declaration
+
+fun main() -> float
+{
+    return 1.;
+};

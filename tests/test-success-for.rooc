@@ -2,11 +2,11 @@
 
 fun main() -> int
 {
-    var sum:int = 1;
-    for(var a:int = 0; a<=2; a = a+1){
+    var sum:int;
+    var a:int;
+    sum=1;
+    for(a = 0; a<=2; a = a+1){
         sum = sum+a;
     }
     return sum;
-}
-
-
+};

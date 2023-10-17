@@ -9,8 +9,9 @@ open Ast
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
-%token VAR LET FUN STRUCT IMPL TRAIT
-%token INT BOOL FLOAT STR VOID LIST
+%token VAR FUN STRUCT IMPL TRAIT
+%token INT BOOL FLOAT STR VOID 
+// %token LET LIST
 %token RETURN IF ELSE FOR WHILE 
 %token <int> ILIT
 %token <string> FLIT SLIT ID
@@ -115,7 +116,7 @@ vdecl_list:
   | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-   typ ID SEMI { ($1, $2) }
+   VAR ID COLON typ SEMI { ($4, $2) }
 
 stmt_list:
     /* nothing */  { [] }
@@ -140,9 +141,11 @@ expr_opt:
 
 expr:
     ILIT             { Literal($1)            }
-  | FLIT	     { Fliteral($1)           }
+  | FLIT	           { Fliteral($1)           }
   | BLIT             { BoolLit($1)            }
   | ID               { Id($1)                 }
+  | SLIT             { Sliteral($1)           }
+  | ID DOT ID        { Member($1, $3)         }
   | expr PLUS   expr { Binop($1, Add,   $3)   }
   | expr MINUS  expr { Binop($1, Sub,   $3)   }
   | expr TIMES  expr { Binop($1, Mult,  $3)   }

@@ -58,7 +58,7 @@ rule token = parse
 | "."      { DOT }
 (* keywords *)
 | "var"    { VAR }
-| "let"    { LET }
+(* | "let"    { LET } *)
 | "fun"    { FUN }
 | "struct" { STRUCT }
 | "impl"   { IMPL }
@@ -69,7 +69,7 @@ rule token = parse
 | "bool"   { BOOL }
 | "str"    { STR}
 | "void"   { VOID }
-| "list"   { LIST }
+(* | "list"   { LIST } *)
 (* *)
 | "return" { RETURN }
 | "if"     { IF }

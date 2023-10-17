@@ -8,7 +8,9 @@
    (run %{bin:ocamllex} -q -o %{target} %{deps}))))
 
 (menhir
-  (modules parser))
+  (modules parser)
+  (flags --explain --trace)
+  )
 
 (env
  (dev
