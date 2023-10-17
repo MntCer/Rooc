@@ -2,7 +2,8 @@
    check the resulting AST and generate an SAST from it, generate LLVM IR,
    and dump the module *)
 
-type action = Ast | Sast | LLVM_IR | Compile
+type action = Ast | Sast 
+            (* | LLVM_IR | Compile *)
 
 let () =
   let action = ref Compile in
@@ -10,9 +11,6 @@ let () =
   let speclist = [
     ("-a", Arg.Unit (set_action Ast), "Print the AST");
     ("-s", Arg.Unit (set_action Sast), "Print the SAST");
-    ("-l", Arg.Unit (set_action LLVM_IR), "Print the generated LLVM IR");
-    ("-c", Arg.Unit (set_action Compile),
-      "Check and print the generated LLVM IR (default)");
   ] in  
   let usage_msg = "usage: ./rooc.native [-a|-s|-l|-c] [file.rooc]" in
   let channel = ref stdin in

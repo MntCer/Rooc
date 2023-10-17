@@ -7,6 +7,10 @@ type uop = Not | Neg
 
 type typ = Int | Float | String | Bool | Void
 
+(* type typ = Primitive of primitive_typ | Generic of generic_typ
+and generic_typ = List of typ
+and primitive_typ = Int | Float | String | Bool | Void *)
+
 type bind = typ * string
 
 type expr =
@@ -117,6 +121,21 @@ let string_of_typ = function
   | Float -> "float"
   | Void -> "void" 
   | String -> "string"
+
+
+(* let rec string_of_typ = function
+    Primitive(t) -> string_of_ptyp t
+  | Generic(t) -> string_of_gtyp t
+
+and string_of_gtyp = function
+    List(t) -> "list<" ^ string_of_typ t ^ ">"
+
+and string_of_ptyp = function
+    Int -> "int"
+  | Bool -> "bool"
+  | Float -> "float"
+  | String -> "string"
+  | Void -> "void" *)
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 

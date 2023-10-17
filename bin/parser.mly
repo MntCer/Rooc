@@ -10,7 +10,7 @@ open Ast
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
 %token VAR LET FUN STRUCT IMPL TRAIT
-%token INT BOOL FLOAT STR VOID
+%token INT BOOL FLOAT STR VOID LIST
 %token RETURN IF ELSE FOR WHILE 
 %token <int> ILIT
 %token <string> FLIT SLIT ID
@@ -90,10 +90,25 @@ formal_list:
   | formal_list ID COLON typ { ($4,$2) :: $1 }
 
 typ:
-    INT   { Int   }
-  | BOOL  { Bool  }
-  | FLOAT { Float }
-  | VOID  { Void  }
+    INT   { Int    }
+  | BOOL  { Bool   }
+  | FLOAT { Float  }
+  | STR   { String }
+  | VOID  { Void   }
+
+// primitive_typ:
+//     INT   { Int    }
+//   | BOOL  { Bool   }
+//   | FLOAT { Float  }
+//   | STR   { String }
+//   | VOID  { Void   }
+
+// generic_typ:
+//     LIST LPAREN typ RPAREN { List($3) }
+
+// typ:
+//     primitive_typ { Primitive($1)}
+//   | generic_typ     { Generic($1) }
 
 vdecl_list:
     /* nothing */    { [] }

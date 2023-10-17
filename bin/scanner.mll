@@ -69,6 +69,7 @@ rule token = parse
 | "bool"   { BOOL }
 | "str"    { STR}
 | "void"   { VOID }
+| "list"   { LIST }
 (* *)
 | "return" { RETURN }
 | "if"     { IF }
