@@ -20,9 +20,8 @@ let () =
   let ast = Parser.program Scanner.token lexbuf in  
   match !action with
     Ast -> print_string (Ast.string_of_program ast)
-  (* | _ -> let sast = Semant.check ast in *)
-  | _ -> let sast = ast in
+  | _ -> 
+    let sast = ast in
     match !action with
       Ast     -> print_string (Ast.string_of_program ast)
-    (* | Sast    -> print_string (Sast.string_of_sprogram sast) *)
     | Sast    -> print_string (Ast.string_of_program sast)
