@@ -1,4 +1,4 @@
-//Test while loop and negative number
+//Test while loop and negative number, fail becau of var count:int = 0 can't be written in one line
 
 fun main() -> int
 {
