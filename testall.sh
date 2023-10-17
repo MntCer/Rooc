@@ -6,9 +6,9 @@
 #  Compile and check the error of each expected-to-fail test
 
 # Path to the Rooc compiler. 
-# Try "_build/install/default/bin/Rooc.exe" if ocamlbuild was unable to create a symbolic link.
+# Try "_build/install/default/bin/Rooc" if ocamlbuild was unable to create a symbolic link.
 Rooc="Rooc"
-#Rooc="_build/install/default/bin/Rooc.exe"
+#Rooc="_build/install/default/bin/Rooc"
 
 # Set time limit for all operations
 ulimit -t 30
