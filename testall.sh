@@ -133,9 +133,6 @@ CheckFail() {
     fi
 }
 
-
-shift `expr $OPTIND - 1`
-
 while getopts kdpsh c; do
     case $c in
 	k) # Keep intermediate files
@@ -148,6 +145,9 @@ while getopts kdpsh c; do
         SignalError
     esac
 done
+
+shift `expr $OPTIND - 1`
+
 
 if [ $# -ge 1 ]
 then
