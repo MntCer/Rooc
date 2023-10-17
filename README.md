@@ -25,35 +25,14 @@ The project directory is like
     ├── fail-impl.rooc
     ├── fail-struct
     ├── fail-struct.rooc
-    ├── fail-trait
-    ├── fail-trait.rooc
-    ├── fail-while
-    ├── fail-while.rooc
-    ├── test-success-arith
-    ├── test-success-arith.rooc
-    ├── test-success-bool
-    ├── test-success-bool.rooc
-    ├── test-success-comments
-    ├── test-success-comments.rooc
-    ├── test-success-for
-    ├── test-success-for.rooc
-    ├── test-success-func
-    ├── test-success-func.rooc
-    ├── test-success-if
-    ├── test-success-if.rooc
-    ├── test-success-impl
-    ├── test-success-impl.rooc
-    ├── test-success-struct
-    ├── test-success-struct.rooc
-    ├── test-success-trait
-    └── test-success-trait.rooc
+    └── ......
 ```
 
-Run the command `dune build` in this project root directory could build our Rooc project.
+Run the command `dune build` in this project root directory could build our **Rooc** project.
 
 ### How to Execute a Single .rooc File
 
-`dune exec Rooc ./tests/test-success-bool.rooc`
+Run `dune exec Rooc ./tests/test-success-bool.rooc` after `dune build`.
 
 ### How to Run Test Script
 
@@ -65,16 +44,16 @@ Use the `./testall.sh` to run the test.
 `./testall.sh [options] [.rooc files]`
 
 options are:  
--k: Keep intermediate files(.out)  
--h: Print this help  
+`-k`: Keep intermediate files(`.out` and `.err`)  
+`-h`: Print this help  
 
-If no .rooc files are given, all .rooc files in the tests directory will be tested.
+If no `.rooc` files are given, all `.rooc` files in the tests directory will be tested.
 
 Test results will be found in `testall.log`  
 
 ### Syntax need to be added
 
-- let
+- let for defining constants
 - Built-in List
 - Declaration of "var" at initialization
 - In functions, local variables can be declared anywhere instead of only at the top
