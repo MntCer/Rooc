@@ -113,10 +113,9 @@ identifier : <letter>(<letter>|<digit>|_)*
 
 The `production_name` referred before also follow this rule.
 
-
 ### Semicolon
 
-To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement. 
+To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement or a declaration. 
 
 ```
 ;
@@ -133,8 +132,9 @@ To allow complex statements to occupy a single line, Rooc use semicolon as the t
 {       }       ,       :      ->     .
 ```
 
-<!-- ```
-;NOTE: following style is too verbose
+
+
+<!-- ``` ;NOTE: following style is too verbose 
 assign  : =
 plus    : \+
 minus   : -
@@ -148,16 +148,18 @@ neq     : !=
 lt      : <
 leq     : <=
 gt      : \>
-geq     : \>=
+geq     : \>= 
 and     : &&
 or      : \|\|
 not     : !
-
 lbrace  : {
 rbrace  : }
 comma   : ,
-colon   : :
-``` -->
+colon   : : 
+
+```
+-->
+
 
 ### Keywords
 
@@ -191,6 +193,7 @@ The fractional part can be omitted if it is zero.
 
 <!-- ;TODO: exponent part -->
 <!-- ;TODO: omit leading zero -->
+
 ```
 decimal_float_lit : <digit>+\.<digit>*
 float_lit         : <decimal_float_lit>
@@ -210,7 +213,7 @@ boolean_lit    : true | false
 A string constant is a sequence of zero or more letters, digits, and escape sequences enclosed within double quotation marks. Rooc will mark the first `"` as the string's beginning and the second `"` as the string's ending. 
 
 ```
-string_lit : "(<digit>|<letter>|\s|\\[nrt])*"
+string_lit : "(<digit>|<letter>|\s|\\[nrt])*" 
 ```
 
 Now, the supported escape sequences are:
@@ -241,7 +244,6 @@ Bool            = "bool".
 String          = "str".
 Void            = "void".   
 ```
-
 
 ### Generic type (TODO)
 
@@ -315,15 +317,17 @@ ForStatement   = "for" "(" Expression ";" Expression ";" Expression ")" "{" Stat
 WhileStatement = "while" "(" Expression ")" "{" Statements "}" .
 ```
 
+<!-- ;TODO: need to support the type-inference first;-->
 
-<!-- ``` ;TODO: need to support the type-inference first;
+``` 
 for(<id> in <list_id>){
     <stmt_list>
 }
-``` -->
-
+```
 
 ## Expressions
+
+Except for the expressions in **C**, 
 
 ## Struct
 
