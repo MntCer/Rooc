@@ -2,6 +2,9 @@
 
 ## Introduction
 
+Rooc seeks to retain the syntactic style of C/C++ while eliminating pointers. 
+It also aims to modernize the type system, eschewing inheritance in favor of traits, akin to Rust, to avoid the problems about subtype.
+
 ## Notation
 
 ### Syntax notation
@@ -161,11 +164,11 @@ colon   : :
 The following keywords are reserved and may not be used as identifiers.
 
 ```
-// ;TODO
-true        false
-var         let         fun  
-
-break
+//TODO
+true        false       var         let         
+fun         struct      trait       impl  
+int         float       bool        str         
+void        list        break       this
 ```
 
 ### Integer literals
@@ -240,7 +243,7 @@ Void            = "void".
 ```
 
 
-### Generic type
+### Generic type (TODO)
 
 ```ebnf
 GenericType = List .
@@ -262,8 +265,8 @@ Example:
 
 ```plaintext
 var a:int = 1;          
-var b :bool = true;
-var c: float = 3.0;
+var b:bool = true;
+var c:float = 3.0;
 var d:string = "a";
 var e:list(int) = [a,2,3];
 ```
@@ -296,7 +299,7 @@ Statements   = {Statement} .
 fun get_second (x:int,y:float) -> float
 {
     return y;
-}
+};
 ```
 
 ### Control flow
@@ -332,7 +335,7 @@ StructDecl = "struct" identifier "{" VarDecl "}" .
 struct Point {
     var m:int;
     var n:int;
-}
+};
 ```
 
 ### Trait
@@ -348,7 +351,7 @@ FunSignatures = {FunSignature ";"} .
 ```
 trait Drawable {
     public void draw();
-}
+};
 ```
 
 ### Impl
@@ -365,16 +368,16 @@ impl Point {
         this.x = x;
         this.y = y;
         return this;
-    }
+    };
 
     fun getX() -> int {
         return this.x;
-    }
+    };
 
     fun getY() -> int {
         return this.y;
-    }
-}
+    };
+};
 ```
 
 ```
@@ -382,21 +385,21 @@ impl Point {
 impl Drawable for Point {
     fun draw() -> void {
         // Drawing logic for Point
-    }
-}
+    };
+};
 
 // Implement the Drawable trait for the Circle struct
 struct Circle {
     var x:int;
     var y:int;
     var radius:int;
-}
+};
 
 impl Drawable for Circle {
     fun draw() -> void {
         // Drawing logic for Circle
-    }
-}
+    };
+};
 ```
 
 With traits, you can write functions that operate on any type that implements a specific trait:
@@ -405,7 +408,7 @@ With traits, you can write functions that operate on any type that implements a 
 ```
 fun render(d: Drawable) -> void {
     d.draw();
-}
+};
 
 var p:Point = Point.new(1, 2);
 var c:Circle = Circle.new(3, 4, 5);
@@ -419,3 +422,7 @@ render(c);  // Calls Circle's draw method
 
 
 ## Built-in functions
+```
+//TODO
+print()
+```
