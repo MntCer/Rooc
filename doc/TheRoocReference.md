@@ -171,11 +171,13 @@ colon   : :
 The following keywords are reserved and may not be used as identifiers.
 
 ```
-booleans: true        false       
-define:   var         let         fun         struct      trait       impl  
-type:     int         float       bool        str         void        list
-control:  if          else        for         while       return
-OOP:      this
+/*booleans*/    true        false       
+/*define*/      var         let         fun         struct      trait       
+                impl  
+/*type*/        int         float       bool        str         void        
+                list
+/*control*/     if          else        for         while       return
+/*OOP*/         this
 ```
 
 ### Integer literals
