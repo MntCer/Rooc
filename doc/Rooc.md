@@ -319,7 +319,7 @@ FunDecl      = FunSignature "{" Statements "}" .
 FunSignature = "fun" identifier "(" ParamList ")" "->" Type .
 ParamList    = [IdtyPair] 
              | IdtyPair {"," IdtyPair} .
-Statements   = {Statement} .
+Statements   = { Statement } .
 ```
 
 Functions can be declared without a body within a `trait` where we don't expect an implementation. We call such declarations function signatures (`FunSignature`). The only difference between it and a function declaration is the latter does have a body of statements.
