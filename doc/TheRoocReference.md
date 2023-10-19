@@ -1,10 +1,5 @@
 # The Rooc Language Reference
 
-## Introduction
-
-Rooc seeks to retain the syntactic style of C/C++ while eliminating pointers. 
-It also aims to modernize the type system, eschewing inheritance in favor of traits, akin to Rust, to avoid the problems about subtype.
-
 ## Notation
 
 ### Syntax notation
@@ -47,7 +42,7 @@ The three operators below are in increasing precedence.
 
 The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions).
 
-In our notation, expressions are named to represent specific tokens, and can be referenced in other expressions as patterns by enclosing the name with `<` and `>` brackets. 
+In our notation, expressions are named to represent specific tokens, and can be referenced in other expressions as patterns by enclosing the name with `<` and `>` brackets.
 A pattern is a segment of the regular expression treated as a single unit.
 
 To match the raw "<" and ">" characters in a string, use `\<` and `\>` respectively.
@@ -94,6 +89,7 @@ Comments will not be parsed by the compiler. Rooc has two comment styles:
 2. _General comments_ start with the character sequence `/*` and stop with the first subsequent character sequence `*/`.
 
 ```
+// Note '\' means escape character.
 line_comment    : \/\/.*(\r?\n)
 general_comment : \/\*.*?\*\/
 comment         : <line_comment>|<general_comment>
@@ -256,16 +252,20 @@ Void            = "void".
 GenericType = List .
 List        = "list" "(" Type ")" .
 ```
-Like in other languages, elements in a list must have the same type.
+
+Elements in a list should have the same type.
 
 ### Struct type
+
 Declaration of a new struct leads to a new type which appears the same as the name of the struct.
 
 Struct type example:
+
 ```
 Struct A{
     var num: int;
 }
+
 Struct B{
     /* Here `A` is the type of variable `a` */
     var a: A;
@@ -314,8 +314,6 @@ trait types
 
 ## Function
 
-
-
 ```ebnf
 FunDecl      = FunSignature "{" Statements "}" .
 FunSignature = "fun" identifier "(" ParamList ")" "->" Type .
@@ -327,7 +325,8 @@ Statements   = {Statement} .
 Functions can be declared without a body within a `trait` where we don't expect an implementation. We call such declarations function signatures (`FunSignature`). The only difference between it and a function declaration is the latter does have a body of statements.
 
 Example:
-```
+
+```plaintext
 /* It's a function signature */
 fun get_second (x:int,y:float) -> float
 
@@ -344,12 +343,14 @@ fun get_second (x:int,y:float) -> float
 #### If Statement
 
 ```ebnf
-IfStatement = "if" "(" Expression ")" "{" Statements "}" 
-            | "if" "(" Expression ")" "{" Statements "}" "else" "{" Statements "}".
+IfStatement = "if" "(" Expression ")" "{" Statements "}" { "else" "{" Statements "}" }.
 ```
+
+
 If `Expression` is evaluated to `true`, the execution flow goes to the first `Statements` and ignores the second `Statements`(if any). Otherwise, only execute the `Statements` after `else`(if any). "`else {Statements}`" is not required.
 
 #### While Statement and For Statement
+
 ```ebnf
 ForStatement   = "for" "(" Expression ";" Expression ";" Expression ")" "{" Statements "}" .
 WhileStatement = "while" "(" Expression ")" "{" Statements "}" .
@@ -357,15 +358,18 @@ WhileStatement = "while" "(" Expression ")" "{" Statements "}" .
 
 <!-- ;TODO: need to support the type-inference first;--> 
 
-To repeat the statements in the curly bracket, we use `while` loop to execute until the `end_condition` evaluates to `false`. 
+To repeat the statements in the curly bracket, we use `while` loop to execute until the `end_condition` evaluates to `false`.
+
 ```
 while(end_condition){
     do_something();
 };
 ```
+
 `ForStatement`'s behavior can be explained with `WhileStatement` since they are interchangeable.
 
 The following two blocks are equivalent:
+
 ```
 start_condition;
 while(end_condition){
@@ -373,14 +377,12 @@ while(end_condition){
     step_update;
 };
 ```
+
 ```
 for(start_condition; end_condition; step_update){
     do_something();
 };
 ```
-
-
-
 
 <!-- ``` 
 for(<id> in <list_id>){
@@ -391,14 +393,17 @@ for(<id> in <list_id>){
 ## Expressions
 
 Except for common expressions like in **C**, Rooc has some OO-styled expressions:
+
 ```ebnf
 Member     = ("this" | identifier) "." identifier .
 CallMember = ("this" | identifier) ":" identifier "." identifier "(" ArgList ")"
 ArgList    = [Expression {"," Expression}]
 ```
+
 These two expressions attempt to access members of a struct. `Member` tries to access a field of a struct instance. `MemberCall` tries to call a function of a struct instance implemented by a implmentation.
 
 Example:
+
 ```
 struct Struct_name{
     var field: int;
@@ -437,13 +442,15 @@ struct Point {
 
 ### Trait
 
-In Rooc, polymorphism is supported through the use of traits, rather than class inheritance. 
+In Rooc, polymorphism is supported through the use of traits, rather than class inheritance.  
+
 Traits define a set of methods that multiple structs can implement. This allows for type-safe, flexible code without the complications that inheritance can bring.
 
 ```ebnf
 TraitDecl = "trait" identifier "{" FunSignatures "}" .
 FunSignatures = {FunSignature ";"} .
 ```
+
 Example:
 
 ```
@@ -461,6 +468,7 @@ FunDecls = {FunDecl} .
 ```
 
 Example:
+
 ```
 impl Point {
     fun new(x:int, y:int) -> Point { 
@@ -518,12 +526,15 @@ render(c);  // Calls Circle's draw method
 
 
 ## Built-in functions
+
 Next step: we want to develop a print function spcifically for string such that it can be used for furthur debugging.
+
 ```
 print_str(to_print : str)
 ```
 
 We also want to implement a function for language user to get to know type of a expression.
+
 ```
 print_typeof()
 ```
