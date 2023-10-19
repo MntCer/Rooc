@@ -530,11 +530,11 @@ render(c);  // Calls Circle's draw method
 Next step: we want to develop a print function spcifically for string such that it can be used for furthur debugging.
 
 ```
-print_str(to_print : str)
+print_str(to_print : str) -> void
 ```
 
 We also want to implement a function for language user to get to know type of a expression.
 
 ```
-print_typeof()
+print_typeof(...) -> void
 ```
