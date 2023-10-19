@@ -101,7 +101,12 @@ comment         : <line_comment>|<general_comment>
 
 ### Whitespace
 
-<!-- ;TODO -->
+```
+ whitespace : [' ' '\t' '\r' '\n'] 
+ separator  : whitespace {whitespace}
+ ```
+
+We use whitespace, tab, carriage return, and newline character to separate tokens, otherwise ignored by the compiler. 
 
 ### Identifiers
 
@@ -166,11 +171,11 @@ colon   : :
 The following keywords are reserved and may not be used as identifiers.
 
 ```
-//TODO
-true        false       var         let         
-fun         struct      trait       impl  
-int         float       bool        str         
-void        list        break       this
+booleans: true        false       
+define:   var         let         fun         struct      trait       impl  
+type:     int         float       bool        str         void        list
+control:  if          else        for         while       return
+OOP:      this
 ```
 
 ### Integer literals
@@ -192,10 +197,9 @@ A decimal floating-point literal consists of an integer part (decimal digits), a
 The fractional part can be omitted if it is zero.
 
 <!-- ;TODO: exponent part -->
-<!-- ;TODO: omit leading zero -->
 
 ```
-decimal_float_lit : <digit>+\.<digit>*
+decimal_float_lit : <digit>+\.<digit>* | \.<digit>+
 float_lit         : <decimal_float_lit>
 ```
 
@@ -225,19 +229,18 @@ Now, the supported escape sequences are:
 
 ## Types
 
-<!-- ;TODO: should struct be a type? -->
-
 
 ```ebnf
-Type = PrimitiveType | GenericType.
+Type = PrimitiveType | GenericType | identifier.
 ```
 
 ### Primitive types
 
 <!-- ;TODO: detailed type introduction -->
+We implement common primitive types.
 
 ```ebnf
-PrimitiveType   = Int | Float | Bool | String .
+PrimitiveType   = Int | Float | Bool | String | Void.
 Int             = "int".
 Float           = "float".
 Bool            = "bool".
@@ -245,11 +248,26 @@ String          = "str".
 Void            = "void".   
 ```
 
-### Generic type (TODO)
+### Generic type
 
 ```ebnf
 GenericType = List .
 List        = "list" "(" Type ")" .
+```
+Like in other languages, elements in a list must have the same type.
+
+### Struct type
+Declaration of a new struct leads to a new type which appears the same as the name of the struct.
+
+Struct type example:
+```
+Struct A{
+    var num: int;
+}
+Struct B{
+    /* Here `A` is the type of variable `a` */
+    var a: A;
+}
 ```
 
 ## Variables
@@ -275,12 +293,17 @@ var e:list(int) = [a,2,3];
 
 ### Constants
 
-Use `let` rather than `var` to declare a constant.
+Use `let` rather than `var` to declare a constant. Attempts to modify them constants result in an error.
 
 ```ebnf
 LetDecl = "let" IdtyPair "=" Expression ";" .
 ```
 
+Example:
+```
+let a = 1;
+a = 2; // This won't compile, instead it raises error: "`a` is unmutable"
+```
 <!-- ;TODO
 Struct types
 Function types
@@ -288,6 +311,8 @@ trait types
  -->
 
 ## Function
+
+
 
 ```ebnf
 FunDecl      = FunSignature "{" Statements "}" .
@@ -297,37 +322,103 @@ ParamList    = [IdtyPair]
 Statements   = {Statement} .
 ```
 
+Functions can be declared without a body within a `trait` where we don't expect an implementation. We call such declarations function signatures (`FunSignature`). The only difference between it and a function declaration is the latter does have a body of statements.
+
+Example:
 ```
+/* It's a function signature */
+fun get_second (x:int,y:float) -> float
+
+/* It's a function declaration */
 fun get_second (x:int,y:float) -> float
 {
     return y;
 };
 ```
 
+
 ### Control flow
 
+#### If Statement
 
 ```ebnf
 IfStatement = "if" "(" Expression ")" "{" Statements "}" 
             | "if" "(" Expression ")" "{" Statements "}" "else" "{" Statements "}".
 ```
+If `Expression` is evaluated to `true`, the execution flow goes to the first `Statements` and ignores the second `Statements`(if any). Otherwise, only execute the `Statements` after `else`(if any). "`else {Statements}`" is not required.
 
+#### While Statement and For Statement
 ```ebnf
 ForStatement   = "for" "(" Expression ";" Expression ";" Expression ")" "{" Statements "}" .
 WhileStatement = "while" "(" Expression ")" "{" Statements "}" .
 ```
 
-<!-- ;TODO: need to support the type-inference first;-->
+<!-- ;TODO: need to support the type-inference first;--> 
 
-``` 
+To repeat the statements in the curly bracket, we use `while` loop to execute until the `end_condition` evaluates to `false`. 
+```
+while(end_condition){
+    do_something();
+};
+```
+`ForStatement`'s behavior can be explained with `WhileStatement` since they are interchangeable.
+
+The following two blocks are equivalent:
+```
+start_condition;
+while(end_condition){
+    do_something();
+    step_update;
+};
+```
+```
+for(start_condition; end_condition; step_update){
+    do_something();
+};
+```
+
+
+
+
+<!-- ``` 
 for(<id> in <list_id>){
     <stmt_list>
 }
-```
+``` -->
 
 ## Expressions
 
-Except for the expressions in **C**, 
+Except for common expressions like in **C**, Rooc has some OO-styled expressions:
+```ebnf
+Member     = ("this" | identifier) "." identifier .
+CallMember = ("this" | identifier) ":" identifier "." identifier "(" ArgList ")"
+ArgList    = [Expression {"," Expression}]
+```
+These two expressions attempt to access members of a struct. `Member` tries to access a field of a struct instance. `MemberCall` tries to call a function of a struct instance implemented by a implmentation.
+
+Example:
+```
+struct Struct_name{
+    var field: int;
+}
+
+impl Impl_name for Struct_name{
+    fun Member_func() -> int{
+        return 1;
+    }
+}
+
+fun main() -> int{
+    var a: Struct_name = ...;
+    let _ = 
+      a.field                   // This is a `Member`
+    let _ = 
+      a:Impl_name.Member_func() // This is a `MemberCall`
+    return 0;
+}
+
+```
+
 
 ## Struct
 
@@ -351,10 +442,11 @@ Traits define a set of methods that multiple structs can implement. This allows 
 TraitDecl = "trait" identifier "{" FunSignatures "}" .
 FunSignatures = {FunSignature ";"} .
 ```
+Example:
 
 ```
 trait Drawable {
-    public void draw();
+    public draw() -> void;
 };
 ```
 
@@ -366,6 +458,7 @@ ImplDecl = "impl" identifier "{" FunDecls "}"
 FunDecls = {FunDecl} .
 ```
 
+Example:
 ```
 impl Point {
     fun new(x:int, y:int) -> Point { 
@@ -421,12 +514,14 @@ render(p);  // Calls Point's draw method
 render(c);  // Calls Circle's draw method
 ```
 
-## Statements
-
-
 
 ## Built-in functions
+Next step: we want to develop a print function spcifically for string such that it can be used for furthur debugging.
 ```
-//TODO
-print()
+print_str(to_print : str)
+```
+
+We also want to implement a function for language user to get to know type of a expression.
+```
+print_typeof()
 ```
