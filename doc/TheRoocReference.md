@@ -201,7 +201,7 @@ The fractional part can be omitted if it is zero.
 <!-- ;TODO: exponent part -->
 
 ```
-decimal_float_lit : <digit>+\.<digit>* | \.<digit>+
+decimal_float_lit : <digit>+\.<digit>*
 float_lit         : <decimal_float_lit>
 ```
 
