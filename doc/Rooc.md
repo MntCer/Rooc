@@ -1,10 +1,14 @@
 # The Rooc Language Reference
 
+## Program structure
+
+<!-- %TODO: the cross-compile part -->
+
 ## Notation
 
 ### Syntax notation
 
-The syntax grammar is specified using [Wirth syntax notation](https://en.wikipedia.org/wiki/Wirth_syntax_notation) to express the Extended Backus-Naur Form (EBNF):
+The syntax grammar is specified using [Wirth syntax notation](https://en.wikipedia.org/wiki/Wirth_syntax_notation) to express the Extended Backus-Naur Form (EBNF) in those monospaced font blocks:
 
 ```ebnf
 Syntax      = { Production } .
@@ -22,8 +26,7 @@ Option      = "[" Expression "]" .
 Repetition  = "{" Expression "}" .
 ```
 
-The equals sign indicates a production. 
-The element on the left is defined to be the combination of elements on the right. 
+The equals sign indicates a production. The element on the left is defined to be the combination of elements on the right. 
 
 A production is terminated by a full stop (period).
 
@@ -40,23 +43,19 @@ The three operators below are in increasing precedence.
 
 ### Lexical notation
 
-The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions).
+The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions)(ERE).
 
-In our notation, expressions are named to represent specific tokens, and can be referenced in other expressions as patterns by enclosing the name with `<` and `>` brackets.
-A pattern is a segment of the regular expression treated as a single unit.
+$$
+\begin{align*}
+\textbf{digit}      & : \texttt{['0'-'9']} \\
+\textbf{integer}    & : \textbf{digit}\texttt{+} \\
+\end{align*}
+$$
 
-To match the raw "<" and ">" characters in a string, use `\<` and `\>` respectively.
+<!-- %TODO: polish this paragraph -->
+A colon indicates a lexical token's definition. The symbols in textwriter font represent operators in ERE regular expression. Strings in bold font refer to named lexical tokens. Symbol in $\texttt{'}$ denotes a single character in Rooc's alphabet.
 
-```
-token1 : (a|\<)
-token2 : <token1>(b|\>)
-```
-
-The `token2` expression expands to `(a|<)(b|>)` in standard ERE.
-
-In ERE, a raw space character is a valid element. 
-However, in most cases, Rooc will not allow to include a "space" as part of lexical tokens(not for string literal, comments, etc.) So, the spaces presented in the following regular expressions are only for readability and don't denote actual space characters.
-To represent a "space" explicitly in the following regular expressions, we will utilize `\s`.
+Worth noting, standard ERE will match space character in input expression. But in this manual, all space characters are just used for formatting and readability. Rooc will use $\backslash \texttt{s}$ to denote a space character in token's definition.
 
 ## Lexical elements
 
@@ -224,9 +223,12 @@ Now, the supported escape sequences are:
 * `\r` : carriage return
 * `\t` : horizontal tab
 
+## Module
 
-## Types
+A file will be compiled as a `module`. 
 
+
+## Type
 
 ```ebnf
 Type = PrimitiveType | GenericType | identifier.
