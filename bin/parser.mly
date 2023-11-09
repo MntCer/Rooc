@@ -12,7 +12,7 @@ open Ast
 %token VAR FUN STRUCT IMPL TRAIT
 %token INT BOOL FLOAT STR VOID
 // %token LET LIST
-%token RETURN IF ELSE FOR WHILE 
+%token RETURN IF ELSE FOR WHILE BREAK CONTINUE
 %token <int> ILIT
 %token <string> FLIT SLIT ID
 %token EOF

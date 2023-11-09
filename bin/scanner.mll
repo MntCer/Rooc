@@ -57,8 +57,9 @@ rule token = parse
 | "->"     { RARROW }
 | "."      { DOT }
 (* keywords *)
+| "const"  { CONST }
 | "var"    { VAR }
-(* | "let"    { LET } *)
+| "let"    { LET }
 | "fun"    { FUN }
 | "struct" { STRUCT }
 | "impl"   { IMPL }
@@ -76,6 +77,8 @@ rule token = parse
 | "else"   { ELSE }
 | "for"    { FOR }
 | "while"  { WHILE }
+| "break"  { BREAK }
+| "continue" { CONTINUE }
 (* literals *)
 | "true"   { BLIT(true)  }
 | "false"  { BLIT(false) }
