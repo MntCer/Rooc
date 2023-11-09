@@ -104,7 +104,7 @@ let translate (functions, traits, structs, impls) =
           | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
       | SCall ("print_str", [e]) -> 
-          L.build_call printf_func [| (expr builder e) |] "printf" builder
+          L.build_call printf_func [| (L.build_global_stringptr e "fmt" builder) |] "printf" builder
       | _ -> L.const_int i32_t 0
       
       (* TODO: add function call, member *)
