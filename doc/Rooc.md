@@ -513,7 +513,7 @@ LiteralExpression =
      STRING_LITERAL
    | INTEGER_LITERAL
    | FLOAT_LITERAL
-   | true | false
+   | BOOL_LITERAL
 ```
 
 A literal expression is an expression consisting of a single token, rather than a sequence of tokens, that immediately and directly denotes the value it evaluates to, rather than referring to it by name or some other evaluation rule.
@@ -580,7 +580,9 @@ GroupedExpression =
 
 ```ebnf
 CallExpression =
-   Expression "(" { CallParams } ")" .
+   IDENTIFIER "(" { CallParams } ")" .
+
+<!-- %TODO: identifier->expression, after implement the path expression -->
 
 CallParams =
    Expression { "," Expression } [ "," ] .

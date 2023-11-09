@@ -5,13 +5,50 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
 
 type uop = Not | Neg
 
+type arith_logical_op = Add | Sub | Mult | Div | And | Or  
+type comparison_op = Equal | Neq | Less | Leq | Greater | Geq 
+
 type typ = Int | Float | String | Bool | Void | Unit
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
 and primitive_typ = Int | Float | String | Bool | Void *)
 
-type bind = typ * string
+type name_type_bind = string * typ
+
+
+type roc_expr =
+    (* literal expr *)
+    Roc_string_literal of string
+  | Roc_int_literal of int
+  | Roc_float_literal of float
+  | Roc_bool_literal of bool
+    (* operator expr *)
+  | Roc_unary_expr of uop * roc_expr
+  | Roc_arith_logical_expr of roc_expr * arith_logical_op * roc_expr
+  | Roc_comparison_expr of roc_expr * comparison_op * roc_expr
+  | Roc_assign_expr of roc_expr * roc_expr
+    (* grouped expr *)
+  | Roc_grouped_expr of roc_expr
+    (* call expr *)
+  | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
+    (* return expr *)
+  | Roc_return_expr of roc_expr
+  | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_block_expr
+  | Roc_while_expr of roc_expr * roc_block_expr
+  | Roc_break_expr
+  | Roc_continue_expr
+  | Roc_if_expr of roc_expr * roc_block_expr * roc_block_expr
+  | Roc_null_expr
+
+and roc_block_expr =
+    Roc_Block_expr of roc_stmt list
+
+and roc_stmt =
+    Roc_expr_stmt of roc_expr
+  | Roc_var_decl_stmt of name_type_bind * roc_expr
+  | Roc_let_decl_stmt of name_type_bind * roc_expr
+
 
 type expr =
     Literal of int
@@ -69,13 +106,14 @@ type program = func_decl list * trait_decl list * struct_decl list
                * impl_decl list
 
 (* %TODO:  *)
-type rc_item =
+type roc_item =
     Function of func_decl
   | Trait of trait_decl
   | Struct of struct_decl
   | Implementation of impl_decl
 
-type rc_module = rc_item list
+type roc_module = roc_item list
+
 
 (* Pretty-printing functions *)
 
