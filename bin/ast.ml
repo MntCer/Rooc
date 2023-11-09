@@ -5,7 +5,7 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
 
 type uop = Not | Neg
 
-type typ = Int | Float | String | Bool | Void
+type typ = Int | Float | String | Bool | Void | Unit
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
@@ -68,6 +68,15 @@ type impl_decl = {
 type program = func_decl list * trait_decl list * struct_decl list
                * impl_decl list
 
+(* %TODO:  *)
+type rc_item =
+    Function of func_decl
+  | Trait of trait_decl
+  | Struct of struct_decl
+  | Implementation of impl_decl
+
+type rc_module = rc_item list
+
 (* Pretty-printing functions *)
 
 let string_of_op = function
@@ -123,6 +132,7 @@ let string_of_typ = function
   | Float -> "float"
   | Void -> "void" 
   | String -> "string"
+  | Unit -> "unit"
 
 (* let rec string_of_typ = function
     Primitive(t) -> string_of_ptyp t

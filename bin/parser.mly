@@ -10,7 +10,7 @@ open Ast
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
 %token VAR FUN STRUCT IMPL TRAIT
-%token INT BOOL FLOAT STR VOID 
+%token INT BOOL FLOAT STR VOID
 // %token LET LIST
 %token RETURN IF ELSE FOR WHILE 
 %token <int> ILIT
@@ -34,7 +34,9 @@ open Ast
 %%
 
 program:
-  decls EOF { $1 }
+  items EOF { $1 }
+
+
 
 decls:
    /* nothing */ { ([], [], [], []) }
@@ -96,6 +98,7 @@ typ:
   | FLOAT { Float  }
   | STR   { String }
   | VOID  { Void   }
+  | LPAREN RPAREN { Unit }
 
 // primitive_typ:
 //     INT   { Int    }
