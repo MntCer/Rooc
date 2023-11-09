@@ -11,9 +11,11 @@ let translate (functions, traits, structs, impls) =
 
   (* Add types *)
   (* TODO *)
-  let i32_t     = L.i32_type    context
-  let i8_t      = L.i8_type     context
+  let i32_t     = L.i32_type    context 
+  and i8_t      = L.i8_type     context
   (* ... *)
+
+  in
 
   let the_module = L.create_module context "Rooc" in
 
