@@ -13,6 +13,8 @@ let translate (functions, traits, structs, impls) =
   (* TODO *)
   let i32_t     = L.i32_type    context 
   and i8_t      = L.i8_type     context
+  and i1_t       = L.i1_type     context
+  and float_t    = L.double_type context
   (* ... *)
 
   in
@@ -24,16 +26,16 @@ let translate (functions, traits, structs, impls) =
   (* ... *)
   in
 
-  let trait_decls : (L.llvalue * trait_decl) StringMap.t = 
+  let trait_decls : (L.llvalue * strait_decl) StringMap.t = 
   (* TODO *)
   (* record traits *)
   StringMap.empty in
 
-  let struct_decls : (L.llvalue * struct_decl) StringMap.t =
+  let struct_decls : (L.llvalue * sstruct_decl) StringMap.t =
   (* record structs *)
   StringMap.empty in
 
-  let impl_decls : (L.llvalue * impl_decl) StringMap.t =
+  let impl_decls : (L.llvalue * simpl_decl) StringMap.t =
   (* TODO *)
   (* record implmentations *)
   StringMap.empty in
@@ -46,16 +48,16 @@ let translate (functions, traits, structs, impls) =
   let function_decls : (L.llvalue * sfunc_decl) StringMap.t =
   (* record function decls *)
   let function_decl m fdecl =
-    let name = fdecl.fs_name
+    let name = fdecl.sfd_name
     and formal_types =
-      Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fdecl.fs_formals)
-    in let ftype = L.function_type (ltype_of_typ fdecl.fs_typ) formal_types in
+      Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fdecl.sfd_formals)
+    in let ftype = L.function_type (ltype_of_typ fdecl.sfd_typ) formal_types in
     StringMap.add name (L.define_function name ftype the_module, fdecl) m in
   List.fold_left function_decl StringMap.empty functions in
 
   let build_function_body fdecl = 
 
-    let (the_function, _) = StringMap.find fdecl.sfname function_decls in
+    let (the_function, _) = StringMap.find fdecl.sfd_name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let rec expr builder ((_, e) : sexpr) = match e with
@@ -112,26 +114,27 @@ let translate (functions, traits, structs, impls) =
       (* TODO: add function call, member *)
       (* ... *)
 
-    let add_terminal builder instr =
+    in let add_terminal builder instr =
                            (* The current block where we're inserting instr *)
       match L.block_terminator (L.insertion_block builder) with
         Some _ -> ()
-      | None -> ignore (instr builder) in
+      | None -> ignore (instr builder) 
+    in
 
     let rec stmt builder = function
         SBlock sl -> List.fold_left stmt builder sl
       (* TODO *)
       (* ... *)
       | _ -> builder in
-    let builder = stmt builder (SBlock fdecl.fd_body) in
-    add_terminal builder (match fdecl.styp with
+    let builder = stmt builder (SBlock fdecl.sfd_body) in
+    add_terminal builder (match fdecl.sfd_typ with
         A.Void -> L.build_ret_void
       | A.Float -> L.build_ret (L.const_float float_t 0.0)
       | t -> L.build_ret (L.const_int (ltype_of_typ t) 0))
   in
 
   let build_method_body idecl = 
-    List.iter build_function_body idecl.i_methods
+    List.iter build_function_body idecl.si_methods
     (* TODO: deal with implementations' methods *)  
   in
   List.iter build_function_body functions;

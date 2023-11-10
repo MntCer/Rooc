@@ -65,8 +65,7 @@ type impl_decl = {
   i_methods : func_decl list;
 }
 
-type program = func_decl list * trait_decl list * struct_decl list
-               * impl_decl list
+type program = func_decl list * trait_decl list * struct_decl list * impl_decl list
 
 (* Pretty-printing functions *)
 
