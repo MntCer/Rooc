@@ -23,7 +23,7 @@ let () =
   match !action with
     Ast -> print_string (Ast.string_of_program ast)
   | _ -> 
-    let sast = Sement.check ast in
+    let sast = Semant.check ast in
     match !action with
       Ast | Sast     -> print_string (Ast.string_of_program ast)
       | LLVM_IR -> print_string (Llvm.string_of_llmodule (Codegen.translate sast))
