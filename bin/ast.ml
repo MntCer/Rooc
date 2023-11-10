@@ -1,21 +1,38 @@
 (* Abstract Syntax Tree and functions for printing it *)
 
-type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
-          And | Or
+(* type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
+          And | Or *)
 
-type uop = Not | Neg
 
 type arith_logical_op = Add | Sub | Mult | Div | And | Or  
 type comparison_op = Equal | Neq | Less | Leq | Greater | Geq 
+type unary_op = Not | Neg
 
-type typ = Int | Float | String | Bool | Void | Unit
+
+(* Define the possible types in Rooc *)
+type roc_type =
+    TInt
+  | TFloat
+  | TBool
+  | TString
+  (* | TFunction of roc_type list * roc_type  *)
+  | TUnit
+  | TVoid
+  (*%TODO:*)
+
+(* Define the runtime values in Rooc *)
+type roc_value =
+    VInt of int
+  | VFloat of float
+  | VBool of bool
+  | VString of string
+  | Null
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
 and primitive_typ = Int | Float | String | Bool | Void *)
 
-type name_type_bind = string * typ
-
+type name_type_bind = string * roc_type
 
 type roc_expr =
     (* literal expr *)
@@ -24,7 +41,7 @@ type roc_expr =
   | Roc_float_literal of float
   | Roc_bool_literal of bool
     (* operator expr *)
-  | Roc_unary_expr of uop * roc_expr
+  | Roc_unary_expr of unary_op * roc_expr
   | Roc_arith_logical_expr of roc_expr * arith_logical_op * roc_expr
   | Roc_comparison_expr of roc_expr * comparison_op * roc_expr
   | Roc_assign_expr of roc_expr * roc_expr
@@ -34,10 +51,12 @@ type roc_expr =
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
     (* return expr *)
   | Roc_return_expr of roc_expr
+    (* loop expr *)
   | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_block_expr
   | Roc_while_expr of roc_expr * roc_block_expr
   | Roc_break_expr
   | Roc_continue_expr
+    (* if expr *)
   | Roc_if_expr of roc_expr * roc_block_expr * roc_block_expr
   | Roc_null_expr
 
@@ -49,8 +68,39 @@ and roc_stmt =
   | Roc_var_decl_stmt of name_type_bind * roc_expr
   | Roc_let_decl_stmt of name_type_bind * roc_expr
 
+(* ... other entry types as needed ... *)
 
-type expr =
+
+type roc_function_params = {
+  rfp_self : bool;
+  rfp_params : name_type_bind list;
+}
+
+type roc_function_signature = {
+  rfs_name : string;
+  rfs_params : roc_function_params;
+  rfs_return_type : roc_type;
+}
+
+type roc_function = {
+    rfun_signature : roc_function_signature;
+    rfun_body : roc_block_expr;
+}
+
+type roc_module = {
+    rm_functions: roc_function list;
+    rm_constants: name_type_bind list;
+    (* %TODO: *)
+}
+
+let get_2_1 (a, _) = a
+let get_2_2 (_, a) = a
+
+(* type program = func_decl list * trait_decl list * struct_decl list
+               * impl_decl list *)
+
+
+(* type expr =
     Literal of int
   | Fliteral of string (*float*)
   | Sliteral of string (*string*)
@@ -69,14 +119,18 @@ type stmt =
   | Return of expr
   | If of expr * stmt * stmt
   | For of expr * expr * expr * stmt
-  | While of expr * stmt
+  | While of expr * stmt *)
 
-type func_decl = {
-    fd_typ : typ;
+(* type roc_function = *)
+
+
+
+(* type func_decl = {
+    fd_typ : roc_type;
     fd_name : string;
-    fd_formals : bind list;
-    fd_locals : bind list;
-    fd_body : stmt list;
+    fd_formals : name_type_bind list;
+    fd_locals : name_type_bind list;
+    fd_body : roc_block_expr;
   }
 
 (* for trait *)
@@ -100,42 +154,55 @@ type impl_decl = {
   i_name : string;
   i_forstruct : string;
   i_methods : func_decl list;
-}
-
-type program = func_decl list * trait_decl list * struct_decl list
-               * impl_decl list
-
-(* %TODO:  *)
-type roc_item =
-    Function of func_decl
-  | Trait of trait_decl
-  | Struct of struct_decl
-  | Implementation of impl_decl
-
-type roc_module = roc_item list
-
+} *)
 
 (* Pretty-printing functions *)
 
-let string_of_op = function
+let string_of_arith_logical_op = function
     Add -> "+"
   | Sub -> "-"
   | Mult -> "*"
   | Div -> "/"
+  | And -> "&&"
+  | Or -> "||"
+
+let string_of_comparison_op = function
   | Equal -> "=="
   | Neq -> "!="
   | Less -> "<"
   | Leq -> "<="
   | Greater -> ">"
   | Geq -> ">="
-  | And -> "&&"
-  | Or -> "||"
 
- let string_of_uop = function
+let string_of_unary_op = function
     Neg -> "-"
   | Not -> "!"
 
-let rec string_of_expr = function
+let string_of_roc_type = function
+  TInt -> "int"
+| TBool -> "bool"
+| TFloat -> "float"
+| TVoid -> "void" 
+| TString -> "string"
+| TUnit -> "unit"
+
+(* let rec string_of_typ = function
+  Primitive(t) -> string_of_ptyp t
+| Generic(t) -> string_of_gtyp t
+
+and string_of_gtyp = function
+  List(t) -> "list<" ^ string_of_typ t ^ ">"
+
+and string_of_ptyp = function
+  Int -> "int"
+| Bool -> "bool"
+| Float -> "float"
+| String -> "string"
+| Void -> "void" *)
+
+(* *************************************** *)
+(* print function of old ast *)
+(* let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | Fliteral(l) -> l
   | BoolLit(true) -> "true"
@@ -164,27 +231,7 @@ let rec string_of_stmt = function
       string_of_expr e3  ^ ") " ^ string_of_stmt s
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
 
-let string_of_typ = function
-    Int -> "int"
-  | Bool -> "bool"
-  | Float -> "float"
-  | Void -> "void" 
-  | String -> "string"
-  | Unit -> "unit"
 
-(* let rec string_of_typ = function
-    Primitive(t) -> string_of_ptyp t
-  | Generic(t) -> string_of_gtyp t
-
-and string_of_gtyp = function
-    List(t) -> "list<" ^ string_of_typ t ^ ">"
-
-and string_of_ptyp = function
-    Int -> "int"
-  | Bool -> "bool"
-  | Float -> "float"
-  | String -> "string"
-  | Void -> "void" *)
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
@@ -221,5 +268,5 @@ let string_of_program (fdecls, tdecls, sdecls, idecls) =
 let get_4_1 (a, _, _, _) = a
 let get_4_2 (_, a, _, _) = a
 let get_4_3 (_, _, a, _) = a
-let get_4_4 (_, _, _, a) = a
+let get_4_4 (_, _, _, a) = a *)
 

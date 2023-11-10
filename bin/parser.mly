@@ -17,8 +17,8 @@ open Ast
 %token <string> FLIT SLIT ID
 %token EOF
 
-%start program
-%type <Ast.program> program
+%start roc_module
+%type <Ast.roc_module> odule
 
 %nonassoc NOELSE
 %nonassoc ELSE
@@ -33,26 +33,31 @@ open Ast
 
 %%
 
-program:
+module:
   items EOF { $1 }
 
+items:
+    /* nothing */ { ([],[]) }
+  | items function { ($2 :: (get_2_1 $1),get_2_2 $1) }
+  | items constant_value { (get_2_1 $1, $2 :: (get_2_2 $1)) }
+
+function:
+  function_signature block_expression 
+    {{ rfun_signature : $1;
+       rfun_body : $2 }}
+
+function_signature:
+  FUN ID LPAREN function_params RPAREN RARROW type
+    { { 
+      rfs_name = $2;
+      rfs_params = $4;
+      rfs_return_type = $7 } }
+    
+function_params:
+
+    
 
 
-decls:
-   /* nothing */ { ([], [], [], []) }
-/*  | decls vdecl { (($2 :: fst $1), snd $1) } */
- | decls fdecl { ($2 :: (get_4_1 $1), get_4_2 $1, get_4_3 $1, get_4_4 $1) }
- | decls tdecl { (get_4_1 $1, $2 :: (get_4_2 $1), get_4_3 $1, get_4_4 $1) }
- | decls sdecl { (get_4_1 $1, get_4_2 $1, $2 :: (get_4_3 $1), get_4_4 $1) }
- | decls idecl { (get_4_1 $1, get_4_2 $1, get_4_3 $1, $2 :: (get_4_4 $1)) } 
-
-fdecl:
-    FUN ID LPAREN formals_opt RPAREN RARROW typ LBRACE vdecl_list stmt_list RBRACE SEMI
-     { { fd_typ = $7;
-	 fd_name = $2;
-	 fd_formals = List.rev $4;
-	 fd_locals = List.rev $9;
-	 fd_body = List.rev $10 } }
 
 fdecl_list:
    /* nothing */ { [] }
@@ -92,13 +97,13 @@ formal_list:
     ID COLON typ             { [($3,$1)]     }
   | formal_list ID COLON typ { ($4,$2) :: $1 }
 
-typ:
-    INT   { Int    }
-  | BOOL  { Bool   }
-  | FLOAT { Float  }
-  | STR   { String }
-  | VOID  { Void   }
-  | LPAREN RPAREN { Unit }
+type:
+    INT   { TInt    }
+  | FLOAT { TFloat  }
+  | BOOL  { TBool   }
+  | STR   { TString }
+  | VOID  { TVoid   }
+  | LPAREN RPAREN { TUnit }
 
 // primitive_typ:
 //     INT   { Int    }
