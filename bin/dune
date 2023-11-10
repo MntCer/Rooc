@@ -16,7 +16,8 @@
 (env
  (dev
   (flags
-   (:standard -warn-error -A))))
+   (:standard -w -A)
+   )))
 
 (executable
  (public_name Rooc)

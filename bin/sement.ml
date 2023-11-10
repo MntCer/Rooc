@@ -230,6 +230,3 @@ let check(functions,traits,structs,impls) =
   in 
   let simpls = List.map check_impl impls in
   (List.map check_func functions, straits, sstructs, simpls)
-
-    
-

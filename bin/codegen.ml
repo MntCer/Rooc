@@ -60,6 +60,32 @@ let translate (functions, traits, structs, impls) =
     let (the_function, _) = StringMap.find fdecl.sfd_name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
+    let local_vars =
+      let add_formal m (t, n) p = 
+        let () = L.set_value_name n p in
+	      let local = L.build_alloca (ltype_of_typ t) n builder in
+        let _  = L.build_store p local builder in
+	      StringMap.add n local m 
+      in
+
+      (* Allocate space for any locally declared variables and add the
+       * resulting registers to our map *)
+      let add_local m (t, n) =
+	      let local_var = L.build_alloca (ltype_of_typ t) n builder
+	      in StringMap.add n local_var m 
+      in
+
+      let formals = List.fold_left2 add_formal StringMap.empty fdecl.sfd_formals
+          (Array.to_list (L.params the_function)) in
+      List.fold_left add_local formals fdecl.sfd_locals 
+    in
+
+    (* Return the value for a variable or formal argument. First check
+     * locals, then globals *)
+    let lookup n = try StringMap.find n local_vars
+                   with Not_found -> raise (Failure ("undeclared variable " ^ n))
+    in
+
     let rec expr builder ((_, e) : sexpr) = match e with
         SLiteral i -> L.const_int i32_t i
       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
@@ -107,7 +133,7 @@ let translate (functions, traits, structs, impls) =
             A.Neg when t = A.Float -> L.build_fneg
           | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
-      | SCall ("print_str", [e]) -> 
+      | SCall ("print_str", [(_,SSliteral (e))]) -> 
           L.build_call printf_func [| (L.build_global_stringptr e "fmt" builder) |] "printf" builder
       | _ -> L.const_int i32_t 0
       

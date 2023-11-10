@@ -1,6 +1,0 @@
-
-
-struct Circle
-int radius;
-string color;
-

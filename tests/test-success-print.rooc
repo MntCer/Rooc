@@ -1,0 +1,4 @@
+fun main() -> int {
+    print_str("Hello world");
+    return 0;
+};
