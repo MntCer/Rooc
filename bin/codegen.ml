@@ -134,7 +134,7 @@ let translate (functions, traits, structs, impls) =
           | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
       | SCall ("print_str", [(_,SSliteral (e))]) -> 
-          L.build_call printf_func [| (L.build_global_stringptr e "fmt" builder) |] "printf" builder
+	  L.build_call printf_func [| (L.build_global_stringptr e "fmt" builder) |] "printf" builder
       | _ -> L.const_int i32_t 0
       
       (* TODO: add function call, member *)
@@ -149,6 +149,13 @@ let translate (functions, traits, structs, impls) =
 
     let rec stmt builder = function
         SBlock sl -> List.fold_left stmt builder sl
+      | SExpr e -> let _ = expr builder e in builder
+      | SReturn e -> let _ = match fdecl.sfd_typ with
+                              (* Special "return nothing" instr *)
+                              A.Void -> L.build_ret_void builder
+                              (* Build return statement *)
+                            | _ -> L.build_ret (expr builder e) builder
+                     in builder
       (* TODO *)
       (* ... *)
       | _ -> builder in
@@ -163,7 +170,8 @@ let translate (functions, traits, structs, impls) =
     List.iter build_function_body idecl.si_methods
     (* TODO: deal with implementations' methods *)  
   in
+
+  let _ = List.iter build_method_body impls in
   List.iter build_function_body functions;
-  List.iter build_method_body impls;
   the_module
 
