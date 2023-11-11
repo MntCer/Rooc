@@ -10,20 +10,24 @@ let translate (functions, traits, structs, impls) =
   let context    = L.global_context () in
 
   (* Add types *)
-  (* TODO *)
   let i32_t     = L.i32_type    context 
   and i8_t      = L.i8_type     context
   and i1_t       = L.i1_type     context
   and float_t    = L.double_type context
-  (* ... *)
-
+  and void_t     = L.void_type   context 
+  and string_t = L.pointer_type  i8_t
   in
-
+  
+  (* Create an LLVM module *)
   let the_module = L.create_module context "Rooc" in
 
+  (* Convert types *)
   let ltype_of_typ = function
-      A.Int      -> i32_t
-  (* ... *)
+      A.Int   -> i32_t
+    | A.Bool  -> i1_t
+    | A.Float -> float_t
+    | A.Void  -> void_t
+    | A.String -> string_t
   in
 
   let trait_decls : (L.llvalue * strait_decl) StringMap.t = 
