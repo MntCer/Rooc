@@ -15,7 +15,6 @@ let translate (functions, traits, structs, impls) =
   and i1_t       = L.i1_type     context
   and float_t    = L.double_type context
   and void_t     = L.void_type   context 
-  and string_t = L.pointer_type  i8_t
   in
   
   (* Create an LLVM module *)
@@ -27,7 +26,6 @@ let translate (functions, traits, structs, impls) =
     | A.Bool  -> i1_t
     | A.Float -> float_t
     | A.Void  -> void_t
-    | A.String -> string_t
   in
 
   let trait_decls : (L.llvalue * strait_decl) StringMap.t = 
