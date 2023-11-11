@@ -3,10 +3,11 @@
 ### How to Compile
 
 The project directory is like
+
 ```bash
 .
-├── README.md
 ├── Makefile
+├── README.md
 ├── bin
 │   ├── ast.ml
 │   ├── codegen.ml
@@ -15,21 +16,29 @@ The project directory is like
 │   ├── rooc.ml
 │   ├── sast.ml
 │   ├── scanner.mll
-│   └── sement.ml
+│   └── semant.ml
 ├── dune-project
 ├── lib
 │   └── dune
-├── testprint.sh
+├── testall.sh
 └── tests
-    └── test-success-print.rooc
+    ├── test-success-printhello
+    ├── test-success-printhello.rooc
+    ├── test-success-printworld
+    └── test-success-printworld.rooc
 ```
 
-Run the command `dune build` in this project root directory could build our **Rooc** project.
+run `make` in this root directory could build our **Rooc** compiler.
+
 
 ### How to Run Test Script
 
+run `make test` will execute our test script `testall.sh`.
+This script can also directly be executed by `./testall.sh`. Use `./testall.sh -h` for more information.
 
-run `make test` and check the output is ok.
+### Clean generated files
+
+If execute `./testall.sh` without `-k` flag, this script will clean all **Rooc** compiled results. Use `make clean` to delete our **Rooc** compiler.
 
 
 ### Names and Email addresses
