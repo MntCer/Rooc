@@ -1,14 +1,14 @@
 #!/bin/sh
 
-# Regression testing script for Rooc
-# Step through a list of files
-#  Compile, run, and check the output of each expected-to-work test
-#  Compile and check the error of each expected-to-fail test
+# TODO:  
 
 # Path to the Rooc compiler. 
 # Try "_build/install/default/bin/Rooc" if ocamlbuild was unable to create a symbolic link.
 Rooc="Rooc"
 #Rooc="_build/install/default/bin/Rooc"
+
+LLC="llc"
+CC="cc"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -84,8 +84,11 @@ Check() {
 
     generatedfiles=""
 
-    generatedfiles="$generatedfiles ${basename}.out" &&
-    Run "dune exec $Rooc" "$1" ">" "${basename}.out" && # generate result
+    generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
+    Run "dune exec $Rooc" "$1" ">" "${basename}.ll" && # generate result
+    Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
+    Run "$CC" "-o" "${basename}.exe" "${basename}.s" &&
+    Run "./${basename}.exe" > "${basename}.out" &&
     Compare ${basename}.out ${reffile} ${basename}.diff
 
     # Report the status and clean up the generated files
@@ -102,6 +105,7 @@ Check() {
 }
 
 CheckFail() {
+    # %TODO: Now no check failed test. 
     error=0
     basename=`echo $1 | sed 's/.*\\///
                              s/.rooc//'`
@@ -141,19 +145,16 @@ while getopts kdpsh c; do
 	h) # Help
 	    Usage
 	    ;;
-    s) 
-        SignalError
     esac
 done
 
 shift `expr $OPTIND - 1`
 
-
 if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="tests/test-*.rooc tests/fail-*.rooc"
+    files="tests/test-*.rooc"
 fi
 
 # echo $files

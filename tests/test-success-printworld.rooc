@@ -1,4 +1,4 @@
 fun main() -> int {
-    print_str("Hello world");
+    print_str("World");
     return 0;
 };

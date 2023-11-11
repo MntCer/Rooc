@@ -1,0 +1,8 @@
+fun main() -> int {
+    var x:int;
+    var y:int;
+    x=0;
+    y=1;
+    print_str("Hello");
+    return x;
+};

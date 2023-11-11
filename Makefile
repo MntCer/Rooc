@@ -12,3 +12,4 @@ test : all testprint.sh
 .PHONY : clean
 clean :
 	dune clean
+	rm -rf testall.log *.diff Rooc.opam
