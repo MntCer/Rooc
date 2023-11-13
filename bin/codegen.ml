@@ -28,10 +28,32 @@ let translate (functions, traits, structs, impls) =
     | A.Void  -> void_t
   in
 
-  let trait_decls : (L.llvalue * strait_decl) StringMap.t = 
-  (* TODO *)
+  
+
+  let trait_decls : ((L.llvalue * strait_decl) StringMap.t) StringMap.t = 
   (* record traits *)
-  StringMap.empty in
+  let trait_decl m tdecl =
+    let name = tdecl.str_name 
+    and let function_sigs : (L.llvalue * sfunc_sig) StringMap.t =
+    (* record function sigs*)
+      let function_sig m fsig =
+        let name = fsig.sfs_name
+        and formal_types =
+          Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fsig.sfs_formals)
+        in let ftype = L.function_type (ltype_of_typ fsig.sfs_typ) formal_types in
+        StringMap.add name (L.declare_function name ftype the_module, fsig) m in
+      List.fold_left function_sig StringMap.empty tdecl.str_methods in
+    in
+    StringMap.add name function_sig m in
+  List.fold_left trait_decl StringMap.empty traits in
+
+  let string_of_fsig fsig = 
+    string_of_typ fsig.fs_typ ^ " " ^
+    fsig.fs_name ^ "(" ^ String.concat ", " (StringMap.map snd fsig.fs_formals) ^ ")\n" in
+  let string_of_tdecl tdecl =
+    "trait " ^ tdecl.tr_name ^ "\n" ^
+    String.concat "" (StringMap.map string_of_fsig tdecl.tr_methods) in
+  let _ = print_string (string_of_tdecl trait_decl)
 
   let struct_decls : (L.llvalue * sstruct_decl) StringMap.t =
   (* record structs *)
@@ -57,7 +79,7 @@ let translate (functions, traits, structs, impls) =
     StringMap.add name (L.define_function name ftype the_module, fdecl) m in
   List.fold_left function_decl StringMap.empty functions in
 
-  let build_function_body fdecl = 
+  let build_function_body x = 
 
     let (the_function, _) = StringMap.find fdecl.sfd_name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
@@ -92,6 +114,7 @@ let translate (functions, traits, structs, impls) =
         SLiteral i -> L.const_int i32_t i
       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | SFliteral l -> L.const_float_of_string float_t l
+      | SSliteral str -> L.build_global_stringptr str (*not sure*)
       | SNoexpr -> L.const_int i32_t 0
       | SId s -> L.build_load (lookup s) s builder
       | SAssign (s, e) -> let e' = expr builder e in
