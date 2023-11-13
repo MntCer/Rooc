@@ -10,23 +10,23 @@ type unary_op = Not | Neg
 
 
 (* Define the possible types in Rooc *)
-type roc_type =
-    TInt
-  | TFloat
-  | TBool
-  | TString
+type roc_type = 
+    T_int
+  | T_float
+  | T_string
+  | T_bool
+  | T_void
+  | T_unit
   (* | TFunction of roc_type list * roc_type  *)
-  | TUnit
-  | TVoid
   (*%TODO:*)
 
 (* Define the runtime values in Rooc *)
 type roc_value =
-    VInt of int
-  | VFloat of float
-  | VBool of bool
-  | VString of string
-  | Null
+    V_int of int
+  | V_float of float
+  | V_bool of bool
+  | V_string of string
+  | V_null
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
@@ -87,9 +87,14 @@ type roc_function = {
     rfun_body : roc_block_expr;
 }
 
+type roc_item = 
+    FunctionItem of roc_function
+  (* | ConstantItem of roc_constant *)
+  (* | TypeItem of %TODO *)
+  (* ... other item types ... *)
+
 type roc_module = {
-    rm_functions: roc_function list;
-    rm_constants: name_type_bind list;
+  rm_items: roc_item list;
     (* %TODO: *)
 }
 
@@ -179,12 +184,12 @@ let string_of_unary_op = function
   | Not -> "!"
 
 let string_of_roc_type = function
-  TInt -> "int"
-| TBool -> "bool"
-| TFloat -> "float"
-| TVoid -> "void" 
-| TString -> "string"
-| TUnit -> "unit"
+  T_int -> "int"
+| T_bool -> "bool"
+| T_float -> "float"
+| T_void -> "void" 
+| T_string -> "string"
+| T_unit -> "unit"
 
 (* let rec string_of_typ = function
   Primitive(t) -> string_of_ptyp t
