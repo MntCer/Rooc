@@ -30,11 +30,11 @@ let translate (functions, traits, structs, impls) =
 
   
 
-  let trait_decls : ((L.llvalue * strait_decl) StringMap.t) StringMap.t = 
+  let trait_decls : ((L.llvalue * sfunc_sig) StringMap.t) StringMap.t = 
   (* record traits *)
   let trait_decl m tdecl =
     let name = tdecl.str_name 
-    and let function_sigs : (L.llvalue * sfunc_sig) StringMap.t =
+    and function_sigs : (L.llvalue * sfunc_sig) StringMap.t =
     (* record function sigs*)
       let function_sig m fsig =
         let name = fsig.sfs_name
@@ -43,18 +43,18 @@ let translate (functions, traits, structs, impls) =
         in let ftype = L.function_type (ltype_of_typ fsig.sfs_typ) formal_types in
         StringMap.add name (L.declare_function name ftype the_module, fsig) m in
       List.fold_left function_sig StringMap.empty tdecl.str_methods in
-    in
-    StringMap.add name function_sig m in
+    StringMap.add name function_sigs m in
   List.fold_left trait_decl StringMap.empty traits in
 
   let string_of_fsig fsig = 
-    string_of_typ fsig.fs_typ ^ " " ^
-    fsig.fs_name ^ "(" ^ String.concat ", " (StringMap.map snd fsig.fs_formals) ^ ")\n" in
+    A.string_of_typ fsig.sfs_typ ^ " " ^
+    fsig.sfs_name ^ "(" ^ String.concat ", " (List.map snd fsig.sfs_formals) ^ ")\n" in
   let string_of_tdecl tdecl =
-    "trait " ^ tdecl.tr_name ^ "\n" ^
-    String.concat "" (StringMap.map string_of_fsig tdecl.tr_methods) in
-  let _ = print_string (string_of_tdecl trait_decl)
-
+    "trait " ^ tdecl.str_name ^ "\n" ^
+    String.concat "" (List.map string_of_fsig tdecl.str_methods) in
+  let string_of_tdecls tdecls = 
+	"\n" ^ StringMap.map string_of_tdecl tdecls ^ "\n" in
+  let _ = print_string (string_of_tdecls trait_decls) in
   let struct_decls : (L.llvalue * sstruct_decl) StringMap.t =
   (* record structs *)
   StringMap.empty in
