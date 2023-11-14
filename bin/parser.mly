@@ -9,9 +9,9 @@ open Ast
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
-%token VAR FUN STRUCT IMPL TRAIT
+%token VAR LET FUN STRUCT IMPL TRAIT
 %token INT BOOL FLOAT STR VOID
-// %token LET LIST
+// %token LIST
 %token RETURN IF ELSE FOR WHILE BREAK CONTINUE
 %token <int> ILIT
 %token <string> FLIT SLIT ID
@@ -45,7 +45,7 @@ roc_item:
   // | %TODO
 
 roc_function:
-    roc_function_signature roc_block_expression SEMI
+    roc_function_signature roc_block_expr SEMI
       {{ 
         rfun_signature : $1;
         rfun_body : $2 }}
@@ -77,7 +77,7 @@ roc_function_params:
         rfp_params = $1 }
     
 roc_self_param:
-    SELF  { true}
+    SELF  { true }
 
 roc_ns_params:
   // No need to handle "empty list" case here, because it is handled by the roc_function_params rule
@@ -88,7 +88,37 @@ roc_ns_param:
     ID COLON type { {
       rv_name = $1;
       rv_type = $3;
-      rv_initial_value = None } }
+      rv_initial_expr = None } }
+
+roc_statement:
+    SEMI {}
+  | roc_expr SEMI { Roc_expr_stmt($1) }
+  | VAR ID COLON type ASSIGN roc_expr SEMI
+    {
+      Roc_var_decl_stmt({
+        rv_name = $2;
+        rv_type = $4;
+        rv_initial_expr = $6 }) }
+  | VAR ID COLON type SEMI
+    {
+      Roc_var_decl_stmt({
+        rv_name = $2;
+        rv_type = $4;
+        rv_initial_expr = None }) }
+  | LET ID COLON type ASSIGN roc_expr SEMI
+    {
+      Roc_let_decl_stmt({
+        rv_name = $2;
+        rv_type = $4;
+        rv_initial_expr = $6 }) }
+  | LET ID COLON type SEMI
+    {
+      Roc_let_decl_stmt({
+        rv_name = $2;
+        rv_type = $4;
+        rv_initial_expr = None }) }
+
+
 
 type:
     INT   { T_int    }

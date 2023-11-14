@@ -63,10 +63,10 @@ and roc_block_expr =
     Roc_Block_expr of roc_stmt list
 
 and roc_variable =
-    {
-      rv_name : string;
+    { rv_name : string;
       rv_type : roc_type;
       rv_initial_value : roc_expr option; }
+
 
 and roc_stmt =
     Roc_expr_stmt of roc_expr
