@@ -85,33 +85,10 @@ roc_ns_params:
   | roc_ns_params COMMA roc_ns_param { $3 :: $1 }
     
 roc_ns_param:
-    ID COLON type { ($1,$3) }
-
-
-
-tdecl: 
-  TRAIT ID LBRACE fsign_list RBRACE SEMI
-   { { tr_name = $2;
-       tr_methods = List.rev $4 } }
-
-idecl:
-  IMPL ID FOR ID LBRACE fdecl_list RBRACE SEMI
-{ {    i_name = $2;
-       i_forstruct = $4;
-       i_methods = List.rev $6 } }
-
-sdecl: 
-  STRUCT ID LBRACE vdecl_list RBRACE SEMI
-{ {    s_name = $2;
-       s_fields = List.rev $4 } }
-
-formals_opt:
-    /* nothing */ { [] }
-  | formal_list   { $1 }
-
-formal_list:
-    ID COLON typ             { [($3,$1)]     }
-  | formal_list ID COLON typ { ($4,$2) :: $1 }
+    ID COLON type { {
+      rv_name = $1;
+      rv_type = $3;
+      rv_initial_value = None } }
 
 type:
     INT   { T_int    }

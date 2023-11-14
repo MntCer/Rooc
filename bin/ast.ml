@@ -32,7 +32,6 @@ type roc_value =
 and generic_typ = List of typ
 and primitive_typ = Int | Float | String | Bool | Void *)
 
-type name_type_bind = string * roc_type
 
 type roc_expr =
     (* literal expr *)
@@ -63,17 +62,25 @@ type roc_expr =
 and roc_block_expr =
     Roc_Block_expr of roc_stmt list
 
+and roc_variable =
+    {
+      rv_name : string;
+      rv_type : roc_type;
+      rv_initial_value : roc_expr option; }
+
 and roc_stmt =
     Roc_expr_stmt of roc_expr
-  | Roc_var_decl_stmt of name_type_bind * roc_expr
-  | Roc_let_decl_stmt of name_type_bind * roc_expr
+  | Roc_var_decl_stmt of roc_variable
+  | Roc_let_decl_stmt of roc_variable
+
+
 
 (* ... other entry types as needed ... *)
 
 
 type roc_function_params = {
   rfp_self : bool;
-  rfp_not_self_params : name_type_bind list;
+  rfp_not_self_params : roc_variable list;
 }
 
 type roc_function_signature = {
@@ -126,17 +133,8 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt *)
 
-(* type roc_function = *)
 
-
-
-(* type func_decl = {
-    fd_typ : roc_type;
-    fd_name : string;
-    fd_formals : name_type_bind list;
-    fd_locals : name_type_bind list;
-    fd_body : roc_block_expr;
-  }
+(* 
 
 (* for trait *)
 type func_sig = {
@@ -161,7 +159,9 @@ type impl_decl = {
   i_methods : func_decl list;
 } *)
 
+(* ************************************************************ *)
 (* Pretty-printing functions *)
+(* ************************************************************ *)
 
 let string_of_arith_logical_op = function
     Add -> "+"
@@ -205,8 +205,10 @@ and string_of_ptyp = function
 | String -> "string"
 | Void -> "void" *)
 
-(* *************************************** *)
+(* ************************************************************ *)
 (* print function of old ast *)
+(* ************************************************************ *)
+
 (* let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | Fliteral(l) -> l
