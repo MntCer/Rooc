@@ -73,12 +73,12 @@ and roc_stmt =
 
 type roc_function_params = {
   rfp_self : bool;
-  rfp_params : name_type_bind list;
+  rfp_not_self_params : name_type_bind list;
 }
 
 type roc_function_signature = {
   rfs_name : string;
-  rfs_params : roc_function_params;
+  rfs_params : roc_function_params option;
   rfs_return_type : roc_type;
 }
 

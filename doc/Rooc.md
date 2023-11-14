@@ -286,9 +286,9 @@ A constant value is not associated with a specific memory location in the progra
 Function           = FunctionSignature BlockExpression ";" .
 FunctionSignature  = "fun" identifier "(" [ FunctionParams ] ")" "->" Type .
 FunctionParams     = SelfParam [ "," ]
-                   | [ SelfParam "," ] FunctionParam 
-                                       { "," FunctionParam } [ "," ] .
-FunctionParam      = identifier ":" Type .
+                   | [ SelfParam "," ] NotSelfParam 
+                                       { "," NotSelfParam } [ "," ] .
+NotSelfParam      = identifier ":" Type .
 ```
 
 A function consists of a block, along with a name, a set of parameters, and an output type. 

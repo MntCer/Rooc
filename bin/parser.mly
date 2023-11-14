@@ -18,7 +18,7 @@ open Ast
 %token EOF
 
 %start roc_module
-%type <Ast.roc_module> odule
+%type <Ast.roc_module> roc_module
 
 %nonassoc NOELSE
 %nonassoc ELSE
@@ -33,45 +33,61 @@ open Ast
 
 %%
 
-module:
-  items EOF { $1 }
+roc_module:
+  roc_items EOF { $1 }
 
-items:
-    /* nothing */ { ([],[]) }
-  | items function { ($2 :: (get_2_1 $1),get_2_2 $1) }
-  | items constant_value { (get_2_1 $1, $2 :: (get_2_2 $1)) }
+roc_items:
+    /* nothing */ { ([]) }
+  | roc_items roc_item { ($2 :: $1) }
 
-function:
-  function_signature block_expression 
-    {{ rfun_signature : $1;
-       rfun_body : $2 }}
+roc_item:
+    roc_function { FunctionItem($1) }
+  // | %TODO
 
-function_signature:
-  FUN ID LPAREN function_params RPAREN RARROW type
-    { { 
-      rfs_name = $2;
-      rfs_params = $4;
-      rfs_return_type = $7 } }
+roc_function:
+    roc_function_signature roc_block_expression SEMI
+      {{ 
+        rfun_signature : $1;
+        rfun_body : $2 }}
+
+roc_function_signature:
+    FUN ID LPAREN roc_function_params RPAREN RARROW type
+      { { 
+        rfs_name = $2;
+        rfs_params = $4;
+        rfs_return_type = $7 } }
+  | FUN ID LPAREN RPAREN RARROW type
+      { { 
+        rfs_name = $2;
+        rfs_params = None;
+        rfs_return_type = $6 } }
     
-function_params:
-
+roc_function_params:
+    roc_self_param COMMA roc_ns_params | roc_self_param COMMA roc_ns_params COMMA 
+      {
+        rfp_self_param = $1;
+        rfp_params = $3 }
+  | roc_self_param | roc_self_param COMMA 
+      {
+        rfp_self_param = $1;
+        rfp_params = [] }
+  | roc_ns_params | roc_ns_params COMMA 
+      {
+        rfp_self_param = false;
+        rfp_params = $1 }
     
+roc_self_param:
+    SELF  { true}
+
+roc_ns_params:
+  // No need to handle "empty list" case here, because it is handled by the roc_function_params rule
+    roc_ns_param { [$1] }
+  | roc_ns_params COMMA roc_ns_param { $3 :: $1 }
+    
+roc_ns_param:
+    ID COLON type { ($1,$3) }
 
 
-
-fdecl_list:
-   /* nothing */ { [] }
-  | fdecl_list fdecl { $2 :: $1 }
-
-fsign: 
-   FUN ID LPAREN formals_opt RPAREN RARROW typ SEMI
-    { { fs_typ = $7;
-        fs_name = $2;
-        fs_formals = $4 } }
-
-fsign_list:
-   /* nothing */ { [] }
-  | fsign_list fsign { $2 :: $1 }
 
 tdecl: 
   TRAIT ID LBRACE fsign_list RBRACE SEMI
@@ -98,12 +114,12 @@ formal_list:
   | formal_list ID COLON typ { ($4,$2) :: $1 }
 
 type:
-    INT   { TInt    }
-  | FLOAT { TFloat  }
-  | BOOL  { TBool   }
-  | STR   { TString }
-  | VOID  { TVoid   }
-  | LPAREN RPAREN { TUnit }
+    INT   { T_int    }
+  | FLOAT { T_float  }
+  | BOOL  { T_bool   }
+  | STR   { T_string }
+  | VOID  { T_void   }
+  | LPAREN RPAREN { T_unit }
 
 // primitive_typ:
 //     INT   { Int    }

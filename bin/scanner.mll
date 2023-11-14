@@ -64,6 +64,7 @@ rule token = parse
 | "struct" { STRUCT }
 | "impl"   { IMPL }
 | "trait"  { TRAIT }
+| "self"   { SELF }
 (* *)
 | "int"    { INT }
 | "float"  { FLOAT }
