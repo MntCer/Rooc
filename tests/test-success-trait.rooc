@@ -1,16 +1,16 @@
+trait testTraitAgain {
+    print_str() -> int;
+};
+
 trait testTrait {
     print_str() -> int;
     print_bool() -> bool;
     print_float() -> float;
-    random(x:int, y:int) -> int;
-};
-
-struct Circle {
-    var x:int;
-    var y:int;
-    var radius:int;
-};
-
-trait testTraitAgain {
-    print_str() -> int;
+    print_text() -> string;
+    random(x:int) -> int;
+    twoInt(x:int, y:int) -> int;
+    twoFlo(x:float, y:float) -> float;
+    diffInput(x:string, y:bool) -> float;
+    testEqual(x:int, y:float, z:bool) -> bool;
+    intToStr(x:int) -> string;
 };
