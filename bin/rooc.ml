@@ -3,7 +3,7 @@
    and dump the module *)
 
 type action = Ast 
-            (* | Sast  *)
+            | Sast 
             (* | LLVM_IR | Compile *)
 
 let () =
@@ -11,7 +11,7 @@ let () =
   let set_action a () = action := a in
   let speclist = [
     ("-a", Arg.Unit (set_action Ast), "Print the AST");
-    (* ("-s", Arg.Unit (set_action Sast), "Print the SAST"); *)
+    ("-s", Arg.Unit (set_action Sast), "Print the SAST");
   ] in  
   let usage_msg = "usage: ./rooc.native [-a|-s|-l|-c] [file.rooc]" in
   let channel = ref stdin in
@@ -20,4 +20,10 @@ let () =
   let lexbuf = Lexing.from_channel !channel in
   let ast = Parser.roc_module Scanner.token lexbuf in  
   match !action with
-    Ast -> print_string (Ast.string_of_module ast)
+      Ast -> print_string (Ast.string_of_module ast)
+    | _ -> 
+      let sast =  ast in
+      match !action with
+        Ast     -> print_string (Ast.string_of_module ast)
+      | Sast    -> print_string (Ast.string_of_module sast)
+  
