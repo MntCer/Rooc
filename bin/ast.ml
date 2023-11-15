@@ -37,42 +37,40 @@ type roc_expr =
     (* literal expr *)
     Roc_string_literal of string
   | Roc_int_literal of int
-  | Roc_float_literal of float
+  | Roc_float_literal of string
   | Roc_bool_literal of bool
     (* operator expr *)
   | Roc_unary_expr of unary_op * roc_expr
-  | Roc_arith_logical_expr of roc_expr * arith_logical_op * roc_expr
-  | Roc_comparison_expr of roc_expr * comparison_op * roc_expr
-  | Roc_assign_expr of roc_expr * roc_expr
+  | Roc_arith_logical_expr of  arith_logical_op * roc_expr * roc_expr
+  | Roc_comparison_expr of  comparison_op * roc_expr *roc_expr
+  | Roc_assignment_expr of roc_expr * roc_expr
     (* grouped expr *)
   | Roc_grouped_expr of roc_expr
     (* call expr *)
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
+  | Roc
     (* return expr *)
   | Roc_return_expr of roc_expr
+    (* block expr *)
+  | Roc_block_expr of roc_stmt list
     (* loop expr *)
-  | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_block_expr
-  | Roc_while_expr of roc_expr * roc_block_expr
+  | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_expr
+  | Roc_while_expr of roc_expr * roc_expr
   | Roc_break_expr
   | Roc_continue_expr
     (* if expr *)
-  | Roc_if_expr of roc_expr * roc_block_expr * roc_block_expr
-  | Roc_null_expr
-
-and roc_block_expr =
-    Roc_Block_expr of roc_stmt list
+  | Roc_if_expr of roc_expr * roc_expr * roc_expr
 
 and roc_variable =
     { rv_name : string;
       rv_type : roc_type;
-      rv_initial_value : roc_expr option; }
-
+      rv_initial_expr : roc_expr option; }
 
 and roc_stmt =
     Roc_expr_stmt of roc_expr
   | Roc_var_decl_stmt of roc_variable
   | Roc_let_decl_stmt of roc_variable
-
+  | Roc_empty_stmt
 
 
 (* ... other entry types as needed ... *)
@@ -90,8 +88,8 @@ type roc_function_signature = {
 }
 
 type roc_function = {
-    rfun_signature : roc_function_signature;
-    rfun_body : roc_block_expr;
+  rf_signature : roc_function_signature;
+  rf_body : roc_expr;
 }
 
 type roc_item = 
@@ -104,35 +102,6 @@ type roc_module = {
   rm_items: roc_item list;
     (* %TODO: *)
 }
-
-let get_2_1 (a, _) = a
-let get_2_2 (_, a) = a
-
-(* type program = func_decl list * trait_decl list * struct_decl list
-               * impl_decl list *)
-
-
-(* type expr =
-    Literal of int
-  | Fliteral of string (*float*)
-  | Sliteral of string (*string*)
-  | Member of string * string
-  | BoolLit of bool
-  | Id of string
-  | Binop of expr * op * expr
-  | Unop of uop * expr
-  | Assign of string * expr
-  | Call of string * expr list
-  | Noexpr
-
-type stmt =
-    Block of stmt list
-  | Expr of expr
-  | Return of expr
-  | If of expr * stmt * stmt
-  | For of expr * expr * expr * stmt
-  | While of expr * stmt *)
-
 
 (* 
 
@@ -162,6 +131,9 @@ type impl_decl = {
 (* ************************************************************ *)
 (* Pretty-printing functions *)
 (* ************************************************************ *)
+
+let string_of_module = function
+    _ -> "TODO"
 
 let string_of_arith_logical_op = function
     Add -> "+"

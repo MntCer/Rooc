@@ -687,13 +687,13 @@ for(<id> in <list_id>){
 
 ### If Expression
 
+%TODO: this one could be changed into more convient form
+
 ```ebnf
-IfStatement = "if" "(" Expression ")" "{" Statements "}" { "else" "{" Statements "}" }.
+IfStatement = 
+    "if" "(" Expression ")" BlockExpression 
+        "else"  BlockExpression .
 ```
-
-
-If `Expression` is evaluated to `true`, the execution flow goes to the first `Statements` and ignores the second `Statements`(if any). Otherwise, only execute the `Statements` after `else`(if any). "`else {Statements}`" is not required.
-
 
 <!-- 
 

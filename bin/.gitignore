@@ -3,3 +3,4 @@
 scanner.ml
 ast.ml.ml
 *.swp
+*.conflicts

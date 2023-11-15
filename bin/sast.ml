@@ -1,13 +1,26 @@
 
 open Ast
 
-type roc_symbol_table_entry =
-
+(* 
 
 type roc_symbol_table = {
   rst_parent : roc_symbol_table option;
   rst_symbols : roc_symbol list;
 }
+
+
+type symbol_table_entry =
+  VarEntry of asdadasd
+  FunEntry of asdadasd
+
+let check_symtable tab =
+
+type symbol_table = {
+    entries: (string, symbol_table_entry) Hashtbl.t;
+    parent: symbol_table option;
+    scope_type: scope_type;
+}
+
 
 type roc_s_stmt =
     TODO of string
@@ -34,4 +47,4 @@ type roc_s_function = {
 
 type roc_s_module = {
 
-}
+} *)

@@ -9,8 +9,9 @@
 
 (menhir
   (modules parser)
-  ; (flags --trace)
-  ; (flags --explain)
+  (flags 
+          --trace
+  )
   )
 
 (env

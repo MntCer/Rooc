@@ -1,18 +1,19 @@
 /* Ocamlyacc parser for Rooc */
-
 %{
 open Ast
+open Util
 %}
+
 /* operator & punctuation */
 %token SEMI 
 %token ASSIGN PLUS MINUS TIMES DIVIDE LPAREN RPAREN
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
-%token VAR LET FUN STRUCT IMPL TRAIT
+%token VAR LET FUN STRUCT IMPL TRAIT CONST
 %token INT BOOL FLOAT STR VOID
 // %token LIST
-%token RETURN IF ELSE FOR WHILE BREAK CONTINUE
+%token RETURN IF ELSE FOR WHILE BREAK CONTINUE SELF
 %token <int> ILIT
 %token <string> FLIT SLIT ID
 %token EOF
@@ -20,13 +21,12 @@ open Ast
 %start roc_module
 %type <Ast.roc_module> roc_module
 
-%nonassoc NOELSE
+%nonassoc NOELSE RETURN
 %nonassoc ELSE
 %right ASSIGN
 %left OR
 %left AND
-%left EQ NEQ
-%left LT GT LEQ GEQ
+%left LT GT LEQ GEQ EQ NEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT
@@ -34,7 +34,10 @@ open Ast
 %%
 
 roc_module:
-  roc_items EOF { $1 }
+  roc_items EOF 
+  { { 
+      rm_items = List.rev $1;
+      } }
 
 roc_items:
     /* nothing */ { ([]) }
@@ -46,17 +49,17 @@ roc_item:
 
 roc_function:
     roc_function_signature roc_block_expr SEMI
-      {{ 
-        rfun_signature : $1;
-        rfun_body : $2 }}
+      { { 
+        rf_signature = $1;
+        rf_body = $2 } }
 
 roc_function_signature:
-    FUN ID LPAREN roc_function_params RPAREN RARROW type
+    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type
       { { 
         rfs_name = $2;
-        rfs_params = $4;
+        rfs_params = Some ($4);
         rfs_return_type = $7 } }
-  | FUN ID LPAREN RPAREN RARROW type
+  | FUN ID LPAREN RPAREN RARROW roc_type
       { { 
         rfs_name = $2;
         rfs_params = None;
@@ -64,17 +67,18 @@ roc_function_signature:
     
 roc_function_params:
     roc_self_param COMMA roc_ns_params | roc_self_param COMMA roc_ns_params COMMA 
-      {
-        rfp_self_param = $1;
-        rfp_params = $3 }
+      { {
+        rfp_self = $1;
+        rfp_not_self_params = List.rev $3
+      } }
   | roc_self_param | roc_self_param COMMA 
-      {
-        rfp_self_param = $1;
-        rfp_params = [] }
+      { {
+        rfp_self = $1;
+        rfp_not_self_params = [] } }
   | roc_ns_params | roc_ns_params COMMA 
-      {
-        rfp_self_param = false;
-        rfp_params = $1 }
+      { {
+        rfp_self = false;
+        rfp_not_self_params = List.rev $1 } }
     
 roc_self_param:
     SELF  { true }
@@ -85,42 +89,151 @@ roc_ns_params:
   | roc_ns_params COMMA roc_ns_param { $3 :: $1 }
     
 roc_ns_param:
-    ID COLON type { {
+    ID COLON roc_type { {
       rv_name = $1;
       rv_type = $3;
       rv_initial_expr = None } }
 
 roc_statement:
-    SEMI {}
-  | roc_expr SEMI { Roc_expr_stmt($1) }
-  | VAR ID COLON type ASSIGN roc_expr SEMI
+    roc_expr_stmt { $1 }
+  | roc_decl_stmt { $1 }
+  | SEMI { Roc_empty_stmt }
+
+roc_decl_stmt:
+    VAR ID COLON roc_type ASSIGN roc_expr SEMI
     {
       Roc_var_decl_stmt({
         rv_name = $2;
         rv_type = $4;
-        rv_initial_expr = $6 }) }
-  | VAR ID COLON type SEMI
+        rv_initial_expr = Some ($6) }) }
+  | VAR ID COLON roc_type SEMI
     {
       Roc_var_decl_stmt({
         rv_name = $2;
         rv_type = $4;
         rv_initial_expr = None }) }
-  | LET ID COLON type ASSIGN roc_expr SEMI
+  | LET ID COLON roc_type ASSIGN roc_expr SEMI
     {
       Roc_let_decl_stmt({
         rv_name = $2;
         rv_type = $4;
-        rv_initial_expr = $6 }) }
-  | LET ID COLON type SEMI
+        rv_initial_expr = Some ($6) }) }
+  | LET ID COLON roc_type SEMI
     {
       Roc_let_decl_stmt({
         rv_name = $2;
         rv_type = $4;
         rv_initial_expr = None }) }
 
+roc_expr_stmt:
+    roc_expr SEMI { Roc_expr_stmt($1) }
+
+roc_expr:
+    roc_expr_without_block { $1 }
+  | roc_expr_with_block { $1 }
+
+roc_expr_without_block:
+    roc_literal_expr {$1}
+  | roc_operator_expr {$1}
+  | roc_grouped_expr {$1}
+  | roc_call_expr {$1}
+  | roc_continue_expr {$1}
+  | roc_break_expr {$1}
+  | roc_return_expr {$1}
+
+roc_literal_expr:
+    SLIT { Roc_string_literal($1) }
+  | ILIT { Roc_int_literal($1) }
+  // %TODO: can convert the float literal here.
+  | FLIT { Roc_float_literal($1) } 
+  | BLIT { Roc_bool_literal($1) }
+
+roc_operator_expr:
+    roc_unary_expr {$1}
+  | roc_arith_logical_expr {$1}
+  | roc_comparison_expr {$1}
+  | roc_assignment_expr {$1}
+
+roc_unary_expr:
+    MINUS roc_expr %prec NOT { Roc_unary_expr(Neg, $2) }
+  | NOT roc_expr { Roc_unary_expr(Not, $2) }
+
+roc_arith_logical_expr:
+    roc_expr PLUS roc_expr { Roc_arith_logical_expr(Add, $1, $3) }
+  | roc_expr MINUS roc_expr { Roc_arith_logical_expr(Sub, $1, $3) }
+  | roc_expr TIMES roc_expr { Roc_arith_logical_expr(Mult, $1, $3) }
+  | roc_expr DIVIDE roc_expr { Roc_arith_logical_expr(Div, $1, $3) }
+  | roc_expr AND roc_expr { Roc_arith_logical_expr(And, $1, $3) }
+  | roc_expr OR roc_expr { Roc_arith_logical_expr(Or, $1, $3) }
+
+roc_comparison_expr:
+    roc_expr EQ roc_expr { Roc_comparison_expr(Equal, $1, $3) }
+  | roc_expr NEQ roc_expr { Roc_comparison_expr(Neq, $1, $3) }
+  | roc_expr LT roc_expr { Roc_comparison_expr(Less, $1, $3) }
+  | roc_expr LEQ roc_expr { Roc_comparison_expr(Leq, $1, $3) }
+  | roc_expr GT roc_expr { Roc_comparison_expr(Greater, $1, $3) }
+  | roc_expr GEQ roc_expr { Roc_comparison_expr(Geq, $1, $3) }
+
+roc_assignment_expr:
+    roc_expr ASSIGN roc_expr { Roc_assignment_expr($1, $3) }
+
+roc_grouped_expr:
+    LPAREN roc_expr RPAREN { Roc_grouped_expr($2) }
+
+roc_call_expr:    
+    ID LPAREN roc_call_params RPAREN { Roc_call_expr($1, $3) }
+  | ID LPAREN RPAREN { Roc_call_expr($1, []) }
+
+roc_call_params:
+    roc_call_params_no_comma optional_comma { List.rev $1 }
+
+roc_call_params_no_comma:
+    roc_expr { [$1] }
+  | roc_call_params_no_comma COMMA roc_expr { $3 :: $1 }
+
+optional_comma:
+    /* empty */ { () }
+  | COMMA { () }
+
+roc_continue_expr:
+    CONTINUE { Roc_continue_expr }
+
+roc_break_expr:
+    BREAK { Roc_break_expr }
+
+roc_return_expr:
+    RETURN roc_expr { Roc_return_expr($2) }
 
 
-type:
+roc_expr_with_block:
+    roc_block_expr {$1}
+  | roc_if_expr {$1}
+  | roc_loop_expr {$1}
+
+
+roc_block_expr:
+    LBRACE roc_statements RBRACE { Roc_block_expr(List.rev $2) }
+  | LBRACE RBRACE { Roc_block_expr([]) }
+
+roc_statements:
+    roc_statement { [$1] }
+  | roc_statements roc_statement { $2 :: $1 }
+
+roc_if_expr:
+    IF LPAREN roc_expr roc_block_expr ELSE roc_block_expr { Roc_if_expr($3, $4, $6) }
+
+roc_loop_expr:
+    roc_for_expr  { $1 }
+  | roc_while_expr { $1 }
+
+roc_for_expr:
+    FOR LPAREN roc_expr SEMI roc_expr SEMI roc_expr RPAREN roc_block_expr { Roc_for_expr($3, $5, $7, $9) }
+
+roc_while_expr:
+    WHILE LPAREN roc_expr RPAREN roc_block_expr { Roc_while_expr($3, $5) }
+
+
+roc_type:
     INT   { T_int    }
   | FLOAT { T_float  }
   | BOOL  { T_bool   }
@@ -141,64 +254,3 @@ type:
 // typ:
 //     primitive_typ { Primitive($1)}
 //   | generic_typ     { Generic($1) }
-
-vdecl_list:
-    /* nothing */    { [] }
-  | vdecl_list vdecl { $2 :: $1 }
-
-vdecl:
-   VAR ID COLON typ SEMI { ($4, $2) }
-
-stmt_list:
-    /* nothing */  { [] }
-  | stmt_list stmt { $2 :: $1 }
-
-stmt:
-    expr SEMI                               { Expr $1               }
-  | RETURN expr_opt SEMI                    { Return $2             }
-  | LBRACE stmt_list RBRACE                 { Block(List.rev $2)    }
-  | IF LPAREN expr RPAREN stmt %prec NOELSE
-                                            { If($3, $5, Block([])) }
-  | IF LPAREN expr RPAREN stmt ELSE stmt
-                                            { If($3, $5, $7)       }
-  | FOR LPAREN expr_opt SEMI expr SEMI expr_opt RPAREN stmt
-                                            { For($3, $5, $7, $9)   }
-  | WHILE LPAREN expr RPAREN stmt
-                                            { While($3, $5)         }
-
-expr_opt:
-    /* nothing */ { Noexpr }
-  | expr          { $1 }
-
-expr:
-    ILIT             { Literal($1)            }
-  | FLIT	           { Fliteral($1)           }
-  | BLIT             { BoolLit($1)            }
-  | ID               { Id($1)                 }
-  | SLIT             { Sliteral($1)           }
-  | ID DOT ID        { Member($1, $3)         }
-  | expr PLUS   expr { Binop($1, Add,   $3)   }
-  | expr MINUS  expr { Binop($1, Sub,   $3)   }
-  | expr TIMES  expr { Binop($1, Mult,  $3)   }
-  | expr DIVIDE expr { Binop($1, Div,   $3)   }
-  | expr EQ     expr { Binop($1, Equal, $3)   }
-  | expr NEQ    expr { Binop($1, Neq,   $3)   }
-  | expr LT     expr { Binop($1, Less,  $3)   }
-  | expr LEQ    expr { Binop($1, Leq,   $3)   }
-  | expr GT     expr { Binop($1, Greater, $3) }
-  | expr GEQ    expr { Binop($1, Geq,   $3)   }
-  | expr AND    expr { Binop($1, And,   $3)   }
-  | expr OR     expr { Binop($1, Or,    $3)   }
-  | MINUS expr %prec NOT { Unop(Neg, $2)      }
-  | NOT expr         { Unop(Not, $2)          }
-  | ID ASSIGN expr   { Assign($1, $3)         }
-  | ID LPAREN args_opt RPAREN { Call($1, $3)  }
-  | LPAREN expr RPAREN { $2                   }
-
-args_opt:
-    /* nothing */ { [] }
-  | args_list  { List.rev $1 }
-
-args_list:
-    expr                    { [$1] }
-  | args_list COMMA expr { $3 :: $1 }
