@@ -369,6 +369,9 @@ constants -->
 <!-- %TODO: ref -->
 Traits are implemented for specific types through separate implementations.
 
+<!-- %TODO: ref -->
+All functions are public visibility by default.
+
 Trait functions may omit the function body by replacing it with a semicolon. This indicates that the implementation must define the function. If the trait function defines a body, this definition acts as a default for any implementation which does not override it.
 
 Example:
@@ -769,6 +772,10 @@ Elements in a list should have the same type.
 ### Struct type
 
 <!-- %TODO: -->
+
+## Name analysis
+
+### Visibility
 
 ## Built-in functions
 

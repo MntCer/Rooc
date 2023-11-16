@@ -1,7 +1,7 @@
 
 open Ast
 
-type roc_s_type=
+type s_type =
     ST_int
   | ST_float
   | ST_string
@@ -9,77 +9,89 @@ type roc_s_type=
   | ST_void
   | ST_unit
 
+type s_expr = 
+    S_string_literal of string
+  | S_int_literal of int
+  | S_float_literal of string
+  | S_bool_literal of bool
+
+  | S_unary_expr of unary_op * s_expr
+  | S_arith_logical_expr of arith_logical_op * s_expr * s_expr
+  | S_comparison_expr of comparison_op * s_expr * s_expr
+  | S_assign_expr of s_expr * s_expr
+  | S_call_expr of s_call_expr
+  | S_grouped_expr of s_expr
+
+  | S_return_expr of s_expr
+
+  | S_break_expr
+  | S_continue_expr
+
+  | S_null_expr
 
 
-type roc_s_expr =
-
-
-and roc_s_block = {
-  rsb_stmts : roc_s_stmt list;
-  rsb_scope : roc_s_scope;
-
+  
+and s_call_expr ={
+  (* function which be called needs to be declared before *)
+  sce_function_called: s_function;
+  sce_param: s_expr list;
 }
 
-and roc_stmt =
-    Roc_expr_stmt of roc_expr
-  | Roc_var_decl_stmt of roc_variable
-  | Roc_let_decl_stmt of roc_variable
-
-
-type roc_s_function = {
-  (* rfs_self: some type of refer *)
-  rsf_params : roc_s_variable list;
-  rsf_return_type : roc_s_type;
-  rsf_body : roc_s_block;
-
+and s_for_expr = {
+  sfe_init : s_expr;
+  sfe_condition : s_expr;
+  sfe_update : s_expr;
+  sfe_body : s_block_expr;
 }
 
-type symbol_table_entry =
-    FuncEntry of roc_s_function
-  | VarEntry of roc_s_variable
-
-
-
-(* 
-
-type roc_symbol_table = {
-  rst_parent : roc_symbol_table option;
-  rst_symbols : roc_symbol list;
+and s_while = {
+  sw_condition : s_expr;
+  sw_body : s_expr;
 }
 
-
-type symbol_table_entry =
-  VarEntry of asdadasd
-  FunEntry of asdadasd
-
-let check_symtable tab =
-
-type symbol_table = {
-    entries: (string, symbol_table_entry) Hashtbl.t;
-    parent: symbol_table option;
-    scope_type: scope_type;
+and s_if_expr = {
+  sie_condition: s_expr ;
+  sie_true_branch : s_block_expr;
+  sie_false_branch : s_block_expr;
 }
 
+and s_variable =
+  {
+    sv_name: string;
+    sv_type: s_type;
+    sv_initial_value : s_expr option;
+  }
 
-type roc_s_stmt =
+and s_stmt =
     TODO of string
 
-
-
-type roc_s_function_param = {
-  rsfp_name : string;
-  rsfp_type : roc_type;
+and s_block_expr = {
+  sb_stmts : s_stmt list;
+  sb_scope : s_symbol_table;
 }
 
-type roc_s_function = {
-  rsf_name : string;
-  rsfp_self: bool;
-  rsf_params : roc_s_function_param list;
-  rsf_return_type : roc_type;
-  rsf_body : roc_s_block;
+and s_function_param = {
+  sfp_name : string;
+  sfp_type : s_type;
 }
 
+and s_function = {
+  sf_name : string;
+  sfp_self: bool;
+  sf_params : s_function_param list;
+  sf_return_type : s_type;
+  sf_body : s_block_expr;
+}
 
-type roc_s_module = {
+type s_symbol_table_entry =
+    FuncEntry of s_function
+  | VarEntry of s_variable
 
-} *)
+type s_symbol_table = {
+  sst_parent : s_symbol_table option;
+  sst_symbols: (string, s_symbol_table_entry) Hashtbl.t
+}
+
+type s_module = {
+  sm_scope: s_symbol_table;
+}
