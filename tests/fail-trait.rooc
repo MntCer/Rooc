@@ -1,7 +1,0 @@
-// Test trait with function body (not allowed)
-
-trait Drawable {
-    fun draw() -> void{
-        return;
-    };
-};

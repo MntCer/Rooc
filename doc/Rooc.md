@@ -163,6 +163,7 @@ colon   : :
 ```
 -->
 
+Note: When assigning objects, passing them to functions, or copying values, our current implementation only supports a shallow copy. This means that the objects or values involved will reference the same memory location rather than creating an entirely independent duplicate.
 
 ### Keywords
 
@@ -378,7 +379,7 @@ Example:
 
 ```
 trait Drawable {
-    draw() -> void;
+    fun draw() -> void;
 };
 ```
 
@@ -767,7 +768,7 @@ GenericType = List .
 List        = "list" "(" Type ")" .
 ```
 
-Elements in a list should have the same type.
+Elements in a list should have the same type. The list's implementation is similar to how C++ manages vectors, ensuring that elements are stored contiguously, facilitating easy access and traversal through iterators. When inserting new elements, if the list's size exceeds its capacity, a reallocation process is initiated. This involves allocating a new block of memory, relocating the existing elements to this new space, and subsequently releasing the old memory locations. This dynamic reallocation mechanism ensures the list can dynamically grow in size while maintaining efficient memory usage.
 
 ### Struct type
 
@@ -782,7 +783,7 @@ Elements in a list should have the same type.
 We want to develop a print function spcifically for string such that it can be used for furthur debugging.
 
 ```
-print_str(to_print : str) -> void ;
+fun print_str(to_print : str) -> void ;
 ```
 
 <!-- We also want to implement a function for language user to get to know type of a expression.

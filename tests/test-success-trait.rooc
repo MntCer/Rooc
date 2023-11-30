@@ -1,5 +1,16 @@
-// Test trait with wrong return type (string instead of void)
+trait testTrait {
+    fun print_str() -> int;
+    fun print_bool() -> bool;
+    fun print_float() -> float;
+    fun print_text() -> string;
+    fun random(x:int) -> int;
+    fun twoInt(x:int, y:int) -> int;
+    fun twoFlo(x:float, y:float) -> float;
+    fun diffInput(x:string, y:bool) -> float;
+    fun testEqual(x:int, y:float, z:bool) -> bool;
+    fun intToStr(x:int) -> string;
+};
 
-trait Drawable {
-    fun draw() -> void;
+trait testTraitAgain {
+    print_str() -> int;
 };

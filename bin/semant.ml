@@ -22,12 +22,12 @@ let analyse ast_module =
     | S_assign_expr (e1, e2) -> infer_assign_expr_type e1 e2
   
     | S_call_expr call_expr -> infer_call_expr_type call_expr
-    | S_grouped_expr e -> infer_s_expr_type e
+    | S_grouped_expr e -> infer_expr_type e
   
-    | S_return_expr e -> infer_s_expr_type e
+    | S_return_expr e -> infer_expr_type e
   
     | S_break_expr | S_continue_expr | S_null_expr -> ST_void
-    (* //TODO: need to assure those three kinds' return type *)
+    (* //TODO: need to assure those three kinds' return types *)
   
   
   and infer_unary_expr_type op e =

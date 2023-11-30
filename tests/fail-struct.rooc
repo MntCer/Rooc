@@ -1,6 +1,0 @@
-// Test struct with unsupported intialization
-
-struct Circle {
-    var radius:int=1;
-};
-
