@@ -15,7 +15,6 @@ type roc_type =
   | T_float
   | T_string
   | T_bool
-  | T_void
   | T_unit
   (* | TFunction of roc_type list * roc_type  *)
   (*%TODO:*)
@@ -44,16 +43,12 @@ type roc_expr =
   | Roc_arith_logical_expr of  arith_logical_op * roc_expr * roc_expr
   | Roc_comparison_expr of  comparison_op * roc_expr *roc_expr
   | Roc_assignment_expr of roc_expr * roc_expr
-    (* grouped expr *)
   | Roc_grouped_expr of roc_expr
-    (* call expr *)
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
-  | Roc
-    (* return expr *)
+
+  | Roc_path_exor of (*TODO: *)
   | Roc_return_expr of roc_expr
-    (* block expr *)
   | Roc_block_expr of roc_stmt list
-    (* loop expr *)
   | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_expr
   | Roc_while_expr of roc_expr * roc_expr
   | Roc_break_expr

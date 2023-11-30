@@ -6,11 +6,15 @@ type s_type =
   | ST_float
   | ST_string
   | ST_bool
-  | ST_void
   | ST_unit
   | ST_error
 
-type s_expr = 
+type s_expr = {
+    se_type: s_type;
+    se_content: s_expr_content;
+  }
+
+and s_expr_content =
     S_string_literal of string
   | S_int_literal of int
   | S_float_literal of string
@@ -69,8 +73,8 @@ and s_stmt =
   | S_let_decl_stmt of s_variable
 
 and s_block_expr = {
-  sb_stmts : s_stmt list;
-  sb_scope : s_symbol_table;
+  sbe_stmts : s_stmt list;
+  sbe_scope : s_symbol_table;
 }
 
 and s_function_param = {
@@ -86,11 +90,11 @@ and s_function = {
   sf_body : s_block_expr;
 }
 
-type s_symbol_table_entry =
+and s_symbol_table_entry =
     FuncEntry of s_function
   | VarEntry of s_variable
 
-type s_symbol_table = {
+and s_symbol_table = {
   sst_parent : s_symbol_table option;
   sst_symbols: (string, s_symbol_table_entry) Hashtbl.t
 }

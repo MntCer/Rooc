@@ -5,7 +5,7 @@ module L = Llvm
 module A = Ast
 
 
-let translate_module (node_module: s_module) =
+let generate_module (sast: s_module) =
   let context    = L.global_context () in
 
   (* Add types *)
