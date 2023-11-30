@@ -8,6 +8,7 @@ type s_type =
   | ST_bool
   | ST_void
   | ST_unit
+  | ST_error
 
 type s_expr = 
     S_string_literal of string
@@ -63,7 +64,9 @@ and s_variable =
   }
 
 and s_stmt =
-    TODO of string
+    S_expr_stmt of s_expr
+  | S_var_decl_stmt of s_variable
+  | S_let_decl_stmt of s_variable
 
 and s_block_expr = {
   sb_stmts : s_stmt list;
