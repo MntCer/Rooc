@@ -80,6 +80,7 @@ and s_variable =
   {
     sv_name: string;
     sv_type: s_type;
+    sv_mutable: bool;
     sv_initial_value : s_expr option;
   }
 

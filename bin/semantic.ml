@@ -118,7 +118,8 @@ let analyse_module (ast_root:roc_module) : s_module =
         { se_type = analysed_expr.se_type; se_content = S_return_expr analysed_expr }
     
     | Roc_block_expr stmts ->
-        raise (todo_failure "block expr")
+        let analysed_block = analyse_block_expr stmts symbol_table true in
+        { se_type = ST_unit; se_content = S_block_expr analysed_block }
 
     | Roc_for_expr (init, cond, update, body) ->
         raise (todo_failure "for expr")
@@ -138,7 +139,52 @@ let analyse_module (ast_root:roc_module) : s_module =
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
         { se_type = ST_unit; se_content = S_null_expr } *)
-  in 
+  and analyse_block_expr (raw_stmts: roc_stmt list) (symbol_table: s_symbol_table) (init_new_table:bool) : s_block_expr =
+    let table_for_the_block = 
+      if init_new_table then 
+        init_symbol_table ~parent:symbol_table () 
+      else symbol_table 
+    in
+    let analysed_stmts = List.rev (List.fold_left (fun acc stmt ->
+      match stmt with
+      | Roc_expr_stmt expr -> 
+          let analysed_expr = analyse_expr expr table_for_the_block in
+          (S_expr_stmt analysed_expr)::acc 
+      | Roc_var_decl_stmt var_decl -> 
+        let var_name = var_decl.rv_name in 
+        let var_type = analyse_type var_decl.rv_type in
+        let var_initial_value = 
+          Option.map (fun expr -> analyse_expr expr table_for_the_block) var_decl.rv_initial_expr in
+        let s_var = 
+          { sv_name = var_name; 
+            sv_type = var_type; 
+            sv_mutable = true;
+            sv_initial_value = var_initial_value } in
+        (* Add to symbol table *)
+        insert_symbol table_for_the_block var_name (VarEntry s_var);
+        let analysed_var = S_var_decl_stmt s_var in 
+        analysed_var::acc
+      | Roc_let_decl_stmt let_decl ->
+        let let_name = let_decl.rv_name in
+        let let_type = analyse_type let_decl.rv_type in
+        let let_initial_value = 
+          Option.map (fun expr -> analyse_expr expr table_for_the_block) let_decl.rv_initial_expr in
+        let s_let = 
+          { sv_name = let_name; 
+            sv_type = let_type; 
+            sv_mutable = false;
+            sv_initial_value = let_initial_value } in
+        (* Add to symbol table *)
+        insert_symbol table_for_the_block let_name (VarEntry s_let);
+        let analysed_let = S_let_decl_stmt s_let in
+        analysed_let::acc
+      | Roc_empty_stmt -> 
+          acc  (* Skip empty statements *)
+    ) [] raw_stmts)
+    in
+    { sbe_stmts = analysed_stmts; sbe_scope = table_for_the_block }
+  in
+
   let analyse_params (raw_params: roc_params) (symbol_table: s_symbol_table) : s_params =
     raise (todo_failure "analyse params")
   in
@@ -197,6 +243,8 @@ let analyse_module (ast_root:roc_module) : s_module =
         { sft_params_type = analysed_params_type; 
           sft_return_type = analyse_type raw_func.rf_return_type; } )
     in
+    let function_scope = init_symbol_table ~parent:symbol_table () in
+    
     let analysed_body = UserDefined (get_block_from_expr (analyse_expr raw_func.rf_body symbol_table)) in
     { sf_name = analysed_name;
       sf_params = analysed_params;

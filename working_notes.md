@@ -12,12 +12,12 @@ Traits and structures and all impl should have its own scope. When try to analyz
 
 And also for other "uncommon" expr.
 
-## Nov 30
-
-### Target
+## Target
 
 * [x] need to implement "2 traverse" to support forward reference.
+* [x] block_expr's semantic analysis part.
+* [ ] init function's argument into the function's scope.
 * [ ] special treatment for main function
 * [ ] function's code generation part.
-* [ ] block_expr's semantic analysis part.
-* [ ] more function about expressions.
+* [ ] more features about expressions.
+* [ ] inefficient code in the two pass analysis for items.
