@@ -7,7 +7,15 @@ type s_type =
   | ST_string
   | ST_bool
   | ST_unit
+  | ST_function of s_function_type
   | ST_error
+
+and s_function_type = {
+  sft_parameters: s_type list;
+  sft_return: s_type;
+  (* sft_generics: string list;  *)
+  (* Future use: Names of generic type parameters *)
+}
 
 type s_expr = {
     se_type: s_type;
@@ -21,9 +29,11 @@ and s_expr_content =
   | S_bool_literal of bool
 
   | S_unary_expr of unary_op * s_expr
-  | S_arith_logical_expr of arith_logical_op * s_expr * s_expr
+  | S_arith_expr of arith_op * s_expr * s_expr
+  | S_logical_expr of logical_op * s_expr * s_expr
   | S_comparison_expr of comparison_op * s_expr * s_expr
-  | S_assign_expr of s_expr * s_expr
+  | S_assignment_expr of s_expr * s_expr
+  | S_path_expr of s_path_expr
   | S_call_expr of s_call_expr
   | S_grouped_expr of s_expr
 
@@ -32,11 +42,19 @@ and s_expr_content =
   | S_break_expr
   | S_continue_expr
 
+  | S_for_expr of s_for_expr
+  | S_while_expr of s_while_expr
+  | S_if_expr of s_if_expr
+  | S_block_expr of s_block_expr
+
   | S_null_expr
 
-
+and s_path_expr = {
+  spe_path: string list;
+}
   
 and s_call_expr ={
+  (* maybe we should keep the path here.*)
   (* function which be called needs to be declared before *)
   sce_function_called: s_function;
   sce_param: s_expr list;
@@ -49,9 +67,9 @@ and s_for_expr = {
   sfe_body : s_block_expr;
 }
 
-and s_while = {
-  sw_condition : s_expr;
-  sw_body : s_expr;
+and s_while_expr = {
+  swe_condition : s_expr;
+  swe_body : s_expr;
 }
 
 and s_if_expr = {
@@ -79,14 +97,14 @@ and s_block_expr = {
 
 and s_function_param = {
   sfp_name : string;
-  sfp_type : s_type;
+  sfp_type : s_type;  
 }
 
 and s_function = {
   sf_name : string;
   sfp_self: bool;
   sf_params : s_function_param list;
-  sf_return_type : s_type;
+  sf_type : s_function_type;
   sf_body : s_block_expr;
 }
 

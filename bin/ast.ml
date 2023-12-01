@@ -4,7 +4,8 @@
           And | Or *)
 
 
-type arith_logical_op = Add | Sub | Mult | Div | And | Or  
+type arith_op = Add | Sub | Mult | Div
+type logical_op = And | Or
 type comparison_op = Equal | Neq | Less | Leq | Greater | Geq 
 type unary_op = Not | Neg
 
@@ -16,7 +17,6 @@ type roc_type =
   | T_string
   | T_bool
   | T_unit
-  (* | TFunction of roc_type list * roc_type  *)
   (*%TODO:*)
 
 (* Define the runtime values in Rooc *)
@@ -40,13 +40,13 @@ type roc_expr =
   | Roc_bool_literal of bool
     (* operator expr *)
   | Roc_unary_expr of unary_op * roc_expr
-  | Roc_arith_logical_expr of  arith_logical_op * roc_expr * roc_expr
-  | Roc_comparison_expr of  comparison_op * roc_expr *roc_expr
+  | Roc_arith_expr of  arith_op * roc_expr * roc_expr
+  | Roc_logical_expr of logical_op * roc_expr * roc_expr
+  | Roc_comparison_expr of  comparison_op * roc_expr * roc_expr
   | Roc_assignment_expr of roc_expr * roc_expr
   | Roc_grouped_expr of roc_expr
-  | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
-
-  | Roc_path_exor of (*TODO: *)
+  | Roc_path_expr of string list
+  | Roc_call_expr of roc_expr * ( roc_expr list ) (* expr, callParams*)
   | Roc_return_expr of roc_expr
   | Roc_block_expr of roc_stmt list
   | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_expr
@@ -130,12 +130,14 @@ type impl_decl = {
 let string_of_module = function
     _ -> "TODO"
 
-let string_of_arith_logical_op = function
+let string_of_arith_op = function
     Add -> "+"
   | Sub -> "-"
   | Mult -> "*"
   | Div -> "/"
-  | And -> "&&"
+
+let string_of_logical_op = function
+    And -> "&&"
   | Or -> "||"
 
 let string_of_comparison_op = function
@@ -154,7 +156,6 @@ let string_of_roc_type = function
   T_int -> "int"
 | T_bool -> "bool"
 | T_float -> "float"
-| T_void -> "void" 
 | T_string -> "string"
 | T_unit -> "unit"
 
@@ -170,7 +171,7 @@ and string_of_ptyp = function
 | Bool -> "bool"
 | Float -> "float"
 | String -> "string"
-| Void -> "void" *)
+*)
 
 (* ************************************************************ *)
 (* print function of old ast *)

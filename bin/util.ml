@@ -1,4 +1,5 @@
 let todo_failure str = Failure ("TODO:"^str)
+let type_err_failure str = Failure ("type_err:"^str)
 
 let safe_float_of_string str =
   try Some (float_of_string str)

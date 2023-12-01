@@ -22,7 +22,7 @@ let () =
   match !action with
       Ast -> print_string (Ast.string_of_module ast)
     | _ -> 
-      let sast = Semantic.analyse ast in
+      let sast = Semantic.analyse_module ast in
       match !action with
         Ast     -> print_string (Ast.string_of_module ast)
       | Sast    -> print_string (Ast.string_of_module sast)

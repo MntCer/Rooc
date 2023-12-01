@@ -524,12 +524,25 @@ A literal expression is an expression consisting of a single token, rather than 
 
 A literal is a form of constant expression, so is evaluated (primarily) at compile time.
 
+### Path expression
+
+```ebnf
+PathExpression = 
+    PathSegment { "::" PathSegment } .
+
+PathSegment = 
+    IDENTIFIER .
+  <!-- | "self" . -->
+```
+
+
 ### Operator expression
 
 ```ebnf
 OperatorExpression =
     UnaryExpression
-  | ArithmeticOrLogicalExpression
+  | ArithmeticExpression
+  | LogicalExpression
   | ComparisonExpression
   | AssignmentExpression .
 ```
@@ -545,11 +558,13 @@ UnaryExpression =
 #### Arithmetic or logical expression
 
 ```ebnf
-ArithmeticOrLogicalExpression =
+ArithmeticxExpression =
     Expression "+" Expression
   | Expression "-" Expression
   | Expression "*" Expression
-  | Expression "/" Expression
+  | Expression "/" Expression .
+
+LogicalExpression =
   | Expression "&&" Expression
   | Expression "||" Expression .
 ```
@@ -584,9 +599,7 @@ GroupedExpression =
 
 ```ebnf
 CallExpression =
-   IDENTIFIER "(" { CallParams } ")" .
-
-<!-- %TODO: identifier->expression, after implement the path expression -->
+   PathExpression "(" { CallParams } ")" .
 
 CallParams =
    Expression { "," Expression } [ "," ] .

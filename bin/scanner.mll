@@ -70,7 +70,6 @@ rule token = parse
 | "float"  { FLOAT }
 | "bool"   { BOOL }
 | "str"    { STR}
-| "void"   { VOID }
 (* | "list"   { LIST } *)
 (* *)
 | "return" { RETURN }
