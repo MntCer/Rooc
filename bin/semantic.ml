@@ -151,43 +151,41 @@ let analyse_module (ast_root:roc_module) : s_module =
           let analysed_expr = analyse_expr expr table_for_the_block in
           (S_expr_stmt analysed_expr)::acc 
       | Roc_var_decl_stmt var_decl -> 
-        let var_name = var_decl.rv_name in 
-        let var_type = analyse_type var_decl.rv_type in
-        let var_initial_value = 
-          Option.map (fun expr -> analyse_expr expr table_for_the_block) var_decl.rv_initial_expr in
-        let s_var = 
-          { sv_name = var_name; 
-            sv_type = var_type; 
-            sv_mutable = true;
-            sv_initial_value = var_initial_value } in
+        let var_name = var_decl.rv_name in
+        let analysed_var = analyse_variable var_decl true table_for_the_block in
         (* Add to symbol table *)
-        insert_symbol table_for_the_block var_name (VarEntry s_var);
-        let analysed_var = S_var_decl_stmt s_var in 
+        insert_symbol table_for_the_block var_name (VarEntry analysed_var);
+        let analysed_var = S_var_decl_stmt analysed_var in 
         analysed_var::acc
       | Roc_let_decl_stmt let_decl ->
         let let_name = let_decl.rv_name in
-        let let_type = analyse_type let_decl.rv_type in
-        let let_initial_value = 
-          Option.map (fun expr -> analyse_expr expr table_for_the_block) let_decl.rv_initial_expr in
-        let s_let = 
-          { sv_name = let_name; 
-            sv_type = let_type; 
-            sv_mutable = false;
-            sv_initial_value = let_initial_value } in
+        let analysed_let = analyse_variable let_decl false table_for_the_block in
         (* Add to symbol table *)
-        insert_symbol table_for_the_block let_name (VarEntry s_let);
-        let analysed_let = S_let_decl_stmt s_let in
+        insert_symbol table_for_the_block let_name (VarEntry analysed_let);
+        let analysed_let = S_let_decl_stmt analysed_let in
         analysed_let::acc
       | Roc_empty_stmt -> 
           acc  (* Skip empty statements *)
     ) [] raw_stmts)
     in
     { sbe_stmts = analysed_stmts; sbe_scope = table_for_the_block }
+
+  and analyse_variable (raw_variable: roc_variable) (is_mutable: bool) (symbol_table: s_symbol_table) : s_variable =
+    let analysed_name = raw_variable.rv_name in
+    let analysed_type = analyse_type raw_variable.rv_type in
+    let analysed_initial_value = 
+      Option.map (fun expr -> analyse_expr expr symbol_table) raw_variable.rv_initial_expr in
+    { sv_name = analysed_name; 
+      sv_type = analysed_type; 
+      sv_mutable = is_mutable;
+      sv_initial_value = analysed_initial_value }
   in
 
   let analyse_params (raw_params: roc_params) (symbol_table: s_symbol_table) : s_params =
-    raise (todo_failure "analyse params")
+    let analysed_params = List.map (fun param -> analyse_variable param true symbol_table) raw_params.rp_params in
+    { sp_params = analysed_params }
   in
+
   let analyse_params_type (raw_params: roc_params) (symbol_table: s_symbol_table) : s_type list =
     List.map (fun param -> analyse_type param.rv_type) raw_params.rp_params
   in
@@ -227,6 +225,7 @@ let analyse_module (ast_root:roc_module) : s_module =
 
   let analyse_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function =
     let analysed_name = raw_func.rf_name in
+
     let raw_params =  raw_func.rf_params in
     let analysed_params = 
       (match raw_params with
@@ -243,9 +242,19 @@ let analyse_module (ast_root:roc_module) : s_module =
         { sft_params_type = analysed_params_type; 
           sft_return_type = analyse_type raw_func.rf_return_type; } )
     in
+    let param_vars = 
+      (match analysed_params with
+      | None -> []
+      | Some params -> params.sp_params) in 
     let function_scope = init_symbol_table ~parent:symbol_table () in
-    
-    let analysed_body = UserDefined (get_block_from_expr (analyse_expr raw_func.rf_body symbol_table)) in
+    List.iter (fun param -> 
+      let param_name = param.sv_name in
+      let param_entry = VarEntry param in
+      insert_symbol function_scope param_name param_entry) param_vars;
+    let block_content = match raw_func.rf_body with
+      | Roc_block_expr block -> block
+      | _ -> raise (todo_failure "function body is not a block") in
+    let analysed_body = UserDefined (analyse_block_expr block_content function_scope false) in
     { sf_name = analysed_name;
       sf_params = analysed_params;
       sf_type = analysed_type;

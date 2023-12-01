@@ -8,6 +8,7 @@ let print_int = {
     sp_params=[{
     sv_name = "i";
     sv_type = ST_int;
+    sv_mutable = true;
     sv_initial_value = None;
   }]});
   sf_type = {
