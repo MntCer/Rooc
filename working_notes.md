@@ -17,7 +17,7 @@ And also for other "uncommon" expr.
 * [x] need to implement "2 traverse" to support forward reference.
 * [x] block_expr's semantic analysis part.
 * [x] analyse function's parameters.
-* [ ] special treatment for main function
+* [x] special treatment for main function
 * [ ] function's code generation part.
 * [ ] more features about expressions.
 * [ ] inefficient code in the two pass analysis for items.
