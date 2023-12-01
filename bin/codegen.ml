@@ -1,6 +1,7 @@
 (* Code generating for Rooc *)
 
 open Sast
+open Util
 module L = Llvm
 module A = Ast
 
@@ -24,9 +25,9 @@ let generate_module (sast: s_module) =
     | ST_int -> i32_t
     | ST_bool -> i1_t
     | ST_float -> float_t
-    | ST_void -> void_t
     (* //TODO: *)
-    | _ -> (* handle other types *) in
+    | _ -> raise (todo_failure "not supported. in ltype_of_stype")
+  in
 
   (* Declare built-in functions *)
   let printf_t: L.lltype =
