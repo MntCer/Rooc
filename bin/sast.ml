@@ -103,10 +103,22 @@ and s_function_body =
 
 and s_function = {
   sf_name : string;
-  sf_self: bool;
   sf_params : s_params option;
   sf_type : s_function_type;
   sf_body : s_function_body;
+}
+
+and s_method_signature = {
+  sms_name : string;
+  sms_params : s_params option;
+  sms_type : s_function_type;
+}
+
+and s_method = {
+  sm_name : string;
+  sm_params : s_params option;
+  sm_type : s_function_type;
+  sm_body : s_block_expr;
 }
 
 and s_symbol_table_entry =

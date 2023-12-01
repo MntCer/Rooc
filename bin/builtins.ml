@@ -1,9 +1,9 @@
 open Sast
 open Util
 
-let builtin_print_int = {
+
+let print_int = {
   sf_name = "print_int";
-  sf_self = false;
   sf_params = Some ({
     sp_params=[{
     sv_name = "i";
@@ -16,3 +16,15 @@ let builtin_print_int = {
   };
   sf_body = BuiltIn;
 }
+
+let print_int_ir = raise (Failure "print_int_ir")
+
+
+
+let builtins = [
+  print_int;
+]
+
+let builtins_ir = [
+  print_int_ir;
+]

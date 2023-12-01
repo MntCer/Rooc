@@ -18,10 +18,16 @@ let rec lookup_symbol identifier symbol_table =
       | None -> None  )
 
 let insert_symbol symbol_table identifier entry =
-  let lookup_result = lookup_symbol identifier symbol_table in
-  match lookup_result with
-  | Some _ -> raise (SymbolTableError ("Symbol already exists: " ^ identifier))
-  | None -> Hashtbl.add symbol_table.sst_symbols identifier entry
+  (* Check for existence in the current scope only *)
+  if Hashtbl.mem symbol_table.sst_symbols identifier then
+    raise (SymbolTableError ("Symbol already exists in the same scope: " ^ identifier))
+  else
+    Hashtbl.add symbol_table.sst_symbols identifier entry
+
+let get_block_from_expr (expr: s_expr) : s_block_expr =
+  match expr.se_content with
+  | S_block_expr block -> block
+  | _ -> raise (Failure "Not a block expression")
 
 
 let analyse_module (ast_root:roc_module) : s_module =
@@ -130,9 +136,33 @@ let analyse_module (ast_root:roc_module) : s_module =
   let analyse_params (raw_params: roc_params) (symbol_table: s_symbol_table) : s_params =
     raise (todo_failure "analyse params")
   in
+  let analyse_params_type (raw_params: roc_params) (symbol_table: s_symbol_table) : s_type list =
+    List.map (fun param -> analyse_type param.rv_type) raw_params.rp_params
+  in
   let analyse_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function =
-
-    raise (todo_failure "analyse function")
+    let analysed_name = raw_func.rf_name in
+    let raw_params =  raw_func.rf_params in
+    let analysed_params = 
+      (match raw_params with
+      | None -> None
+      | Some params -> Some (analyse_params params symbol_table))
+    in
+    let analysed_type = 
+      (match raw_params with
+      | None -> 
+        { sft_params_type = []; 
+          sft_return_type = analyse_type raw_func.rf_return_type } 
+      | Some params -> 
+        let analysed_params_type = analyse_params_type params symbol_table in
+        { sft_params_type = analysed_params_type; 
+          sft_return_type = analyse_type raw_func.rf_return_type; } )
+    in
+    let analysed_body = UserDefined (get_block_from_expr (analyse_expr raw_func.rf_body symbol_table)) in
+    { sf_name = analysed_name;
+      sf_params = analysed_params;
+      sf_type = analysed_type;
+      sf_body = analysed_body; }
+      
   in
   let analyse_item (x:roc_item) (symbol_table: s_symbol_table) : s_symbol_table_entry =
     match x with
@@ -150,11 +180,18 @@ let analyse_module (ast_root:roc_module) : s_module =
   let get_var_name (x:roc_variable) : string = x.rv_name in
 
   let the_namespace = init_symbol_table () in
+  (* Insert builtins *)
+  List.iter (fun builtin -> 
+    let name = builtin.sf_name in
+    let entry = FuncEntry builtin in
+    insert_symbol the_namespace name entry) builtins;
   List.iter (fun item ->
     let name = get_item_name item in
     let entry = analyse_item item the_namespace in
     insert_symbol the_namespace name entry
   ) ast_root.rm_items;
+  (* special treatment for main*)
+  
   { sm_namespace = the_namespace}
 
 

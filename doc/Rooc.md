@@ -303,6 +303,8 @@ Function must have a function body. Method can only be defined in a `impl` block
 
 The key difference between a function and a method is the `self` as parameter.
 
+Functions and methods could be forward referenced, that is to say, as long as the called function or method is visiable in the called scope, this call is valid.
+
 <!-- %TODO: yield a first-class function value -->
 Example:
 
