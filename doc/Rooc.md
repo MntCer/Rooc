@@ -282,19 +282,26 @@ A constant value is not associated with a specific memory location in the progra
 
 <!-- %TODO: FunctionQualifier -->
 <!-- %TODO: Generic params -->
-<!-- %TODO: SelfParam      = "self" ":" Type . -->
 ```ebnf
-Function           = FunctionSignature BlockExpression ";" .
-FunctionSignature  = "fun" identifier "(" [ FunctionParams ] ")" "->" Type .
-FunctionParams     = SelfParam [ "," ]
-                   | [ SelfParam "," ] NotSelfParam 
-                                       { "," NotSelfParam } [ "," ] .
-NotSelfParam      = identifier ":" Type .
+Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type BlockExpression ";".
+
+FunctionParams     = Param { "," Param } [ "," ] .
+Param      = identifier ":" Type .
+
+MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type ";".
+Method = "fun" identifier "(" [ MethodParams] ")" "->" Type BlockExpression ";".
+
+MethodParams = "self" { "," Param } [ "," ] .
 ```
 
 A function consists of a block, along with a name, a set of parameters, and an output type. 
 
 Functions may declare a set of input variables as parameters, through which the caller passes arguments into the function, and the output type of the value the function will return to its caller on completion. The parameters are optional.
+
+<!-- %TODO: revise the words -->
+Function must have a function body. Method can only be defined in a `impl` block and Methodsignature can only be defined in a `trait` block.
+
+The key difference between a function and a method is the `self` as parameter.
 
 <!-- %TODO: yield a first-class function value -->
 Example:
@@ -323,9 +330,7 @@ Functions without a body block are function declaration. This form may only appe
 
 ```ebnf
 Struct =
-    StructSignature "{" [ StructFields ] "}" ";" .
-StructSignature =
-   "struct" IDENTIFIER 
+    "struct" IDENTIFIER "{" [ StructFields ] "}" ";" .
 StructFields =
     StructField {"," StructField } [","] .
 StructField =
@@ -423,18 +428,6 @@ impl Point {
 ```
 
 
-### Associated Items
-
-
-<!--%TODO:  -->
-```ebnf
-AssociatedItem =
-    Function .
-AssociatedDeclaration =
-    FunctionDeclaration .
-FunctionDeclaration = 
-    FunctionSignature ";" .
-```
 
 ## Statements
 

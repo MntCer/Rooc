@@ -11,8 +11,8 @@ type s_type =
   | ST_error
 
 and s_function_type = {
-  sft_parameters: s_type list;
-  sft_return: s_type;
+  sft_params_type: s_type list;
+  sft_return_type: s_type;
   (* sft_generics: string list;  *)
   (* Future use: Names of generic type parameters *)
 }
@@ -54,10 +54,8 @@ and s_path_expr = {
 }
   
 and s_call_expr ={
-  (* maybe we should keep the path here.*)
-  (* function which be called needs to be declared before *)
-  sce_function_called: s_function;
-  sce_param: s_expr list;
+  sce_callee: s_path_expr;
+  sce_arguments: s_expr list;
 }
 
 and s_for_expr = {
@@ -95,17 +93,20 @@ and s_block_expr = {
   sbe_scope : s_symbol_table;
 }
 
-and s_function_param = {
-  sfp_name : string;
-  sfp_type : s_type;  
+and s_params = {
+  sp_params : s_variable list;
 }
+
+and s_function_body =
+  | UserDefined of s_block_expr
+  | BuiltIn
 
 and s_function = {
   sf_name : string;
-  sfp_self: bool;
-  sf_params : s_function_param list;
+  sf_self: bool;
+  sf_params : s_params option;
   sf_type : s_function_type;
-  sf_body : s_block_expr;
+  sf_body : s_function_body;
 }
 
 and s_symbol_table_entry =

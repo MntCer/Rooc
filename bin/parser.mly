@@ -48,51 +48,55 @@ roc_item:
   // | %TODO
 
 roc_function:
-    roc_function_signature roc_block_expr SEMI
-      { { 
-        rf_signature = $1;
-        rf_body = $2 } }
+    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type roc_block_expr SEMI
+    { { 
+      rf_name = $2;
+      rf_params = Some ($4);
+      rf_return_type = $7;
+      rf_body = $8 } }
 
-roc_function_signature:
-    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type
-      { { 
-        rfs_name = $2;
-        rfs_params = Some ($4);
-        rfs_return_type = $7 } }
-  | FUN ID LPAREN RPAREN RARROW roc_type
-      { { 
-        rfs_name = $2;
-        rfs_params = None;
-        rfs_return_type = $6 } }
-    
+  | FUN ID LPAREN RPAREN RARROW roc_type roc_block_expr SEMI
+      { {
+        rf_name = $2;
+        rf_params = None;
+        rf_return_type = $6;
+        rf_body = $7 } }
+
+
 roc_function_params:
-    roc_self_param COMMA roc_ns_params | roc_self_param COMMA roc_ns_params COMMA 
-      { {
-        rfp_self = $1;
-        rfp_not_self_params = List.rev $3
-      } }
-  | roc_self_param | roc_self_param COMMA 
-      { {
-        rfp_self = $1;
-        rfp_not_self_params = [] } }
-  | roc_ns_params | roc_ns_params COMMA 
-      { {
-        rfp_self = false;
-        rfp_not_self_params = List.rev $1 } }
-    
-roc_self_param:
-    SELF  { true }
+    roc_params | roc_params COMMA { {
+      rp_params = List.rev $1; }}
 
-roc_ns_params:
-  // No need to handle "empty list" case here, because it is handled by the roc_function_params rule
-    roc_ns_param { [$1] }
-  | roc_ns_params COMMA roc_ns_param { $3 :: $1 }
-    
-roc_ns_param:
+roc_params :
+    roc_param  { [$1] }
+  | roc_params COMMA roc_param  { $3 :: $1 }
+
+roc_param:
     ID COLON roc_type { {
       rv_name = $1;
       rv_type = $3;
       rv_initial_expr = None } }
+    
+roc_method_signature:
+    FUN ID LPAREN roc_method_params RPAREN RARROW roc_type SEMI
+    { {
+      rms_name = $2;
+      rms_params = $4;
+      rms_return_type = $7 } }
+
+roc_method:
+    FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block_expr SEMI
+    { {
+      rm_name = $2;
+      rm_params = $4;
+      rm_return_type = $7;
+      rm_body = $8 } }
+    
+roc_method_params:
+    SELF { None }
+  | SELF COMMA roc_params  { Some ({
+    rp_params=List.rev $3}) }
+
 
 roc_statement:
     roc_expr_stmt { $1 }

@@ -1,27 +1,37 @@
 open Ast
 open Sast
 open Util
+open Builtins
 
-let analyse_module (ast:roc_module) : s_module =
-  let init_symbol_table ?parent () : s_symbol_table =
-    let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
-    { sst_parent = parent; sst_symbols = symbol_table }
-  in  
-  let rec lookup_symbol identifier symbol_table =
-    match Hashtbl.find_opt symbol_table.sst_symbols identifier with
-    | Some entry -> Some entry
-    | None ->(
-        match symbol_table.sst_parent with
-        | Some parent_table -> lookup_symbol identifier parent_table  
-        | None -> None  )
-  in
-  let get_item_name (x:roc_item) : string = 
-    match x with
-    | FunctionItem x_fun -> x_fun.rf_signature.rfs_name
-  (* //TODO: add more *)
-  in
-  let get_var_name (x:roc_variable) : string =
-    x.rv_name
+exception SymbolTableError of string
+
+let init_symbol_table ?parent () : s_symbol_table =
+  let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
+  { sst_parent = parent; sst_symbols = symbol_table }
+
+let rec lookup_symbol identifier symbol_table =
+  match Hashtbl.find_opt symbol_table.sst_symbols identifier with
+  | Some entry -> Some entry
+  | None ->(
+      match symbol_table.sst_parent with
+      | Some parent_table -> lookup_symbol identifier parent_table  
+      | None -> None  )
+
+let insert_symbol symbol_table identifier entry =
+  let lookup_result = lookup_symbol identifier symbol_table in
+  match lookup_result with
+  | Some _ -> raise (SymbolTableError ("Symbol already exists: " ^ identifier))
+  | None -> Hashtbl.add symbol_table.sst_symbols identifier entry
+
+
+let analyse_module (ast_root:roc_module) : s_module =
+  let analyse_type (raw_type: roc_type) : s_type =
+    match raw_type with
+    | T_int -> ST_int
+    | T_float -> ST_float
+    | T_bool -> ST_bool
+    | T_string -> ST_string
+    | T_unit -> ST_unit
   in
   let rec analyse_expr (raw_expr: roc_expr) (symbol_table: s_symbol_table) : s_expr =
     match raw_expr with
@@ -110,33 +120,42 @@ let analyse_module (ast:roc_module) : s_module =
     | Roc_continue_expr ->
         { se_type = ST_unit; se_content = S_continue_expr }
 
-    | Roc_if_expr (cond, then_stmt, else_stmt) ->
+    | Roc_if_expr (cond, then_branch, else_branch) ->
         raise (todo_failure "if expr")
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
         { se_type = ST_unit; se_content = S_null_expr } *)
   in 
-  (* init the scope *)
-  let the_namespace = init_symbol_table () in
-  (* //TODO: add processed items *)
-  { sm_namespace = the_namespace}
-  
-  (* let item_add (x:roc_item) = 
-    let x_name = get_item_name (x) in
+  let analyse_params (raw_params: roc_params) (symbol_table: s_symbol_table) : s_params =
+    raise (todo_failure "analyse params")
+  in
+  let analyse_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function =
 
-    let check_function (x_fun: roc_function ) =
-      let 
-    in
-    (* //TODO: add checker for other item *)
-
+    raise (todo_failure "analyse function")
+  in
+  let analyse_item (x:roc_item) (symbol_table: s_symbol_table) : s_symbol_table_entry =
     match x with
-  | FunctionItem x_fun -> ()
-    (* //TODO: add more *)
-    in
-  in *)
+    | FunctionItem func ->
+        let analysed_func = analyse_function func symbol_table in
+        FuncEntry analysed_func
+    | _ -> raise (todo_failure "not yet supported item.")
+  in
 
-  (* assure there is no item with different name *)
+  let get_item_name (x:roc_item) : string = 
+    match x with
+    | FunctionItem fun_x -> fun_x.rf_name
+    | _ -> raise (todo_failure "not yet supported item.")
+  in
+  let get_var_name (x:roc_variable) : string = x.rv_name in
+
+  let the_namespace = init_symbol_table () in
+  List.iter (fun item ->
+    let name = get_item_name item in
+    let entry = analyse_item item the_namespace in
+    insert_symbol the_namespace name entry
+  ) ast_root.rm_items;
+  { sm_namespace = the_namespace}
 
 
 
