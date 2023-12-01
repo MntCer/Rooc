@@ -118,5 +118,8 @@ and s_symbol_table = {
 }
 
 type s_module = {
-  sm_scope: s_symbol_table;
+  sm_namespace: s_symbol_table;
 }
+
+let string_of_module = function
+  _ -> "TODO"

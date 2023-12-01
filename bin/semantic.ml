@@ -3,6 +3,18 @@ open Sast
 open Util
 
 let analyse_module (ast:roc_module) : s_module =
+  let init_symbol_table ?parent () : s_symbol_table =
+    let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
+    { sst_parent = parent; sst_symbols = symbol_table }
+  in  
+  let rec lookup_symbol identifier symbol_table =
+    match Hashtbl.find_opt symbol_table.sst_symbols identifier with
+    | Some entry -> Some entry
+    | None ->(
+        match symbol_table.sst_parent with
+        | Some parent_table -> lookup_symbol identifier parent_table  
+        | None -> None  )
+  in
   let get_item_name (x:roc_item) : string = 
     match x with
     | FunctionItem x_fun -> x_fun.rf_signature.rfs_name
@@ -104,9 +116,12 @@ let analyse_module (ast:roc_module) : s_module =
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
         { se_type = ST_unit; se_content = S_null_expr } *)
-    
   in 
-  raise (todo_failure "analyse_expr")
+  (* init the scope *)
+  let the_namespace = init_symbol_table () in
+  (* //TODO: add processed items *)
+  { sm_namespace = the_namespace}
+  
   (* let item_add (x:roc_item) = 
     let x_name = get_item_name (x) in
 
