@@ -8,15 +8,16 @@ Traits and structures and all impl should have its own scope. When try to analyz
 
 ### what type should a pathExpr has? 
 
->//TODO
+> //TODO
 
 And also for other "uncommon" expr.
 
 ## Nov 30
 
-### TODO
-1. need to implement "2 traverse" to support forward reference.
-2. special treatment for main function
-3. function's code generation part.
-4. block_expr's semantic analysis part.
-5. more function about expressions.
+### Target
+
+* [x] need to implement "2 traverse" to support forward reference.
+* [ ] special treatment for main function
+* [ ] function's code generation part.
+* [ ] block_expr's semantic analysis part.
+* [ ] more function about expressions.

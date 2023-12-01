@@ -24,6 +24,12 @@ let insert_symbol symbol_table identifier entry =
   else
     Hashtbl.add symbol_table.sst_symbols identifier entry
 
+let update_symbol_table symbol_table identifier new_entry =
+  if Hashtbl.mem symbol_table.sst_symbols identifier then
+    Hashtbl.replace symbol_table.sst_symbols identifier new_entry
+  else
+    raise (SymbolTableError ("Symbol not found for update: " ^ identifier))
+
 let get_block_from_expr (expr: s_expr) : s_block_expr =
   match expr.se_content with
   | S_block_expr block -> block
@@ -139,6 +145,40 @@ let analyse_module (ast_root:roc_module) : s_module =
   let analyse_params_type (raw_params: roc_params) (symbol_table: s_symbol_table) : s_type list =
     List.map (fun param -> analyse_type param.rv_type) raw_params.rp_params
   in
+
+  let register_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function_signature =
+    let analysed_name = raw_func.rf_name in
+    let raw_params =  raw_func.rf_params in
+    let analysed_params = 
+      (match raw_params with
+      | None -> None
+      | Some params -> Some (analyse_params params symbol_table))
+    in
+    let analysed_type = 
+      (match raw_params with
+      | None -> 
+        { sft_params_type = []; 
+          sft_return_type = analyse_type raw_func.rf_return_type } 
+      | Some params -> 
+        let analysed_params_type = analyse_params_type params symbol_table in
+        { sft_params_type = analysed_params_type; 
+          sft_return_type = analyse_type raw_func.rf_return_type; } )
+    in
+    { sfs_name = analysed_name;
+      sfs_params = analysed_params;
+      sfs_type = analysed_type; }
+  in
+
+  let register_items (ast_root: roc_module) (symbol_table: s_symbol_table) : unit =
+    List.iter (fun item ->
+      (match item with
+      | FunctionItem func -> 
+        let func_sig = register_function func symbol_table in
+        insert_symbol symbol_table func_sig.sfs_name (FuncSigEntry func_sig)
+      | _ -> raise (todo_failure "not yet supported item."))
+    ) ast_root.rm_items
+  in
+
   let analyse_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function =
     let analysed_name = raw_func.rf_name in
     let raw_params =  raw_func.rf_params in
@@ -162,22 +202,17 @@ let analyse_module (ast_root:roc_module) : s_module =
       sf_params = analysed_params;
       sf_type = analysed_type;
       sf_body = analysed_body; }
-      
-  in
-  let analyse_item (x:roc_item) (symbol_table: s_symbol_table) : s_symbol_table_entry =
-    match x with
-    | FunctionItem func ->
-        let analysed_func = analyse_function func symbol_table in
-        FuncEntry analysed_func
-    | _ -> raise (todo_failure "not yet supported item.")
   in
 
-  let get_item_name (x:roc_item) : string = 
-    match x with
-    | FunctionItem fun_x -> fun_x.rf_name
-    | _ -> raise (todo_failure "not yet supported item.")
+  let analyse_items (ast_root:roc_module) (symbol_table: s_symbol_table) : unit =
+    List.iter (fun item ->
+      (match item with
+      | FunctionItem func -> 
+        let analysed_func = analyse_function func symbol_table in
+        update_symbol_table symbol_table analysed_func.sf_name (FuncEntry analysed_func)
+      | _ -> raise (todo_failure "not yet supported item."))
+    ) ast_root.rm_items
   in
-  let get_var_name (x:roc_variable) : string = x.rv_name in
 
   let the_namespace = init_symbol_table () in
   (* Insert builtins *)
@@ -185,12 +220,10 @@ let analyse_module (ast_root:roc_module) : s_module =
     let name = builtin.sf_name in
     let entry = FuncEntry builtin in
     insert_symbol the_namespace name entry) builtins;
-  List.iter (fun item ->
-    let name = get_item_name item in
-    let entry = analyse_item item the_namespace in
-    insert_symbol the_namespace name entry
-  ) ast_root.rm_items;
+  register_items ast_root the_namespace;
   (* special treatment for main*)
+  analyse_items ast_root the_namespace;
+
   
   { sm_namespace = the_namespace}
 

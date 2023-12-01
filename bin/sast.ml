@@ -121,8 +121,15 @@ and s_method = {
   sm_body : s_block_expr;
 }
 
+and s_function_signature = {
+  sfs_name : string;
+  sfs_params : s_params option;
+  sfs_type : s_function_type;
+}
+
 and s_symbol_table_entry =
     FuncEntry of s_function
+  | FuncSigEntry of s_function_signature
   | VarEntry of s_variable
 
 and s_symbol_table = {
