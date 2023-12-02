@@ -5,3 +5,4 @@ ast.ml.ml
 *.swp
 *.message
 *.conflicts
+*.swo
