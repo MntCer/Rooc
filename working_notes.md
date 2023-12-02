@@ -19,5 +19,6 @@ And also for other "uncommon" expr.
 * [x] analyse function's parameters.
 * [x] special treatment for main function
 * [ ] function's code generation part.
+* [ ] builtin functions' codegen
 * [ ] more features about expressions.
 * [ ] inefficient code in the two pass analysis for items.
