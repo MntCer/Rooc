@@ -12,4 +12,4 @@ test : all testall.sh
 .PHONY : clean
 clean :
 	dune clean
-	rm -rf testall.log *.diff Rooc.opam
+	rm -rf testall.log *.diff Rooc.opam *.ll
