@@ -9,15 +9,16 @@
 
 (menhir
   (modules parser)
-  (flags 
-          --trace
-  )
+  ; (flags --trace)
+  (flags --unused-tokens --unused-precedence-levels)
   )
 
 (env
  (dev
   (flags
-   (:standard -warn-error -A))))
+  ;  (:standard -warn-error -A)
+   (:standard -w -A)
+   )))
 
 (executable
  (public_name Rooc)

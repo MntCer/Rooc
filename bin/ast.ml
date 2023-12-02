@@ -82,7 +82,7 @@ type roc_function = {
   rf_body : roc_expr;
 }
 
-type roc_method_signature = {
+(* type roc_method_signature = {
   rms_name : string;
   rms_params : roc_params option;
   rms_return_type : roc_type;
@@ -93,7 +93,7 @@ type roc_method = {
   rm_params : roc_params option;
   rm_return_type : roc_type;
   rm_body : roc_expr;
-}
+} *)
 
 type roc_item = 
     FunctionItem of roc_function

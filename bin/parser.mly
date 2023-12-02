@@ -77,25 +77,25 @@ roc_param:
       rv_type = $3;
       rv_initial_expr = None } }
     
-roc_method_signature:
-    FUN ID LPAREN roc_method_params RPAREN RARROW roc_type SEMI
-    { {
-      rms_name = $2;
-      rms_params = $4;
-      rms_return_type = $7 } }
+// roc_method_signature:
+//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type SEMI
+//     { {
+//       rms_name = $2;
+//       rms_params = $4;
+//       rms_return_type = $7 } }
 
-roc_method:
-    FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block_expr SEMI
-    { {
-      rm_name = $2;
-      rm_params = $4;
-      rm_return_type = $7;
-      rm_body = $8 } }
+// roc_method:
+//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block_expr SEMI
+//     { {
+//       rm_name = $2;
+//       rm_params = $4;
+//       rm_return_type = $7;
+//       rm_body = $8 } }
     
-roc_method_params:
-    SELF { None }
-  | SELF COMMA roc_params  { Some ({
-    rp_params=List.rev $3}) }
+// roc_method_params:
+//     SELF { None }
+//   | SELF COMMA roc_params  { Some ({
+//     rp_params=List.rev $3}) }
 
 
 roc_statement:
