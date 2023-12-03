@@ -70,9 +70,6 @@ and roc_stmt =
   | Roc_empty_stmt
 
 
-(* ... other entry types as needed ... *)
-
-
 type roc_params = {
   rp_params : roc_variable list;
 }
@@ -84,7 +81,7 @@ type roc_function = {
   rf_body : roc_expr;
 }
 
-(* type roc_method_signature = {
+type roc_method_signature = {
   rms_name : string;
   rms_params : roc_params option;
   rms_return_type : roc_type;
@@ -95,17 +92,17 @@ type roc_method = {
   rm_params : roc_params option;
   rm_return_type : roc_type;
   rm_body : roc_expr;
-} *)
+}
 
 type roc_item = 
     FunctionItem of roc_function
   (* | ConstantItem of roc_constant *)
-  (* | TypeItem of %TODO *)
-  (* ... other item types ... *)
+  (* | ConstantItem of roc_constant *)
+  (* | StructItem of roc_struct *)
+  (* | TraitItem of roc_trait *)
 
 type roc_module = {
   rm_items: roc_item list;
-    (* %TODO: *)
 }
 
 (* 
@@ -168,17 +165,3 @@ let string_of_roc_type = function
 | T_float -> "float"
 | T_string -> "string"
 | T_unit -> "unit"
-
-(* let rec string_of_typ = function
-  Primitive(t) -> string_of_ptyp t
-| Generic(t) -> string_of_gtyp t
-
-and string_of_gtyp = function
-  List(t) -> "list<" ^ string_of_typ t ^ ">"
-
-and string_of_ptyp = function
-  Int -> "int"
-| Bool -> "bool"
-| Float -> "float"
-| String -> "string"
-*)

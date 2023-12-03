@@ -36,5 +36,4 @@ let () =
       | Compile -> 
         let m = Lltrans.trans_module sast in
         Llvm_analysis.assert_valid_module m;
-        print_string (Llvm.string_of_llmodule m)
-  
+        print_string (Llvm.string_of_llmodule m);

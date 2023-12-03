@@ -11,6 +11,11 @@ module StringMap = Map.Make(String)
 
 let trans_module (sast: s_module) =
   let context    = L.global_context () in
+  let the_module = L.create_module context "theRoocProgram" in
+
+  let (item_to_llvalue : (string, L.llvalue) Hashtbl.t) = Hashtbl.create 10 in
+
+  let the_namespace = init_global_scope () in (* #TODO: should be cleaned*)
 
   (* Add types *)
   let i32_t     = L.i32_type    context 
@@ -18,12 +23,9 @@ let trans_module (sast: s_module) =
   and i1_t       = L.i1_type     context
   and float_t    = L.double_type context
   in
-  
-  (* Create an LLVM module *)
-  let the_module = L.create_module context "theRoocProgram" in
 
   (* Convert SAST types to LLVM types *)
-  let ltype_of_stype = function
+  let trans_type = function
     | ST_int -> i32_t
     | ST_bool -> i1_t
     | ST_float -> float_t
@@ -31,16 +33,20 @@ let trans_module (sast: s_module) =
     | _ -> todo "not supported. in ltype_of_stype"
   in
 
-  let the_namespace = init_global_scope () in
+  let declare_f
 
   (* Declare built-in functions *)
 
-  let translate_function (f: s_function) =
+  let trans_function (f: s_function) =
+    (* function init *)
+
+
     match f.sf_body with
     | UserDefined body -> 
       (* Step 1: Determine LLVM function type *)
-      (let llvm_return_type = ltype_of_stype f.sf_type.sft_return_type in
-      let llvm_param_types = Array.of_list (List.map ltype_of_stype f.sf_type.sft_params_type) in
+      (let llvm_return_type = trans_type f.sf_type.sft_return_type in
+      L.param
+      let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
       let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
 
       let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
@@ -54,7 +60,7 @@ let trans_module (sast: s_module) =
       let local_scope = init_local_scope (GlobalScope the_namespace) in
       let add_formal (param: s_variable) llvm_param =
         let local_name = param.sv_name in
-        let local_type = ltype_of_stype param.sv_type in
+        let local_type = trans_type param.sv_type in
         let () = L.set_value_name local_name llvm_param in
         let alloca = L.build_alloca local_type local_name builder in
         let _ = L.build_store llvm_param alloca builder in
@@ -72,23 +78,23 @@ let trans_module (sast: s_module) =
       | None -> ());
       (* ... translate the function body ... *)
       let stmts=body.sbe_stmts in
-      let rec translate_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
+      let rec trans_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
         (match s with
         | S_expr_stmt e -> 
-          (translate_expr e builder scope)
+          (trans_expr e builder scope)
         | S_var_decl_stmt v | S_let_decl_stmt v -> 
-          (translate_var_decl v builder scope)
+          (trans_var_decl v builder scope)
         )
-      and translate_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
+      and trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
         let e_content = e.se_content in
         match e_content with
         | S_int_literal i -> 
            ignore ( L.const_int i32_t i)
         | S_float_literal f -> ignore (L.const_float_of_string float_t f)
         | _ -> ()
-      and translate_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
+      and trans_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
         let local_name = v.sv_name in
-        let local_type = ltype_of_stype v.sv_type in
+        let local_type = trans_type v.sv_type in
         let alloca = L.build_alloca local_type local_name builder in
         let local_var = {
           iv_name = local_name;
@@ -97,18 +103,18 @@ let trans_module (sast: s_module) =
         } in
         insert_local_variable local_name local_var scope
       in
-        List.iter (fun s -> ignore( translate_stmt s builder local_scope)) stmts;
+        List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
       )
     | BuiltIn -> ()
   in
 
-  let translate_item (key: string) (item: s_symbol_table_entry) : unit =
+  let trans_item (key: string) (item: s_symbol_table_entry) : unit =
     match item with
-    | FuncEntry f -> translate_function f
+    | FuncEntry f -> trans_function f
     | _ -> todo "not supported. in translate_item"
   in
 
-  let translate_builtins () =
+  let trans_builtins () =
     let printf_type: L.lltype =
       L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in 
     let printf_func: L.llvalue = L.declare_function "printf" printf_type the_module in
@@ -134,6 +140,9 @@ let trans_module (sast: s_module) =
         if_scope = None;
       } the_namespace;
   in
-  translate_builtins ();
-  Hashtbl.iter translate_item sast.sm_namespace.sst_symbols;
-  the_module
+  try
+    (* #TODO: *)
+    trans_builtins ();
+    Hashtbl.iter trans_item sast.sm_namespace.sst_symbols;
+    the_module
+  with e -> L.dispose_module the_module; raise e

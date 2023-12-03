@@ -4,9 +4,6 @@
 open Llvm
 
 
-let (ll_symbol_table : (string, llvalue) Hashtbl.t) = Hashtbl.create 10
-
-
 type ir_variable = {
   iv_name : string;
   iv_value_addr : llvalue;
