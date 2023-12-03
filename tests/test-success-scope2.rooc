@@ -1,0 +1,10 @@
+fun main() -> int {
+    test(); // forward reference
+};
+
+
+fun test() -> () {
+    print_int(1);
+    return 0;
+};
+

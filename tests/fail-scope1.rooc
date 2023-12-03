@@ -1,0 +1,6 @@
+fun main()->int{
+    print_int(x);
+    var x=1;
+
+    return 0;
+};

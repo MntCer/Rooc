@@ -1,0 +1,11 @@
+struct Point {
+    x: int;
+    y: int;
+};
+
+fun main() -> {
+    var p = Point {x = 1, y = 2};
+    print_int(p::z);  // 'z' is not a field of Point
+
+    return 0;
+};

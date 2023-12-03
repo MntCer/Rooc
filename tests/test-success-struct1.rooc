@@ -1,0 +1,9 @@
+struct Test {
+    field1:int;
+    field2:float;
+};
+
+fun main() -> int {
+    var test = Test {field1 = 1;field2 = 1.0};
+    return 0;
+};
