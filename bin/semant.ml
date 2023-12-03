@@ -104,10 +104,10 @@ let analyse_module (ast_root:roc_module) : s_module =
       { se_type = result_type; se_content = S_assignment_expr (analysed_e1, analysed_e2) }
 
     | Roc_path_expr path -> 
-      raise (todo_failure "path expr")
+      todo "path expr"
     
     | Roc_call_expr (callee, arg_list) ->
-      raise (todo_failure "call expr")
+      todo "call expr"
     
     | Roc_grouped_expr e ->
         let analysed_expr = analyse_expr e symbol_table in
@@ -122,10 +122,10 @@ let analyse_module (ast_root:roc_module) : s_module =
         { se_type = ST_unit; se_content = S_block_expr analysed_block }
 
     | Roc_for_expr (init, cond, update, body) ->
-        raise (todo_failure "for expr")
+      todo "for expr"
 
     | Roc_while_expr (cond, body) ->
-        raise (todo_failure "while expr")
+      todo "while expr"
 
     | Roc_break_expr ->
         { se_type = ST_unit; se_content = S_break_expr }
@@ -134,7 +134,7 @@ let analyse_module (ast_root:roc_module) : s_module =
         { se_type = ST_unit; se_content = S_continue_expr }
 
     | Roc_if_expr (cond, then_branch, else_branch) ->
-        raise (todo_failure "if expr")
+      todo "if expr"
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
@@ -219,7 +219,8 @@ let analyse_module (ast_root:roc_module) : s_module =
       | FunctionItem func -> 
         let func_sig = register_function func symbol_table in
         insert_symbol symbol_table func_sig.sfs_name (FuncSigEntry func_sig)
-      | _ -> raise (todo_failure "not yet supported item."))
+      | _ -> 
+        todo "not yet supported item.")
     ) ast_root.rm_items
   in
 
@@ -253,7 +254,9 @@ let analyse_module (ast_root:roc_module) : s_module =
       insert_symbol function_scope param_name param_entry) param_vars;
     let block_content = match raw_func.rf_body with
       | Roc_block_expr block -> block
-      | _ -> raise (todo_failure "function body is not a block") in
+      | _ -> 
+        bug "Function body is not a block expression"
+    in
     let analysed_body = UserDefined (analyse_block_expr block_content function_scope false) in
     { sf_name = analysed_name;
       sf_params = analysed_params;
@@ -267,7 +270,8 @@ let analyse_module (ast_root:roc_module) : s_module =
       | FunctionItem func -> 
         let analysed_func = analyse_function func symbol_table in
         update_symbol_table symbol_table analysed_func.sf_name (FuncEntry analysed_func)
-      | _ -> raise (todo_failure "not yet supported item."))
+      | _ -> 
+        todo "not yet supported item.")
     ) ast_root.rm_items
   in
 

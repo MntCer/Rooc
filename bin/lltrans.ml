@@ -2,14 +2,14 @@
 
 open Sast
 open Util
-open StructualIR
+open Llhelper
 open Builtins
 module L = Llvm
 module A = Ast
 
 module StringMap = Map.Make(String)
 
-let translate_module (sast: s_module) =
+let trans_module (sast: s_module) =
   let context    = L.global_context () in
 
   (* Add types *)
@@ -28,7 +28,7 @@ let translate_module (sast: s_module) =
     | ST_bool -> i1_t
     | ST_float -> float_t
     (* //TODO: *)
-    | _ -> raise (todo_failure "not supported. in ltype_of_stype")
+    | _ -> todo "not supported. in ltype_of_stype"
   in
 
   let the_namespace = init_global_scope () in
@@ -105,7 +105,7 @@ let translate_module (sast: s_module) =
   let translate_item (key: string) (item: s_symbol_table_entry) : unit =
     match item with
     | FuncEntry f -> translate_function f
-    | _ -> raise (todo_failure "not supported. in translate_item")
+    | _ -> todo "not supported. in translate_item"
   in
 
   let translate_builtins () =

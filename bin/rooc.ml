@@ -27,14 +27,14 @@ let () =
   match !action with
       Ast -> print_string (Ast.string_of_module ast)
     | _ -> 
-      let sast = Semantic.analyse_module ast in
+      let sast = Semant.analyse_module ast in
       match !action with
         Ast     -> print_string (Ast.string_of_module ast)
       | Sast    -> print_string (Sast.string_of_module sast)
       | LLVM_IR -> print_string (Llvm.string_of_llmodule 
-        (Codegen.translate_module sast))
+        (Lltrans.trans_module sast))
       | Compile -> 
-        let m = Codegen.translate_module sast in
+        let m = Lltrans.trans_module sast in
         Llvm_analysis.assert_valid_module m;
         print_string (Llvm.string_of_llmodule m)
   
