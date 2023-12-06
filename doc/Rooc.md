@@ -272,7 +272,7 @@ Items are entirely determined at compile-time, generally remain fixed during exe
 
 ```ebnf
 ConstantValue =
-    "const" IDENTIFIER ":" Type "=" Expression ";" .
+    "const" IDENTIFIER ":" Type "=" Expr ";" .
 ```
 
 A constant value is not associated with a specific memory location in the program. Constants must be explicitly typed and initialized.
@@ -450,7 +450,10 @@ Statements serve mostly to contain and explicitly sequence expression evaluation
 Statement :
       ";"
    | DeclarationStatement
-   | ExpressionStatement .
+   | ExpressionStatement 
+   | Block 
+   | LoopStmt
+   | IfStmt .
 ```
 <!-- %TODO: now just allow first-level item
    | Item 
@@ -484,10 +487,7 @@ ExpressionStatement = Expression ";" .
 Most forms of value-producing or effect-causing evaluation are directed by the uniform syntax category of *expression*s in Rooc.
 
 ```ebnf
-Expression = 
-    ExpressionWithoutBlock
-  | ExpressionWithBlock .
-ExpressionWithoutBlock =
+Expr =
     LiteralExpression
   | PathExpression          %TODO
   | OperatorExpression
@@ -499,10 +499,7 @@ ExpressionWithoutBlock =
   | ContinueExpression
   | BreakExpression
   | ReturnExpression .
-ExpressionWithBlock =
-    BlockExpression 
-  | LoopExpression
-  | IfExpression .
+
 ```
 
 ### Literal expression
