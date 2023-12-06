@@ -3,38 +3,14 @@ open Sast
 open Util
 open Builtins
 
-exception SymbolTableError of string
-
-let init_symbol_table ?parent () : s_symbol_table =
-  let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
-  { sst_parent = parent; sst_symbols = symbol_table }
-
-let rec lookup_symbol identifier symbol_table =
-  match Hashtbl.find_opt symbol_table.sst_symbols identifier with
-  | Some entry -> Some entry
-  | None ->(
-      match symbol_table.sst_parent with
-      | Some parent_table -> lookup_symbol identifier parent_table  
-      | None -> None  )
-
-let insert_symbol symbol_table identifier entry =
-  (* Check for existence in the current scope only *)
-  if Hashtbl.mem symbol_table.sst_symbols identifier then
-    raise (SymbolTableError ("Symbol already exists in the same scope: " ^ identifier))
-  else
-    Hashtbl.add symbol_table.sst_symbols identifier entry
-
-let update_symbol_table symbol_table identifier new_entry =
-  if Hashtbl.mem symbol_table.sst_symbols identifier then
-    Hashtbl.replace symbol_table.sst_symbols identifier new_entry
-  else
-    raise (SymbolTableError ("Symbol not found for update: " ^ identifier))
 
 let get_block_from_expr (expr: s_expr) : s_block_expr =
   match expr.se_content with
   | S_block_expr block -> block
   | _ -> raise (Failure "Not a block expression")
 
+
+(**********************)
 
 let analyse_module (ast_root:roc_module) : s_module =
   let analyse_type (raw_type: roc_type) : s_type =
@@ -45,8 +21,15 @@ let analyse_module (ast_root:roc_module) : s_module =
     | T_string -> ST_string
     | T_unit -> ST_unit
   in
+
+
+  (** 
+   take a ast node `roc_expr` and current scope's symbol table, 
+   do the semantic analysis on it. return the analysed sast node `s_expr`.
+  *)
   let rec analyse_expr (raw_expr: roc_expr) (symbol_table: s_symbol_table) : s_expr =
     match raw_expr with
+    (* literals *)
     | Roc_string_literal strl -> {se_type = ST_string; se_content = S_string_literal strl}
     | Roc_int_literal intl -> { se_type = ST_int; se_content = S_int_literal intl }
     | Roc_float_literal fltl -> { se_type = ST_float; se_content = S_float_literal fltl }
@@ -64,7 +47,7 @@ let analyse_module (ast_root:roc_module) : s_module =
       in
       { se_type = result_type; se_content = S_unary_expr (op, analysed_expr) }
 
-    (* Arithmetic and Logical Expressions *)
+    (* Binary Expression *)
     | Roc_arith_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 symbol_table in
         let analysed_e2 = analyse_expr e2 symbol_table in
@@ -95,6 +78,7 @@ let analyse_module (ast_root:roc_module) : s_module =
       in
       { se_type = result_type; se_content = S_comparison_expr (op, analysed_e1, analysed_e2) }
         
+    (**)
     | Roc_assignment_expr (e1, e2) ->
       (* //TODO: more check for left hand side*)
       let analysed_e1 = analyse_expr e1 symbol_table in

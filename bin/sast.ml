@@ -142,5 +142,36 @@ type s_module = {
   sm_namespace: s_symbol_table;
 }
 
+(* some helper functions *)
+
+exception SymbolTableError of string
+
+let init_symbol_table ?parent () : s_symbol_table =
+  let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
+  { sst_parent = parent; sst_symbols = symbol_table }
+
+let rec lookup_symbol identifier symbol_table =
+  match Hashtbl.find_opt symbol_table.sst_symbols identifier with
+  | Some entry -> Some entry
+  | None ->(
+      match symbol_table.sst_parent with
+      | Some parent_table -> lookup_symbol identifier parent_table  
+      | None -> None  )
+
+let insert_symbol symbol_table identifier entry =
+  (* Check for existence in the current scope only *)
+  if Hashtbl.mem symbol_table.sst_symbols identifier then
+    raise (SymbolTableError ("Symbol already exists in the same scope: " ^ identifier))
+  else
+    Hashtbl.add symbol_table.sst_symbols identifier entry
+
+let update_symbol_table symbol_table identifier new_entry =
+  if Hashtbl.mem symbol_table.sst_symbols identifier then
+    Hashtbl.replace symbol_table.sst_symbols identifier new_entry
+  else
+    raise (SymbolTableError ("Symbol not found for update: " ^ identifier))
+
+(* to string *)
+
 let string_of_module = function
   _ -> "TODO"

@@ -9,6 +9,10 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
+(**
+  translate the whole module from sast node `s_module` to corresponding LLVM module.
+  Should organize helper functions in the order of `from bottom to top`.
+    *)
 let trans_module (sast: s_module) =
   let context    = L.global_context () in
   let the_module = L.create_module context "theRoocProgram" in
@@ -24,6 +28,7 @@ let trans_module (sast: s_module) =
   and float_t    = L.double_type context
   in
 
+
   (* Convert SAST types to LLVM types *)
   let trans_type = function
     | ST_int -> i32_t
@@ -33,14 +38,37 @@ let trans_module (sast: s_module) =
     | _ -> todo "not supported. in ltype_of_stype"
   in
 
-  let declare_f
+  let rec trans_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
+    (match s with
+    | S_expr_stmt e -> 
+      (trans_expr e builder scope)
+    | S_var_decl_stmt v | S_let_decl_stmt v -> 
+      (trans_var_decl v builder scope)
+    )
+
+  and trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
+    let e_content = e.se_content in
+    match e_content with
+    | S_int_literal i -> 
+        ignore ( L.const_int i32_t i)
+    | _ -> ()
+      
+  and trans_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
+    let local_name = v.sv_name in
+    let local_type = trans_type v.sv_type in
+    let alloca = L.build_alloca local_type local_name builder in
+    let local_var = {
+      iv_name = local_name;
+      iv_type = local_type;
+      iv_value_addr = alloca;
+    } in
+    insert_local_variable local_name local_var scope
+  in
+
 
   (* Declare built-in functions *)
 
   let trans_function (f: s_function) =
-    (* function init *)
-
-
     match f.sf_body with
     | UserDefined body -> 
       (* Step 1: Determine LLVM function type *)
@@ -77,35 +105,13 @@ let trans_module (sast: s_module) =
                           (Array.to_list (L.params llvm_function))
       | None -> ());
       (* ... translate the function body ... *)
-      let stmts=body.sbe_stmts in
-      let rec trans_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
-        (match s with
-        | S_expr_stmt e -> 
-          (trans_expr e builder scope)
-        | S_var_decl_stmt v | S_let_decl_stmt v -> 
-          (trans_var_decl v builder scope)
-        )
-      and trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
-        let e_content = e.se_content in
-        match e_content with
-        | S_int_literal i -> 
-           ignore ( L.const_int i32_t i)
-        | S_float_literal f -> ignore (L.const_float_of_string float_t f)
-        | _ -> ()
-      and trans_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
-        let local_name = v.sv_name in
-        let local_type = trans_type v.sv_type in
-        let alloca = L.build_alloca local_type local_name builder in
-        let local_var = {
-          iv_name = local_name;
-          iv_type = local_type;
-          iv_value_addr = alloca;
-        } in
-        insert_local_variable local_name local_var scope
+      let stmts=body.sbe_stmts
       in
-        List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
-      )
+      List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
+    )
+
     | BuiltIn -> ()
+
   in
 
   let trans_item (key: string) (item: s_symbol_table_entry) : unit =
