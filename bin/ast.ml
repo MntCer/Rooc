@@ -21,14 +21,6 @@ type roc_type =
   | T_unit
   (*%TODO:*)
 
-(* Define the runtime values in Rooc *)
-type roc_value =
-    V_int of int
-  | V_float of float
-  | V_bool of bool
-  | V_string of string
-  | V_null
-
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
 and primitive_typ = Int | Float | String | Bool | Void *)

@@ -22,7 +22,6 @@ let analyse_module (ast_root:roc_module) : s_module =
     | T_unit -> ST_unit
   in
 
-
   (** 
    take a ast node `roc_expr` and current scope's symbol table, 
    do the semantic analysis on it. return the analysed sast node `s_expr`.
