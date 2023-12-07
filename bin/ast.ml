@@ -54,7 +54,7 @@ and roc_stmt =
   | Roc_expr_stmt of roc_expr
   | Roc_var_decl_stmt of roc_variable
   | Roc_let_decl_stmt of roc_variable
-  | Roc_block of roc_block
+  | STMT_block of roc_block
   | Roc_for_stmt of roc_expr * roc_expr * roc_expr * roc_block
   | Roc_while_stmt of roc_expr * roc_block
   | Roc_if_stmt of roc_expr * roc_block * roc_block

@@ -102,7 +102,7 @@ roc_param:
 roc_statement:
   | roc_expr_stmt { $1 }
   | roc_decl_stmt { $1 }
-  | roc_block {Roc_block ($1)}
+  | roc_block {STMT_block ($1)}
   | roc_loop_stmt {$1}
   | roc_if_stmt {$1}
   | roc_continue_stmt {$1}
