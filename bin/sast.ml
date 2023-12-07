@@ -29,6 +29,7 @@ and s_expr_content =
   | S_bool_literal of bool
 
   | S_unary_expr of unary_op * s_expr
+  (* binary expression: arith; logical; comparison *)
   | S_arith_expr of arith_op * s_expr * s_expr
   | S_logical_expr of logical_op * s_expr * s_expr
   | S_comparison_expr of comparison_op * s_expr * s_expr
