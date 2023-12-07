@@ -27,6 +27,7 @@ and primitive_typ = Int | Float | String | Bool | Void *)
 
 
 type roc_expr =
+  | EXPR_null
 (* literal expr *)
   (* | Roc_unit_literal #TODO *)
   | Roc_string_literal of string
@@ -50,7 +51,6 @@ and roc_variable =
       rv_initial_expr : roc_expr option; }
 
 and roc_stmt =
-  | Roc_empty_stmt
   | Roc_expr_stmt of roc_expr
   | Roc_var_decl_stmt of roc_variable
   | Roc_let_decl_stmt of roc_variable
