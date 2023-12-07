@@ -170,12 +170,11 @@ Note: When assigning objects, passing them to functions, or copying values, our 
 
 The following keywords are reserved and may not be used as identifiers.
 
-```
-true        false       
-const       fun         var         let         struct      trait       impl  
-int         float       bool        str         void        list
-if          else        for         while       return      break       continue
-self
+```      
+const       var         let         fun         struct      impl        trait  
+self        int         float       bool        str         void        list
+return      if          else        for         while       break       continue
+true        false
 ```
 
 ### Integer literals
