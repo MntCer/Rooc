@@ -34,10 +34,9 @@ open Util
 %%
 
 roc_module:
-  roc_items EOF 
-  { { 
-      rm_items = List.rev $1;
-      } }
+  roc_items EOF {{ 
+    rm_items = List.rev $1;
+  }}
 
 roc_items:
     /* nothing */ { ([]) }
@@ -48,14 +47,14 @@ roc_item:
   // | %TODO
 
 roc_function:
-    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type roc_block_expr SEMI
+    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type roc_block SEMI
     { { 
       rf_name = $2;
       rf_params = Some ($4);
       rf_return_type = $7;
       rf_body = $8 } }
 
-  | FUN ID LPAREN RPAREN RARROW roc_type roc_block_expr SEMI
+  | FUN ID LPAREN RPAREN RARROW roc_type roc_block SEMI
       { {
         rf_name = $2;
         rf_params = None;
@@ -85,7 +84,7 @@ roc_param:
 //       rms_return_type = $7 } }
 
 // roc_method:
-//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block_expr SEMI
+//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block SEMI
 //     { {
 //       rm_name = $2;
 //       rm_params = $4;
@@ -99,9 +98,15 @@ roc_param:
 
 
 roc_statement:
-    roc_expr_stmt { $1 }
+    SEMI { Roc_empty_stmt }
+  | roc_expr_stmt { $1 }
   | roc_decl_stmt { $1 }
-  | SEMI { Roc_empty_stmt }
+  | roc_block {Roc_block ($1)}
+  | roc_loop_stmt {$1}
+  | roc_if_stmt {$1}
+  | roc_continue_stmt {$1}
+  | roc_break_stmt {$1}
+  | roc_return_stmt {$1}
 
 roc_decl_stmt:
     VAR ID COLON roc_type ASSIGN roc_expr SEMI
@@ -132,19 +137,14 @@ roc_decl_stmt:
 roc_expr_stmt:
     roc_expr SEMI { Roc_expr_stmt($1) }
 
-roc_expr:
-    roc_expr_without_block { $1 }
-  | roc_expr_with_block { $1 }
 
-roc_expr_without_block:
-    roc_literal_expr {$1}
+
+roc_expr:
+  | roc_literal_expr {$1}
   | roc_operator_expr {$1}
   | roc_grouped_expr {$1}
   | roc_path_expr {$1}
   | roc_call_expr {$1}
-  | roc_continue_expr {$1}
-  | roc_break_expr {$1}
-  | roc_return_expr {$1}
 
 roc_literal_expr:
     SLIT { Roc_string_literal($1) }
@@ -213,42 +213,42 @@ optional_comma:
     /* empty */ { () }
   | COMMA { () }
 
-roc_continue_expr:
-    CONTINUE { Roc_continue_expr }
+roc_continue_stmt:
+    CONTINUE SEMI { Roc_continue_stmt }
 
-roc_break_expr:
-    BREAK { Roc_break_expr }
+roc_break_stmt:
+    BREAK SEMI { Roc_break_stmt }
 
-roc_return_expr:
-    RETURN roc_expr { Roc_return_expr($2) }
-
-
-roc_expr_with_block:
-    roc_block_expr {$1}
-  | roc_if_expr {$1}
-  | roc_loop_expr {$1}
+roc_return_stmt:
+    RETURN roc_expr SEMI { Roc_return_stmt($2) }
 
 
-roc_block_expr:
-    LBRACE roc_statements RBRACE { Roc_block_expr(List.rev $2) }
-  | LBRACE RBRACE { Roc_block_expr([]) }
+
+
+roc_block:
+    LBRACE roc_statements RBRACE {{
+      roc_block_stmts = List.rev $2;
+    }}
+  | LBRACE RBRACE {{
+      rb_stmt_list = [];
+    }}
 
 roc_statements:
     roc_statement { [$1] }
   | roc_statements roc_statement { $2 :: $1 }
 
-roc_if_expr:
-    IF LPAREN roc_expr roc_block_expr ELSE roc_block_expr { Roc_if_expr($3, $4, $6) }
+roc_if_stmt:
+    IF LPAREN roc_expr roc_block ELSE roc_block { Roc_if_stmt($3, $4, $6) }
 
-roc_loop_expr:
-    roc_for_expr  { $1 }
-  | roc_while_expr { $1 }
+roc_loop_stmt:
+  |  roc_for_stmt  { $1 }
+  | roc_while_stmt { $1 }
 
-roc_for_expr:
-    FOR LPAREN roc_expr SEMI roc_expr SEMI roc_expr RPAREN roc_block_expr { Roc_for_expr($3, $5, $7, $9) }
+roc_for_stmt:
+    FOR LPAREN roc_expr SEMI roc_expr SEMI roc_expr RPAREN roc_block { Roc_for_expr($3, $5, $7, $9) }
 
-roc_while_expr:
-    WHILE LPAREN roc_expr RPAREN roc_block_expr { Roc_while_expr($3, $5) }
+roc_while_stmt:
+    WHILE LPAREN roc_expr RPAREN roc_block { Roc_while_expr($3, $5) }
 
 
 roc_type:
