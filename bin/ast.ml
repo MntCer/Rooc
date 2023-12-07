@@ -41,14 +41,6 @@ type roc_expr =
   | Roc_grouped_expr of roc_expr
   | Roc_path_expr of string list
   | Roc_call_expr of roc_expr * ( roc_expr list ) (* expr, callParams*)
-  | Roc_return_expr of roc_expr
-  | Roc_block_expr of roc_stmt list
-  | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_expr
-  | Roc_while_expr of roc_expr * roc_expr
-  | Roc_break_expr
-  | Roc_continue_expr
-    (* if expr *)
-  | Roc_if_expr of roc_expr * roc_expr * roc_expr
 
 and roc_variable =
     { rv_name : string;
@@ -59,7 +51,19 @@ and roc_stmt =
     Roc_expr_stmt of roc_expr
   | Roc_var_decl_stmt of roc_variable
   | Roc_let_decl_stmt of roc_variable
+  | Roc_return_stmt of roc_expr
+  | Roc_block of roc_block
+  | Roc_for_stmt of roc_expr * roc_expr * roc_expr * roc_block
+  | Roc_while_stmt of roc_expr * roc_block
+  | Roc_if_stmt of roc_expr * roc_block * roc_block
+  | Roc_break_stmt
+  | Roc_continue_stmt
   | Roc_empty_stmt
+
+and roc_block =
+  {
+    rb_stmt_lists : roc_stmt list;
+  }
 
 
 type roc_params = {
