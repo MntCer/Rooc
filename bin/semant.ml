@@ -96,7 +96,7 @@ let analyse_module (ast_root:roc_module) : s_module =
         let analysed_expr = analyse_expr e symbol_table in
         { se_type = analysed_expr.se_type; se_content = S_grouped_expr analysed_expr }
     
-    | Roc_return_expr e ->
+    (* | Roc_return_expr e ->
         let analysed_expr = analyse_expr e symbol_table in
         { se_type = analysed_expr.se_type; se_content = S_return_expr analysed_expr }
     
@@ -121,8 +121,8 @@ let analyse_module (ast_root:roc_module) : s_module =
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
-        { se_type = ST_unit; se_content = S_null_expr } *)
-  and analyse_block_expr (raw_stmts: roc_stmt list) (symbol_table: s_symbol_table) (init_new_table:bool) : s_block_expr =
+        { se_type = ST_unit; se_content = S_null_expr } *) *)
+  and analyse_block ({rb_stmt_lists:roc_stmt list}) (symbol_table: s_symbol_table) (init_new_table:bool) : s_block_expr =
     let table_for_the_block = 
       if init_new_table then 
         init_symbol_table ~parent:symbol_table () 
