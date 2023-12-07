@@ -119,6 +119,7 @@ The `PRODUCTION_NAME` referred before also follow this rule.
 ### Semicolon
 
 To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement or a declaration. 
+<!-- #TODO: not semicolon for block -->
 
 ```
 ;
@@ -247,8 +248,6 @@ fn main() -> int {};
 
 <!-- %TODO:
 ```ebnf
-    | Module
-    | ExternModule
     | UseDeclaration
     | TypeAlias
     | Enumeration
@@ -282,13 +281,14 @@ A constant value is not associated with a specific memory location in the progra
 
 <!-- %TODO: FunctionQualifier -->
 <!-- %TODO: Generic params -->
+
 ```ebnf
-Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type Block ";".
+Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type Block .
 
 FunctionParams     = Param { "," Param } [ "," ] .
 Param      = identifier ":" Type .
 
-MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type ";".
+MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type .
 Method = "fun" identifier "(" [ MethodParams] ")" "->" Type Block ";".
 
 MethodParams = "self" { "," Param } [ "," ] .
@@ -311,7 +311,7 @@ Example:
 ```rust
 fun get_first (x:int,y:float) -> int {
     return x;
-};
+}
 ```
 
 #### function parameters
@@ -332,7 +332,7 @@ Functions without a body block are function declaration. This form may only appe
 
 ```ebnf
 Struct =
-    "struct" IDENTIFIER "{" [ StructFields ] "}" ";" .
+    "struct" IDENTIFIER "{" [ StructFields ] "}" .
 StructFields =
     StructField {"," StructField } [","] .
 StructField =
@@ -343,7 +343,7 @@ StructField =
 struct Point {
     m:int,
     n:int,
-};
+}
 ```
 <!-- %TODO: ref -->
 A struct is a nominal struct type defined with the keyword `struct`.
@@ -356,7 +356,7 @@ Trait =
     "trait" IDENTIFIER "{" 
         { AssociatedItem 
         | AssociatedDeclaration } 
-    "}" ";" .
+    "}".
 ```
 
 A trait describes an abstract interface that types can implement.
@@ -387,7 +387,7 @@ Example:
 ```
 trait Drawable {
     fun draw() -> void;
-};
+}
 ```
 
 ### Implementation
@@ -417,16 +417,16 @@ impl Point {
         self.x = x;
         self.y = y;
         return self;
-    };
+    }
 
     fun getX() -> int {
         return self.x;
-    };
+    }
 
     fun getY() -> int {
         return self.y;
-    };
-};
+    }
+}
 ```
 
 
@@ -449,9 +449,9 @@ Statement :
     | ExprStmt 
     | ForStmt
     | WhileStmt
-    | IfStmt 
     | ContinueStmt
     | BreakStmt
+    | IfStmt 
     | ReturnStmt 
     | Block .
 ```
@@ -506,7 +506,7 @@ LiteralExpr =
      STRING_LITERAL
    | INTEGER_LITERAL
    | FLOAT_LITERAL
-   | BOOL_LITERAL
+   | BOOL_LITERAL .
 ```
 
 A literal expression is an expression consisting of a single token, rather than a sequence of tokens, that immediately and directly denotes the value it evaluates to, rather than referring to it by name or some other evaluation rule.
@@ -613,7 +613,7 @@ Return expressions are denoted with the keyword `return`. Evaluating a return ex
 ### Block Statement
 
 ```ebnf
-Block = "{" [ Statements ]"}" .
+Block = "{" [ Statements ] "}" .
 ```
 
 A block expression, or block, is a control flow expression and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
@@ -731,7 +731,9 @@ fun main() -> int{
 ## Type
 
 ```ebnf
-Type = PrimitiveType | GenericType | identifier.
+Type = PrimitiveType 
+    | GenericType 
+    | identifier .
 ```
 
 ### Primitive types
