@@ -227,10 +227,10 @@ roc_return_stmt:
 
 roc_block:
     LBRACE roc_statements RBRACE {{
-      roc_block_stmts = List.rev $2;
+      rb_stmt_lists = List.rev $2;
     }}
   | LBRACE RBRACE {{
-      rb_stmt_list = [];
+      rb_stmt_lists = [];
     }}
 
 roc_statements:
@@ -245,10 +245,10 @@ roc_loop_stmt:
   | roc_while_stmt { $1 }
 
 roc_for_stmt:
-    FOR LPAREN roc_expr SEMI roc_expr SEMI roc_expr RPAREN roc_block { Roc_for_expr($3, $5, $7, $9) }
+    FOR LPAREN roc_expr SEMI roc_expr SEMI roc_expr RPAREN roc_block { Roc_for_stmt($3, $5, $7, $9) }
 
 roc_while_stmt:
-    WHILE LPAREN roc_expr RPAREN roc_block { Roc_while_expr($3, $5) }
+    WHILE LPAREN roc_expr RPAREN roc_block { Roc_while_stmt($3, $5) }
 
 
 roc_type:
