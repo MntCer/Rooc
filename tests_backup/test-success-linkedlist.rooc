@@ -1,0 +1,11 @@
+struct int_list_node {
+	var val: int;
+	var next: list_node; //use null?
+}
+
+impl int_list_node {
+	fun append(self, val:int) {
+		var new_node = int_list_node(val);
+		self.next = new_node;
+	}
+}
