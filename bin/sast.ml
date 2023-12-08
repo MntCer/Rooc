@@ -3,7 +3,7 @@ open Ast
 
 type s_type =
   | ST_unit
-  |  ST_int
+  | ST_int
   | ST_float
   | ST_string
   | ST_bool
@@ -80,9 +80,9 @@ and s_stmt =
   | S_expr_stmt of s_expr
   | S_var_decl_stmt of s_variable
   | S_let_decl_stmt of s_variable
-  | S_return_stmt of s_expr
-  | S_break_expr
-  | S_continue_expr
+  | SSTMT_return of s_expr
+  | SSTMT_break
+  | SSTMT_continue
 
   | SSTMT_block of s_block
   | SSTMT_for of s_for_stmt

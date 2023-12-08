@@ -47,7 +47,7 @@ let trans_module (sast: s_module) =
     )
 
   and trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
-    let e_content = e.se_content in
+    let e_content = e.se_expr in
     match e_content with
     | S_int_literal i -> 
         ignore ( L.const_int i32_t i)
@@ -105,7 +105,7 @@ let trans_module (sast: s_module) =
                             (Array.to_list (L.params llvm_function))
         | None -> ());
         (* ... translate the function body ... *)
-        let stmts=body.sbe_stmts
+        let stmts=body.sb_stmts
         in
         List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
       )

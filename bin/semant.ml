@@ -4,35 +4,33 @@ open Util
 open Builtins
 
 
-let get_block_from_expr (expr: s_expr) : s_block_expr =
-  match expr.se_content with
-  | S_block_expr block -> block
-  | _ -> raise (Failure "Not a block expression")
-
-
-(**********************)
-
 let analyse_module (ast_root:roc_module) : s_module =
+  (**
+    #TODO: add docstring
+      *)
   let analyse_type (raw_type: roc_type) : s_type =
     match raw_type with
+    | T_unit -> ST_unit
     | T_int -> ST_int
     | T_float -> ST_float
     | T_bool -> ST_bool
     | T_string -> ST_string
-    | T_unit -> ST_unit
   in
 
   (** 
-   take a ast node `roc_expr` and current scope's symbol table, 
-   do the semantic analysis on it. return the analysed sast node `s_expr`.
+    take a ast node `roc_expr` and current scope's symbol table, 
+    do the semantic analysis on it. return the analysed sast node `s_expr`.
   *)
   let rec analyse_expr (raw_expr: roc_expr) (symbol_table: s_symbol_table) : s_expr =
     match raw_expr with
+    (* empty expression *)
+    | EXPR_null -> { se_type = ST_unit; se_expr = SEXPR_null }
+
     (* literals *)
-    | Roc_string_literal strl -> {se_type = ST_string; se_content = S_string_literal strl}
-    | Roc_int_literal intl -> { se_type = ST_int; se_content = S_int_literal intl }
-    | Roc_float_literal fltl -> { se_type = ST_float; se_content = S_float_literal fltl }
-    | Roc_bool_literal booll -> { se_type = ST_bool; se_content = S_bool_literal booll }
+    | Roc_string_literal strl -> {se_type = ST_string; se_expr = S_string_literal strl}
+    | Roc_int_literal intl -> { se_type = ST_int; se_expr = S_int_literal intl }
+    | Roc_float_literal fltl -> { se_type = ST_float; se_expr = S_float_literal fltl }
+    | Roc_bool_literal booll -> { se_type = ST_bool; se_expr = S_bool_literal booll }
 
     (* Unary Expression *)
     | Roc_unary_expr (op, e) ->
@@ -44,7 +42,7 @@ let analyse_module (ast_root:roc_module) : s_module =
         | _ -> raise (type_err_failure "Unary expression type mismatch")
           (* ST_error  *)
       in
-      { se_type = result_type; se_content = S_unary_expr (op, analysed_expr) }
+      { se_type = result_type; se_expr = S_unary_expr (op, analysed_expr) }
 
     (* Binary Expression *)
     | Roc_arith_expr (op, e1, e2) ->
@@ -56,7 +54,7 @@ let analyse_module (ast_root:roc_module) : s_module =
           | _ -> raise (type_err_failure "Arithmetic expression type mismatch")
             (* ST_error   *)
         in
-        { se_type = result_type; se_content = S_arith_expr (op, analysed_e1, analysed_e2) }
+        { se_type = result_type; se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
     | Roc_logical_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 symbol_table in
         let analysed_e2 = analyse_expr e2 symbol_table in
@@ -65,8 +63,7 @@ let analyse_module (ast_root:roc_module) : s_module =
           | _ -> raise (type_err_failure "Logical expression type mismatch")
             (* ST_error *)
         in
-        { se_type = result_type; se_content = S_logical_expr (op, analysed_e1, analysed_e2) }
-
+        { se_type = result_type; se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
     | Roc_comparison_expr (op, e1, e2) ->
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
@@ -75,16 +72,15 @@ let analyse_module (ast_root:roc_module) : s_module =
         | _ -> raise (type_err_failure "Comparison expression type mismatch")
           (* ST_error *)
       in
-      { se_type = result_type; se_content = S_comparison_expr (op, analysed_e1, analysed_e2) }
+      { se_type = result_type; se_expr = S_comparison_expr (op, analysed_e1, analysed_e2) }
         
-    (**)
     | Roc_assignment_expr (e1, e2) ->
       (* //TODO: more check for left hand side*)
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
       let result_type = if analysed_e1.se_type = analysed_e2.se_type then analysed_e1.se_type else ST_error
       in
-      { se_type = result_type; se_content = S_assignment_expr (analysed_e1, analysed_e2) }
+      { se_type = result_type; se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
 
     | Roc_path_expr path -> 
       todo "path expr"
@@ -94,66 +90,86 @@ let analyse_module (ast_root:roc_module) : s_module =
     
     | Roc_grouped_expr e ->
         let analysed_expr = analyse_expr e symbol_table in
-        { se_type = analysed_expr.se_type; se_content = S_grouped_expr analysed_expr }
+        { se_type = analysed_expr.se_type; se_expr = S_grouped_expr analysed_expr }
     
-    (* | Roc_return_expr e ->
-        let analysed_expr = analyse_expr e symbol_table in
-        { se_type = analysed_expr.se_type; se_content = S_return_expr analysed_expr }
-    
-    | Roc_block_expr stmts ->
-        let analysed_block = analyse_block_expr stmts symbol_table true in
-        { se_type = ST_unit; se_content = S_block_expr analysed_block }
+  (**
+    #TODO: add docstring
+      *)
+  and analyse_stmt 
+  (to_analyse: roc_stmt) 
+  (the_table: s_symbol_table) 
+  : s_stmt = 
+    match to_analyse with
+    | Roc_expr_stmt expr -> 
+      let analysed_expr = analyse_expr expr the_table in
+      S_expr_stmt analysed_expr
+    | Roc_var_decl_stmt var_decl -> 
+      let var_name = var_decl.rv_name in
+      let analysed_var = analyse_variable var_decl true the_table in
+      (* Add to symbol table *)
+      let () = insert_symbol the_table var_name (VarEntry analysed_var) in
+      S_var_decl_stmt analysed_var
+    | Roc_let_decl_stmt let_decl ->
+      let let_name = let_decl.rv_name in
+      let analysed_let = analyse_variable let_decl false the_table in
+      (* Add to symbol table *)
+      let () = insert_symbol the_table let_name (VarEntry analysed_let) in
+      S_let_decl_stmt analysed_let
 
-    | Roc_for_expr (init, cond, update, body) ->
+    | Roc_return_stmt e ->
+        let analysed_expr = analyse_expr e the_table in
+        SSTMT_return analysed_expr
+
+    
+    | STMT_block b ->
+        let analysed_block = analyse_block b the_table true in
+        SSTMT_block analysed_block
+
+    | Roc_for_stmt (init, cond, update, body) ->
       todo "for expr"
 
-    | Roc_while_expr (cond, body) ->
+    | Roc_while_stmt (cond, body) ->
       todo "while expr"
 
-    | Roc_break_expr ->
-        { se_type = ST_unit; se_content = S_break_expr }
+    | Roc_break_stmt ->
+      SSTMT_break
     
-    | Roc_continue_expr ->
-        { se_type = ST_unit; se_content = S_continue_expr }
+    | Roc_continue_stmt ->
+      SSTMT_continue
 
-    | Roc_if_expr (cond, then_branch, else_branch) ->
+    | Roc_if_stmt (cond, then_branch, else_branch) ->
       todo "if expr"
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
-        { se_type = ST_unit; se_content = S_null_expr } *) *)
-  and analyse_block ({rb_stmt_lists:roc_stmt list}) (symbol_table: s_symbol_table) (init_new_table:bool) : s_block_expr =
-    let table_for_the_block = 
-      if init_new_table then 
-        init_symbol_table ~parent:symbol_table () 
-      else symbol_table 
-    in
-    let analysed_stmts = List.rev (List.fold_left (fun acc stmt ->
-      match stmt with
-      | Roc_expr_stmt expr -> 
-          let analysed_expr = analyse_expr expr table_for_the_block in
-          (S_expr_stmt analysed_expr)::acc 
-      | Roc_var_decl_stmt var_decl -> 
-        let var_name = var_decl.rv_name in
-        let analysed_var = analyse_variable var_decl true table_for_the_block in
-        (* Add to symbol table *)
-        insert_symbol table_for_the_block var_name (VarEntry analysed_var);
-        let analysed_var = S_var_decl_stmt analysed_var in 
-        analysed_var::acc
-      | Roc_let_decl_stmt let_decl ->
-        let let_name = let_decl.rv_name in
-        let analysed_let = analyse_variable let_decl false table_for_the_block in
-        (* Add to symbol table *)
-        insert_symbol table_for_the_block let_name (VarEntry analysed_let);
-        let analysed_let = S_let_decl_stmt analysed_let in
-        analysed_let::acc
-      | Roc_empty_stmt -> 
-          acc  (* Skip empty statements *)
-    ) [] raw_stmts)
-    in
-    { sbe_stmts = analysed_stmts; sbe_scope = table_for_the_block }
+        { se_type = ST_unit; se_expr = S_null_expr } *)
 
-  and analyse_variable (raw_variable: roc_variable) (is_mutable: bool) (symbol_table: s_symbol_table) : s_variable =
+  (**
+    if the `init_new_table` is true, the function will create a new symbol table with `table_in` as its parent,
+    otherwise, the function will use the `table_in` as the table for the block.
+      *)
+  and analyse_block 
+    ({rb_stmts:roc_stmt list}) 
+    (table_in: s_symbol_table) 
+    (init_new_table:bool) 
+    : s_block =
+    let the_table = 
+      if init_new_table then 
+        init_symbol_table ~parent:table_in () 
+      else table_in
+    in
+    let to_analyse = rb_stmts in
+    (* #TODO: also need a function wrapper here *)
+    let analysed_stmts = List.rev (List.fold_left analyse_stmt [] raw_stmts)
+    in
+    { sb_stmts = analysed_stmts; 
+      sb_scope = the_block }
+
+  and analyse_variable 
+    (raw_variable: roc_variable) 
+    (is_mutable: bool) 
+    (symbol_table: s_symbol_table) 
+    : s_variable =
     let analysed_name = raw_variable.rv_name in
     let analysed_type = analyse_type raw_variable.rv_type in
     let analysed_initial_value = 
@@ -240,7 +256,7 @@ let analyse_module (ast_root:roc_module) : s_module =
       | _ -> 
         bug "Function body is not a block expression"
     in
-    let analysed_body = UserDefined (analyse_block_expr block_content function_scope false) in
+    let analysed_body = UserDefined (analyse_block block_content function_scope false) in
     { sf_name = analysed_name;
       sf_params = analysed_params;
       sf_type = analysed_type;
@@ -264,16 +280,14 @@ let analyse_module (ast_root:roc_module) : s_module =
     let name = builtin.sf_name in
     let entry = FuncEntry builtin in
     insert_symbol the_namespace name entry) builtins;
-
+  (* register items *)
   register_items ast_root the_namespace;
   (match lookup_symbol "main" the_namespace with
   | None -> raise (SymbolTableError "main function not found")
   | _ -> ());
-  (* special treatment for main*)
+  (* special check for main *)
+  (* analyse items *)
   analyse_items ast_root the_namespace;
 
-  
   { sm_namespace = the_namespace}
-
-
 
