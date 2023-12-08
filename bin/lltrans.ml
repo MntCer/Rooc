@@ -21,15 +21,16 @@ let trans_module (sast: s_module) =
 
   let the_namespace = init_global_scope () in (* #TODO: should be cleaned*)
 
-  (* Add types *)
+  (* decl corresponding LL types *)
   let i32_t     = L.i32_type    context 
   and i8_t      = L.i8_type     context
   and i1_t       = L.i1_type     context
   and float_t    = L.double_type context
   in
 
-
-  (* Convert SAST types to LLVM types *)
+  (** 
+    Convert SAST types to LLVM types 
+  *)
   let trans_type = function
     | ST_int -> i32_t
     | ST_bool -> i1_t
@@ -38,22 +39,21 @@ let trans_module (sast: s_module) =
     | _ -> todo "not supported. in ltype_of_stype"
   in
 
-  let rec trans_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
-    (match s with
-    | S_expr_stmt e -> 
-      (trans_expr e builder scope)
-    | S_var_decl_stmt v | S_let_decl_stmt v -> 
-      (trans_var_decl v builder scope)
-    )
-
-  and trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
+  (**
+    #TODO: add docstring
+  *)
+  let trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
     let e_content = e.se_expr in
     match e_content with
     | S_int_literal i -> 
         ignore ( L.const_int i32_t i)
     | _ -> ()
-      
-  and trans_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
+  in
+
+  (**
+    #TODO: add docstring
+  *)
+  let trans_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
     let local_name = v.sv_name in
     let local_type = trans_type v.sv_type in
     let alloca = L.build_alloca local_type local_name builder in
@@ -65,9 +65,26 @@ let trans_module (sast: s_module) =
     insert_local_variable local_name local_var scope
   in
 
+  (**
+    #TODO: add docstring
+  *)
+  let rec trans_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
+    (match s with
+    | S_expr_stmt e -> 
+      (trans_expr e builder scope)
+    | S_var_decl_stmt v | S_let_decl_stmt v -> 
+      (trans_var_decl v builder scope)
+    )
+  in
 
-  (* Declare built-in functions *)
+  (** 
+    Declare built-in functions 
+  *)
+  (* #TODO *)
 
+  (**
+    take a s_function in and get a LLVM function
+  *)
   let trans_function (f: s_function) =
     match f.sf_body with
     | UserDefined body -> 
@@ -114,6 +131,9 @@ let trans_module (sast: s_module) =
 
   in
 
+  (**
+    #TODO: add docstring     
+  *)
   let trans_item (key: string) (item: s_symbol_table_entry) : unit =
     match item with
     | FuncEntry f -> trans_function f
