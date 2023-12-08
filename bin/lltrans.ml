@@ -25,6 +25,7 @@ let trans_module
   let the_namespace = init_global_scope () in (* #TODO: should be cleaned*)
 
   (* decl corresponding LL types *)
+  (* #TODO: these part should be refactored out, be independent. *)
   let i32_t     = L.i32_type    the_context 
   and i8_t      = L.i8_type     the_context
   and i1_t       = L.i1_type     the_context
@@ -86,7 +87,7 @@ let trans_module
   (* #TODO *)
 
   (**
-    take a s_function in and get a LLVM function
+    take a s_function in and get a LLVM function in llvalue type
   *)
   let trans_function (f: s_function) =
     match f.sf_body with
@@ -145,7 +146,6 @@ let trans_module
 
   try
     (* #TODO: *)
-    trans_builtins ();
     Hashtbl.iter trans_item to_trans.sm_namespace.sst_symbols;
     the_module
   with e -> L.dispose_module the_module; raise e

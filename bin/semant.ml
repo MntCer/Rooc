@@ -274,7 +274,7 @@ let analyse_module (ast_root:roc_module) : s_module =
   List.iter (fun builtin -> 
     let name = builtin.sf_name in
     let entry = FuncEntry builtin in
-    insert_symbol the_namespace name entry) builtins;
+    insert_symbol the_namespace name entry) builtins_semant;
   (* register items *)
   register_items ast_root the_namespace;
   (match lookup_symbol "main" the_namespace with
