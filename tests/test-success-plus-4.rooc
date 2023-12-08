@@ -1,0 +1,6 @@
+// Adding zero to a number
+fun main() -> int {
+    print_int(0 + 15);  // Should output 15
+    return 0;
+};
+

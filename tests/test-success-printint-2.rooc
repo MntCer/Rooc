@@ -1,0 +1,6 @@
+// Test with zero
+fun main() -> int {
+    print_int(0);
+    return 0;
+};
+
