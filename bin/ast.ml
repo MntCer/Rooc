@@ -23,7 +23,7 @@ type roc_type =
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
-and primitive_typ = Int | Float | String | Bool | Void *)
+and primitive_typ = Int | Float | String | Bool *)
 
 
 type roc_expr =

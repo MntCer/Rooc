@@ -11,7 +11,7 @@ type token =
 | LBRACE | RBRACE | COMMA | COLON | RARROW | DOT
 | BLIT of bool
 | VAR | LET | FUN | STRUCT | IMPL | TRAIT
-| INT | BOOL | FLOAT | STR | VOID
+| INT | BOOL | FLOAT | STR
 | RETURN | IF | ELSE | FOR | WHILE 
 | ILIT of int
 | FLIT of string
@@ -70,7 +70,6 @@ rule token = parse
 | "float"  { FLOAT }
 | "bool"   { BOOL }
 | "str"    { STR}
-(* | "void"   { VOID } *)
 (* | "list"   { LIST } *)
 (* *)
 | "return" { RETURN }
@@ -95,6 +94,7 @@ and comment = parse
   "*/" { token lexbuf }
 | _    { comment lexbuf }
 
+(* recognize string literal in double quotation marks *)
 and string_processor = parse
 [^'"']* as str_str '"' { SLIT(str_str)}
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char ^ "in string literal")) }

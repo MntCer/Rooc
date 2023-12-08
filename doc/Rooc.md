@@ -172,7 +172,7 @@ The following keywords are reserved and may not be used as identifiers.
 
 ```      
 const       var         let         fun         struct      impl        trait  
-self        int         float       bool        str         void        list
+self        int         float       bool        str         list
 return      if          else        for         while       break       continue
 true        false
 ```
@@ -385,8 +385,8 @@ Example:
 
 ```
 trait Drawable {
-    fun draw() -> void;
-}
+    fun draw() -> ();
+};
 ```
 
 ### Implementation
@@ -746,13 +746,11 @@ PrimitiveType   =
   | Float 
   | Bool 
   | String 
-  | Void 
   | Unit .
 Int             = "int" .
 Float           = "float" .
 Bool            = "bool" .
 String          = "str" .
-Void            = "void" .   
 Unit            = "()" .
 ```
 
@@ -778,11 +776,11 @@ Elements in a list should have the same type. The list's implementation is simil
 We want to develop a print function spcifically for string such that it can be used for furthur debugging.
 
 ```
-fun print_str(to_print : str) -> void ;
+fun print_str(to_print : str) -> ();
 ```
 
 <!-- We also want to implement a function for language user to get to know type of a expression.
 
 ```
-print_typeof(...) -> void
+print_typeof(...) -> ()
 ``` -->
