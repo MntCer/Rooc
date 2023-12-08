@@ -13,19 +13,22 @@ module StringMap = Map.Make(String)
   translate the whole module from sast node `s_module` to corresponding LLVM module.
   Should organize helper functions in the order of `from bottom to top`.
     *)
-let trans_module (sast: s_module) =
-  let context    = L.global_context () in
-  let the_module = L.create_module context "theRoocProgram" in
+let trans_module 
+    (to_trans: s_module) 
+    (the_context: L.llcontext)
+    : L.llmodule =
+
+  let the_module = L.create_module the_context "theRoocProgram" in
 
   let (item_to_llvalue : (string, L.llvalue) Hashtbl.t) = Hashtbl.create 10 in
 
   let the_namespace = init_global_scope () in (* #TODO: should be cleaned*)
 
   (* decl corresponding LL types *)
-  let i32_t     = L.i32_type    context 
-  and i8_t      = L.i8_type     context
-  and i1_t       = L.i1_type     context
-  and float_t    = L.double_type context
+  let i32_t     = L.i32_type    the_context 
+  and i8_t      = L.i8_type     the_context
+  and i1_t       = L.i1_type     the_context
+  and float_t    = L.double_type the_context
   in
 
   (** 
@@ -97,7 +100,7 @@ let trans_module (sast: s_module) =
         let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
 
         (* Builder for function body *)
-        let builder = L.builder_at_end context (L.entry_block llvm_function) in
+        let builder = L.builder_at_end the_context (L.entry_block llvm_function) in
 
         let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
   
@@ -140,35 +143,9 @@ let trans_module (sast: s_module) =
     | _ -> todo "not supported. in translate_item"
   in
 
-  let trans_builtins () =
-    let printf_type: L.lltype =
-      L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in 
-    let printf_func: L.llvalue = L.declare_function "printf" printf_type the_module in
-    (* Create the printf format string for integers *)
-    insert_global_function "printf" {
-        if_return_type = i32_t;
-        if_param_types = [| L.pointer_type i8_t |];
-        if_function_type = printf_type;
-        if_function = printf_func;
-        if_builder = None;
-        if_scope = None;
-      } the_namespace;
-
-    (* Declare print_int as a wrapper around printf *)
-    let print_int_type = L.function_type i32_t [| i32_t |] in
-    let print_int_func = L.declare_function "print_int" print_int_type the_module in
-    insert_global_function "print_int" {
-        if_return_type = i32_t;
-        if_param_types = [| i32_t |];
-        if_function_type = print_int_type;
-        if_function = print_int_func;
-        if_builder = None;
-        if_scope = None;
-      } the_namespace;
-  in
   try
     (* #TODO: *)
     trans_builtins ();
-    Hashtbl.iter trans_item sast.sm_namespace.sst_symbols;
+    Hashtbl.iter trans_item to_trans.sm_namespace.sst_symbols;
     the_module
   with e -> L.dispose_module the_module; raise e

@@ -3,7 +3,7 @@
    and dump the module *)
 
 type action = 
-    Ast 
+  |  Ast 
   | Sast 
   | LLVM_IR 
   | Compile
@@ -31,9 +31,13 @@ let () =
       match !action with
         Ast     -> print_string (Ast.string_of_module ast)
       | Sast    -> print_string (Sast.string_of_module sast)
-      | LLVM_IR -> print_string (Llvm.string_of_llmodule 
-        (Lltrans.trans_module sast))
+      | LLVM_IR -> 
+        let the_context= Llhelper.the_global_context in
+        let translated_module = Lltrans.trans_module sast the_context in
+        print_string(Llvm.string_of_llmodule( translated_module))
+
       | Compile -> 
-        let m = Lltrans.trans_module sast in
-        Llvm_analysis.assert_valid_module m;
-        print_string (Llvm.string_of_llmodule m);
+        let the_context= Llhelper.the_global_context in
+        let translated_module = Lltrans.trans_module sast the_context in
+        let () = Llvm_analysis.assert_valid_module translated_module in
+        print_string (Llvm.string_of_llmodule translated_module);

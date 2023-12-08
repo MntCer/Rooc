@@ -3,6 +3,7 @@
  *)
 open Llvm
 
+let the_global_context = global_context ()
 
 type ir_variable = {
   iv_name : string;
