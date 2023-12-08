@@ -14,20 +14,12 @@ type unary_op = Not | Neg
 
 (* Define the possible types in Rooc *)
 type roc_type = 
-    T_int
+  | T_unit
+  | T_int
   | T_float
   | T_string
   | T_bool
-  | T_unit
   (*%TODO:*)
-
-(* Define the runtime values in Rooc *)
-type roc_value =
-    V_int of int
-  | V_float of float
-  | V_bool of bool
-  | V_string of string
-  | V_null
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
@@ -35,28 +27,23 @@ and primitive_typ = Int | Float | String | Bool *)
 
 
 type roc_expr =
-    (* literal expr *)
-    Roc_string_literal of string
+  | EXPR_null
+(* literal expr *)
+  (* | Roc_unit_literal #TODO *)
+  | Roc_string_literal of string
   | Roc_int_literal of int
   | Roc_float_literal of string
   | Roc_bool_literal of bool
-    (* operator expr *)
+(* operator expr *)
   | Roc_unary_expr of unary_op * roc_expr
   | Roc_arith_expr of  arith_op * roc_expr * roc_expr
   | Roc_logical_expr of logical_op * roc_expr * roc_expr
   | Roc_comparison_expr of  comparison_op * roc_expr * roc_expr
   | Roc_assignment_expr of roc_expr * roc_expr
+
   | Roc_grouped_expr of roc_expr
   | Roc_path_expr of string list
   | Roc_call_expr of roc_expr * ( roc_expr list ) (* expr, callParams*)
-  | Roc_return_expr of roc_expr
-  | Roc_block_expr of roc_stmt list
-  | Roc_for_expr of roc_expr * roc_expr * roc_expr * roc_expr
-  | Roc_while_expr of roc_expr * roc_expr
-  | Roc_break_expr
-  | Roc_continue_expr
-    (* if expr *)
-  | Roc_if_expr of roc_expr * roc_expr * roc_expr
 
 and roc_variable =
     { rv_name : string;
@@ -64,10 +51,21 @@ and roc_variable =
       rv_initial_expr : roc_expr option; }
 
 and roc_stmt =
-    Roc_expr_stmt of roc_expr
+  | Roc_expr_stmt of roc_expr
   | Roc_var_decl_stmt of roc_variable
   | Roc_let_decl_stmt of roc_variable
-  | Roc_empty_stmt
+  | STMT_block of roc_block
+  | Roc_for_stmt of roc_expr * roc_expr * roc_expr * roc_block
+  | Roc_while_stmt of roc_expr * roc_block
+  | Roc_if_stmt of roc_expr * roc_block * roc_block
+  | Roc_break_stmt
+  | Roc_continue_stmt
+  | Roc_return_stmt of roc_expr
+
+and roc_block =
+  {
+    rb_stmts : roc_stmt list;
+  }
 
 
 type roc_params = {
@@ -78,7 +76,7 @@ type roc_function = {
   rf_name : string;
   rf_params : roc_params option;
   rf_return_type : roc_type;
-  rf_body : roc_expr;
+  rf_body : roc_block;
 }
 
 type roc_method_signature = {
@@ -91,7 +89,7 @@ type roc_method = {
   rm_name : string;
   rm_params : roc_params option;
   rm_return_type : roc_type;
-  rm_body : roc_expr;
+  rm_body : roc_block;
 }
 
 type roc_item = 

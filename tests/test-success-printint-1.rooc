@@ -1,4 +1,6 @@
+// Test with a small positive integer
 fun main() -> int {
     print_int(1);
     return 0;
-};
+}
+

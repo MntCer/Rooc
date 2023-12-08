@@ -119,6 +119,7 @@ The `PRODUCTION_NAME` referred before also follow this rule.
 ### Semicolon
 
 To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement or a declaration. 
+<!-- #TODO: not semicolon for block -->
 
 ```
 ;
@@ -246,8 +247,6 @@ fn main() -> int {};
 
 <!-- %TODO:
 ```ebnf
-    | Module
-    | ExternModule
     | UseDeclaration
     | TypeAlias
     | Enumeration
@@ -281,14 +280,15 @@ A constant value is not associated with a specific memory location in the progra
 
 <!-- %TODO: FunctionQualifier -->
 <!-- %TODO: Generic params -->
+
 ```ebnf
-Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type BlockExpression ";".
+Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type Block .
 
 FunctionParams     = Param { "," Param } [ "," ] .
 Param      = identifier ":" Type .
 
-MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type ";".
-Method = "fun" identifier "(" [ MethodParams] ")" "->" Type BlockExpression ";".
+MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type .
+Method = "fun" identifier "(" [ MethodParams] ")" "->" Type Block ";".
 
 MethodParams = "self" { "," Param } [ "," ] .
 ```
@@ -310,7 +310,7 @@ Example:
 ```rust
 fun get_first (x:int,y:float) -> int {
     return x;
-};
+}
 ```
 
 #### function parameters
@@ -331,7 +331,7 @@ Functions without a body block are function declaration. This form may only appe
 
 ```ebnf
 Struct =
-    "struct" IDENTIFIER "{" [ StructFields ] "}" ";" .
+    "struct" IDENTIFIER "{" [ StructFields ] "}" .
 StructFields =
     StructField {"," StructField } [","] .
 StructField =
@@ -342,7 +342,7 @@ StructField =
 struct Point {
     m:int,
     n:int,
-};
+}
 ```
 <!-- %TODO: ref -->
 A struct is a nominal struct type defined with the keyword `struct`.
@@ -355,7 +355,7 @@ Trait =
     "trait" IDENTIFIER "{" 
         { AssociatedItem 
         | AssociatedDeclaration } 
-    "}" ";" .
+    "}".
 ```
 
 A trait describes an abstract interface that types can implement.
@@ -416,16 +416,16 @@ impl Point {
         self.x = x;
         self.y = y;
         return self;
-    };
+    }
 
     fun getX() -> int {
         return self.x;
-    };
+    }
 
     fun getY() -> int {
         return self.y;
-    };
-};
+    }
+}
 ```
 
 
@@ -437,22 +437,22 @@ Statements :
      Statement { Statement } .
 ```
 
-<!--%TODO: ref  -->
+<!--%TODO: not right now  -->
 Statements serve mostly to contain and explicitly sequence expression evaluation. A statement is a component of a block, which is in turn a component of an outer expression or function.
 
-<!-- %TODO:
-| Statement+ ExpressionWithoutBlock
-| ExpressionWithoutBlock 
--->
 
 ```ebnf
 Statement :
       ";"
-   | DeclarationStatement
-   | ExpressionStatement 
-   | Block 
-   | LoopStmt
-   | IfStmt .
+    | DeclarationStmt
+    | ExprStmt 
+    | ForStmt
+    | WhileStmt
+    | ContinueStmt
+    | BreakStmt
+    | IfStmt 
+    | ReturnStmt 
+    | Block .
 ```
 <!-- %TODO: now just allow first-level item
    | Item 
@@ -465,8 +465,8 @@ A declaration statement is one that introduces one or more names into the enclos
 ```ebnf
 DeclarationStatement = VarDeclaration
                      | LetDeclaration .
-VarDeclaration       = "var" identifier ":" Type [ "=" Expression ] ";" .
-LetDeclaration       = "let" identifier ":" Type [ "=" Expression ] ";" .
+VarDeclaration       = "var" identifier ":" Type [ "=" Expr ] ";" .
+LetDeclaration       = "let" identifier ":" Type [ "=" Expr ] ";" .
 ```
 
 A `let` or `var` statement introduce a new set of variables. A variable is a storage location for holding a value. The set of permissible values is determined by the variable's type.
@@ -478,7 +478,7 @@ The variable introduced by a `let` statement is immutable, and `var` variable is
 ### Expression statement
 
 ```ebnf
-ExpressionStatement = Expression ";" .
+ExprStmt = Expr ";" .
 ```
 
 ## Expressions
@@ -487,28 +487,25 @@ Most forms of value-producing or effect-causing evaluation are directed by the u
 
 ```ebnf
 Expr =
-    LiteralExpression
-  | PathExpression          %TODO
-  | OperatorExpression
-  | GroupedExpression
-  | StructExpression        %TODO
-  | CallExpression
-  | MethodCallExpression    %TODO
-  | FieldExpression         %TODO
-  | ContinueExpression
-  | BreakExpression
-  | ReturnExpression .
+    LiteralExpr
+  | PathExpr
+  | OperatorExpr
+  | GroupedExpr
+  | StructExpr        %TODO
+  | CallExpr
+  | MethodCallExpr    %TODO
+  | FieldExpr .       %TODO
 
 ```
 
 ### Literal expression
 
 ```ebnf
-LiteralExpression =
+LiteralExpr =
      STRING_LITERAL
    | INTEGER_LITERAL
    | FLOAT_LITERAL
-   | BOOL_LITERAL
+   | BOOL_LITERAL .
 ```
 
 A literal expression is an expression consisting of a single token, rather than a sequence of tokens, that immediately and directly denotes the value it evaluates to, rather than referring to it by name or some other evaluation rule.
@@ -518,7 +515,7 @@ A literal is a form of constant expression, so is evaluated (primarily) at compi
 ### Path expression
 
 ```ebnf
-PathExpression = 
+PathExpr = 
     PathSegment { "::" PathSegment } .
 
 PathSegment = 
@@ -530,70 +527,72 @@ PathSegment =
 ### Operator expression
 
 ```ebnf
-OperatorExpression =
-    UnaryExpression
-  | ArithmeticExpression
-  | LogicalExpression
-  | ComparisonExpression
-  | AssignmentExpression .
+OperatorExpr =
+    UnaryExpr
+  | ArithmeticExpr
+  | LogicalExpr
+  | ComparisonExpr
+  | AssignmentExpr .
 ```
 
 #### unary expression
 
 ```ebnf
-UnaryExpression =
-    "-" Expression 
-  | "!" Expression .
+UnaryExpr =
+    "-" Expr 
+  | "!" Expr .
 ```
 
 #### Arithmetic or logical expression
 
 ```ebnf
-ArithmeticxExpression =
-    Expression "+" Expression
-  | Expression "-" Expression
-  | Expression "*" Expression
-  | Expression "/" Expression .
+ArithmeticxExpr =
+    Expr "+" Expr
+  | Expr "-" Expr
+  | Expr "*" Expr
+  | Expr "/" Expr .
 
-LogicalExpression =
-  | Expression "&&" Expression
-  | Expression "||" Expression .
+LogicalExpr =
+  | Expr "&&" Expr
+  | Expr "||" Expr .
 ```
 
 #### Comparison expression
 
 ```ebnf
-ComparisonExpression =
-    Expression "==" Expression
-  | Expression "!=" Expression
-  | Expression ">" Expression
-  | Expression "<" Expression
-  | Expression ">=" Expression
-  | Expression "<=" Expression .
+ComparisonExpr =
+    Expr "==" Expr
+  | Expr "!=" Expr
+  | Expr ">" Expr
+  | Expr "<" Expr
+  | Expr ">=" Expr
+  | Expr "<=" Expr .
 ```
 
 #### Assignment expression
 
+<!-- #TODO: Not right now -->
+
 ```ebnf
-AssignmentExpression =
-    Expression "=" Expression .
+AssignmentExpr =
+    Expr "=" Expr .
 ```
 
 ### Grouped expression
 
 ```ebnf
-GroupedExpression = 
-    "(" Expression ")" .
+GroupedExpr = 
+    "(" Expr ")" .
 ```
 
 ### Call expression
 
 ```ebnf
-CallExpression =
-   PathExpression "(" { CallParams } ")" .
+CallExpr =
+   PathExpr "(" { CallParams } ")" .
 
 CallParams =
-   Expression { "," Expression } [ "," ] .
+   Expr { "," Expr } [ "," ] .
 ```
 
 A call expression calls a function.
@@ -601,19 +600,19 @@ A call expression calls a function.
 The syntax of a call expression is an expression, called the function operand, followed by a parenthesized comma-separated list of expression, called the argument operands.
 
 
-### Return expression
+### Return Statement
 
 ```ebnf
-ReturnExpression =
-   "return" Expression .
+ReturnExpr =
+   "return" Expr .
 ```
 
 Return expressions are denoted with the keyword `return`. Evaluating a return expression moves its argument into the designated output location for the current function call, destroys the current function activation frame, and transfers control to the caller frame.
 
-### Block Expression
+### Block Statement
 
 ```ebnf
-BlockExpression = "{" [ Statements ]"}" .
+Block = "{" [ Statements ] "}" .
 ```
 
 A block expression, or block, is a control flow expression and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
@@ -622,35 +621,25 @@ The syntax for a block is `{`, then any number of statements, and finally a `}`.
 
 When evaluating a block expression, each statement, except for item declaration statements, is executed sequentially.
 
-<!-- %TODO: rethink -->
-The type of the BlockExpression is always `unit`.
 
-### Loop Expression
+### For Statement
 
 ```ebnf
-LoopExpression = 
-    ForExpression
-  | WhileExpression .
+ForStmt   = 
+    "for" "(" Expr ";" Expr ";" Expr ")" Block .
 ```
 
-#### For expression
+### While expression
 
 ```ebnf
-ForExpression   = 
-    "for" "(" Expression ";" Expression ";" Expression ")" BlockExpression .
-```
-
-#### While expression
-
-```ebnf
-WhileExpression = 
-    "while" "(" Expression ")" BlockExpression .
+WhileStmt = 
+    "while" "(" Expr ")" Block .
 ```
 
 <!-- ;TODO: need to support the type-inference first;--> 
 
 
-`ForExpression`'s behavior can be explained with `WhileExpression` since they are interchangeable.
+`ForStmt`'s behavior can be explained with `WhileStmt` since they are interchangeable.
 
 The following two snippets are equivalent:
 
@@ -669,20 +658,20 @@ for(start_condition; end_condition; step_update){
 ```
 
 
-#### Break expression
+### Break Statement
 
 ```ebnf
-BreakExpression =
-   "break" .
+BreakStmt =
+   "break" ";".
 ```
 
 When break is encountered, the current loop is immediately terminated, returning control to the next statement after the loop body.
 
-#### Continue expression
+### Continue Statment
 
 ```ebnf
-ContinueExpression =
-   "continue" .
+ContinueStmt =
+   "continue" ";".
 ```
 
 When continue is encountered, the current iteration of the associated loop body is immediately terminated, returning control to the loop head.
@@ -693,14 +682,14 @@ for(<id> in <list_id>){
 }
 ``` -->
 
-### If Expression
+### If Statment
 
 %TODO: this one could be changed into more convient form
 
 ```ebnf
 IfStatement = 
-    "if" "(" Expression ")" BlockExpression 
-        "else"  BlockExpression .
+    "if" "(" Expr ")" Block 
+        "else"  Block .
 ```
 
 <!-- 
@@ -741,7 +730,9 @@ fun main() -> int{
 ## Type
 
 ```ebnf
-Type = PrimitiveType | GenericType | identifier.
+Type = PrimitiveType 
+    | GenericType 
+    | identifier .
 ```
 
 ### Primitive types

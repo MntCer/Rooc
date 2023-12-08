@@ -47,7 +47,7 @@ let trans_module (sast: s_module) =
     )
 
   and trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
-    let e_content = e.se_content in
+    let e_content = e.se_expr in
     match e_content with
     | S_int_literal i -> 
         ignore ( L.const_int i32_t i)
@@ -72,43 +72,43 @@ let trans_module (sast: s_module) =
     match f.sf_body with
     | UserDefined body -> 
       (* Step 1: Determine LLVM function type *)
-      (let llvm_return_type = trans_type f.sf_type.sft_return_type in
-      L.param
-      let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
-      let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
+      (
+        let llvm_return_type = trans_type f.sf_type.sft_return_type in
+        let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
+        let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
 
-      let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
+        let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
 
-      (* Builder for function body *)
-      let builder = L.builder_at_end context (L.entry_block llvm_function) in
+        (* Builder for function body *)
+        let builder = L.builder_at_end context (L.entry_block llvm_function) in
 
-      let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
+        let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
   
-      (* Process formals: Set names and allocate space *)
-      let local_scope = init_local_scope (GlobalScope the_namespace) in
-      let add_formal (param: s_variable) llvm_param =
-        let local_name = param.sv_name in
-        let local_type = trans_type param.sv_type in
-        let () = L.set_value_name local_name llvm_param in
-        let alloca = L.build_alloca local_type local_name builder in
-        let _ = L.build_store llvm_param alloca builder in
-        let local_var = {
-          iv_name = local_name;
-          iv_type = local_type;
-          iv_value_addr = alloca;
-        } in
-        insert_local_variable local_name local_var local_scope;
-      in
-      (match f.sf_params with
-      | Some params -> 
-        List.iter2 add_formal params.sp_params
-                          (Array.to_list (L.params llvm_function))
-      | None -> ());
-      (* ... translate the function body ... *)
-      let stmts=body.sbe_stmts
-      in
-      List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
-    )
+        (* Process formals: Set names and allocate space *)
+        let local_scope = init_local_scope (GlobalScope the_namespace) in
+        let add_formal (param: s_variable) llvm_param =
+          let local_name = param.sv_name in
+          let local_type = trans_type param.sv_type in
+          let () = L.set_value_name local_name llvm_param in
+          let alloca = L.build_alloca local_type local_name builder in
+          let _ = L.build_store llvm_param alloca builder in
+          let local_var = {
+            iv_name = local_name;
+            iv_type = local_type;
+            iv_value_addr = alloca;
+          } in
+          insert_local_variable local_name local_var local_scope;
+        in
+        (match f.sf_params with
+        | Some params -> 
+          List.iter2 add_formal params.sp_params
+                            (Array.to_list (L.params llvm_function))
+        | None -> ());
+        (* ... translate the function body ... *)
+        let stmts=body.sb_stmts
+        in
+        List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
+      )
 
     | BuiltIn -> ()
 

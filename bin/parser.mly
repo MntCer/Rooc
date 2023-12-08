@@ -21,7 +21,8 @@ open Util
 %start roc_module
 %type <Ast.roc_module> roc_module
 
-%nonassoc NOELSE RETURN
+%nonassoc LOWEST_PRECEDENCE
+%nonassoc RETURN
 %nonassoc ELSE
 %right ASSIGN
 %left OR
@@ -30,14 +31,14 @@ open Util
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT
+%nonassoc HIGHEST_PRECEDENCE
 
 %%
 
 roc_module:
-  roc_items EOF 
-  { { 
-      rm_items = List.rev $1;
-      } }
+  roc_items EOF {{ 
+    rm_items = List.rev $1;
+  }}
 
 roc_items:
     /* nothing */ { ([]) }
@@ -48,14 +49,14 @@ roc_item:
   // | %TODO
 
 roc_function:
-    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type roc_block_expr SEMI
+    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type roc_block
     { { 
       rf_name = $2;
       rf_params = Some ($4);
       rf_return_type = $7;
       rf_body = $8 } }
 
-  | FUN ID LPAREN RPAREN RARROW roc_type roc_block_expr SEMI
+  | FUN ID LPAREN RPAREN RARROW roc_type roc_block
       { {
         rf_name = $2;
         rf_params = None;
@@ -85,7 +86,7 @@ roc_param:
 //       rms_return_type = $7 } }
 
 // roc_method:
-//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block_expr SEMI
+//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block
 //     { {
 //       rm_name = $2;
 //       rm_params = $4;
@@ -99,9 +100,14 @@ roc_param:
 
 
 roc_statement:
-    roc_expr_stmt { $1 }
+  | roc_expr_stmt { $1 }
   | roc_decl_stmt { $1 }
-  | SEMI { Roc_empty_stmt }
+  | roc_block {STMT_block ($1)}
+  | roc_loop_stmt {$1}
+  | roc_if_stmt {$1}
+  | roc_continue_stmt {$1}
+  | roc_break_stmt {$1}
+  | roc_return_stmt {$1}
 
 roc_decl_stmt:
     VAR ID COLON roc_type ASSIGN roc_expr SEMI
@@ -132,61 +138,62 @@ roc_decl_stmt:
 roc_expr_stmt:
     roc_expr SEMI { Roc_expr_stmt($1) }
 
-roc_expr:
-    roc_expr_without_block { $1 }
-  | roc_expr_with_block { $1 }
+expr_empty:
+    /* empty */ { EXPR_null }
 
-roc_expr_without_block:
-    roc_literal_expr {$1}
+expr_nonempty:
+  | roc_literal_expr {$1}
   | roc_operator_expr {$1}
   | roc_grouped_expr {$1}
   | roc_path_expr {$1}
   | roc_call_expr {$1}
-  | roc_continue_expr {$1}
-  | roc_break_expr {$1}
-  | roc_return_expr {$1}
+
+roc_expr:
+  | expr_empty %prec LOWEST_PRECEDENCE { $1 }
+  | expr_nonempty { $1 }
 
 roc_literal_expr:
-    SLIT { Roc_string_literal($1) }
+  | SLIT { Roc_string_literal($1) }
   | ILIT { Roc_int_literal($1) }
   // %TODO: can convert the float literal here.
   | FLIT { Roc_float_literal($1) } 
   | BLIT { Roc_bool_literal($1) }
 
 roc_operator_expr:
-    roc_unary_expr {$1}
+  | roc_unary_expr {$1}
   | roc_arith_expr {$1}
   | roc_logical_expr {$1}
   | roc_comparison_expr {$1}
   | roc_assignment_expr {$1}
 
 roc_unary_expr:
-    MINUS roc_expr %prec NOT { Roc_unary_expr(Neg, $2) }
-  | NOT roc_expr { Roc_unary_expr(Not, $2) }
+  | MINUS expr_nonempty %prec HIGHEST_PRECEDENCE { Roc_unary_expr(Neg, $2) }
+  | NOT expr_nonempty { Roc_unary_expr(Not, $2) }
 
 roc_arith_expr:
-    roc_expr PLUS roc_expr { Roc_arith_expr(Add, $1, $3) }
-  | roc_expr MINUS roc_expr { Roc_arith_expr(Sub, $1, $3) }
-  | roc_expr TIMES roc_expr { Roc_arith_expr(Mult, $1, $3) }
-  | roc_expr DIVIDE roc_expr { Roc_arith_expr(Div, $1, $3) }
+    expr_nonempty PLUS expr_nonempty { Roc_arith_expr(Add, $1, $3) }
+  | expr_nonempty MINUS expr_nonempty { Roc_arith_expr(Sub, $1, $3) }
+  | expr_nonempty TIMES expr_nonempty { Roc_arith_expr(Mult, $1, $3) }
+  | expr_nonempty DIVIDE expr_nonempty { Roc_arith_expr(Div, $1, $3) }
 
 roc_logical_expr:
-  | roc_expr AND roc_expr { Roc_logical_expr(And, $1, $3) }
-  | roc_expr OR roc_expr { Roc_logical_expr(Or, $1, $3) }
+  | expr_nonempty AND expr_nonempty { Roc_logical_expr(And, $1, $3) }
+  | expr_nonempty OR expr_nonempty { Roc_logical_expr(Or, $1, $3) }
 
 roc_comparison_expr:
-    roc_expr EQ roc_expr { Roc_comparison_expr(Equal, $1, $3) }
-  | roc_expr NEQ roc_expr { Roc_comparison_expr(Neq, $1, $3) }
-  | roc_expr LT roc_expr { Roc_comparison_expr(Less, $1, $3) }
-  | roc_expr LEQ roc_expr { Roc_comparison_expr(Leq, $1, $3) }
-  | roc_expr GT roc_expr { Roc_comparison_expr(Greater, $1, $3) }
-  | roc_expr GEQ roc_expr { Roc_comparison_expr(Geq, $1, $3) }
+    expr_nonempty EQ expr_nonempty { Roc_comparison_expr(Equal, $1, $3) }
+  | expr_nonempty NEQ expr_nonempty { Roc_comparison_expr(Neq, $1, $3) }
+  | expr_nonempty LT expr_nonempty { Roc_comparison_expr(Less, $1, $3) }
+  | expr_nonempty LEQ expr_nonempty { Roc_comparison_expr(Leq, $1, $3) }
+  | expr_nonempty GT expr_nonempty { Roc_comparison_expr(Greater, $1, $3) }
+  | expr_nonempty GEQ expr_nonempty { Roc_comparison_expr(Geq, $1, $3) }
 
+//#TODO: Should just allow the lvalue be in the left side.
 roc_assignment_expr:
-    roc_expr ASSIGN roc_expr { Roc_assignment_expr($1, $3) }
+    expr_nonempty ASSIGN expr_nonempty { Roc_assignment_expr($1, $3) }
 
 roc_grouped_expr:
-    LPAREN roc_expr RPAREN { Roc_grouped_expr($2) }
+    LPAREN expr_nonempty RPAREN { Roc_grouped_expr($2) }
 
 roc_path_expr:
     roc_path_segments { Roc_path_expr(List.rev $1) }
@@ -206,49 +213,49 @@ roc_call_params:
     roc_call_params_no_comma optional_comma { List.rev $1 }
 
 roc_call_params_no_comma:
-    roc_expr { [$1] }
-  | roc_call_params_no_comma COMMA roc_expr { $3 :: $1 }
+    expr_nonempty { [$1] }
+  | roc_call_params_no_comma COMMA expr_nonempty { $3 :: $1 }
 
 optional_comma:
     /* empty */ { () }
   | COMMA { () }
 
-roc_continue_expr:
-    CONTINUE { Roc_continue_expr }
+roc_continue_stmt:
+    CONTINUE SEMI { Roc_continue_stmt }
 
-roc_break_expr:
-    BREAK { Roc_break_expr }
+roc_break_stmt:
+    BREAK SEMI { Roc_break_stmt }
 
-roc_return_expr:
-    RETURN roc_expr { Roc_return_expr($2) }
-
-
-roc_expr_with_block:
-    roc_block_expr {$1}
-  | roc_if_expr {$1}
-  | roc_loop_expr {$1}
+roc_return_stmt:
+    RETURN roc_expr SEMI { Roc_return_stmt($2) }
 
 
-roc_block_expr:
-    LBRACE roc_statements RBRACE { Roc_block_expr(List.rev $2) }
-  | LBRACE RBRACE { Roc_block_expr([]) }
+
+
+roc_block:
+    LBRACE roc_statements RBRACE {{
+      rb_stmts = List.rev $2;
+    }}
+  | LBRACE RBRACE {{
+      rb_stmts = [];
+    }}
 
 roc_statements:
     roc_statement { [$1] }
   | roc_statements roc_statement { $2 :: $1 }
 
-roc_if_expr:
-    IF LPAREN roc_expr roc_block_expr ELSE roc_block_expr { Roc_if_expr($3, $4, $6) }
+roc_if_stmt:
+    IF LPAREN expr_nonempty roc_block ELSE roc_block { Roc_if_stmt($3, $4, $6) }
 
-roc_loop_expr:
-    roc_for_expr  { $1 }
-  | roc_while_expr { $1 }
+roc_loop_stmt:
+  |  roc_for_stmt  { $1 }
+  | roc_while_stmt { $1 }
 
-roc_for_expr:
-    FOR LPAREN roc_expr SEMI roc_expr SEMI roc_expr RPAREN roc_block_expr { Roc_for_expr($3, $5, $7, $9) }
+roc_for_stmt:
+    FOR LPAREN roc_expr SEMI expr_nonempty SEMI roc_expr RPAREN roc_block { Roc_for_stmt($3, $5, $7, $9) }
 
-roc_while_expr:
-    WHILE LPAREN roc_expr RPAREN roc_block_expr { Roc_while_expr($3, $5) }
+roc_while_stmt:
+    WHILE LPAREN expr_nonempty RPAREN roc_block { Roc_while_stmt($3, $5) }
 
 
 roc_type:
