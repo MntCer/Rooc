@@ -12,13 +12,19 @@ Traits and structures and all impl should have its own scope. When try to analyz
 
 And also for other "uncommon" expr.
 
-## Target
+## Dec 7
+
+Today, we aim to successfully run our project end2end.
+
+* [ ] function's code generation part.
+* [ ] builtin functions' codegen
+* [ ] more about expression codegen.
+
+
+## Target List
 
 * [x] need to implement "2 traverse" to support forward reference.
 * [x] block_expr's semantic analysis part.
 * [x] analyse function's parameters.
 * [x] special treatment for main function
-* [ ] function's code generation part.
-* [ ] builtin functions' codegen
-* [ ] more features about expressions.
 * [ ] inefficient code in the two pass analysis for items.
