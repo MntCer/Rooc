@@ -234,10 +234,10 @@ roc_return_stmt:
 
 roc_block:
     LBRACE roc_statements RBRACE {{
-      rb_stmt_lists = List.rev $2;
+      rb_stmts = List.rev $2;
     }}
   | LBRACE RBRACE {{
-      rb_stmt_lists = [];
+      rb_stmts = [];
     }}
 
 roc_statements:

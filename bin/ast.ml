@@ -64,7 +64,7 @@ and roc_stmt =
 
 and roc_block =
   {
-    rb_stmt_lists : roc_stmt list;
+    rb_stmts : roc_stmt list;
   }
 
 
