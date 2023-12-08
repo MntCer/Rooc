@@ -2,4 +2,4 @@
 fun main() -> int {
     print_int(-10 + -5);  // Should output -15
     return 0;
-};
+}

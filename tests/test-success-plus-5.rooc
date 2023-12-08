@@ -2,5 +2,5 @@
 fun main() -> int {
     print_int(15 + 0);  // Should output 15
     return 0;
-};
+}
 
