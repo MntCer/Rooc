@@ -160,10 +160,9 @@ let analyse_module (ast_root:roc_module) : s_module =
     in
     let to_analyse = rb_stmts in
     (* #TODO: also need a function wrapper here *)
-    let analysed_stmts = List.rev (List.fold_left analyse_stmt [] raw_stmts)
-    in
+    let analysed_stmts = List.map (fun stmt -> analyse_stmt stmt the_table) to_analyse in
     { sb_stmts = analysed_stmts; 
-      sb_scope = the_block }
+      sb_scope = the_table }
 
   and analyse_variable 
     (raw_variable: roc_variable) 
@@ -251,12 +250,8 @@ let analyse_module (ast_root:roc_module) : s_module =
       let param_name = param.sv_name in
       let param_entry = VarEntry param in
       insert_symbol function_scope param_name param_entry) param_vars;
-    let block_content = match raw_func.rf_body with
-      | Roc_block_expr block -> block
-      | _ -> 
-        bug "Function body is not a block expression"
-    in
-    let analysed_body = UserDefined (analyse_block block_content function_scope false) in
+    let body_to_analyse = raw_func.rf_body in
+    let analysed_body = UserDefined (analyse_block body_to_analyse function_scope false) in
     { sf_name = analysed_name;
       sf_params = analysed_params;
       sf_type = analysed_type;
