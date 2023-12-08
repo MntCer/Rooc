@@ -1,6 +1,7 @@
 (**
   This module includes some tool functions for development.
  *)
+open Common
 
 let todo str =
   let k todo_str = failwith todo_str in
@@ -17,7 +18,6 @@ let err (idopt:node_id option) =
     raise (Semant_err (idopt, str))
   in
     Printf.ksprintf k
-
 
 (*
  * #TODO: outdated helper functions, will be reconstructed later
