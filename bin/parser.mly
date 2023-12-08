@@ -256,14 +256,13 @@ roc_type:
   | FLOAT { T_float  }
   | BOOL  { T_bool   }
   | STR   { T_string }
-  | LPAREN RPAREN { T_unit }
+  | LPAREN RPAREN { T_unit } // () serves as void in Rooc
 
 // primitive_typ:
 //     INT   { Int    }
 //   | BOOL  { Bool   }
 //   | FLOAT { Float  }
 //   | STR   { String }
-//   | VOID  { Void   }
 
 // generic_typ:
 //     LIST LPAREN typ RPAREN { List($3) }

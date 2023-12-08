@@ -3,6 +3,7 @@ trait testTrait {
     fun print_bool() -> bool;
     fun print_float() -> float;
     fun print_text() -> string;
+    fun no_return() -> ();
     fun random(x:int) -> int;
     fun twoInt(x:int, y:int) -> int;
     fun twoFlo(x:float, y:float) -> float;
