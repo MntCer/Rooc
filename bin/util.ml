@@ -11,13 +11,6 @@ let bug str =
   let k bug_str = failwith bug_str in
   Printf.ksprintf k "BUG: %s" str
 
-exception Semant_err of ((node_id option) * string)
-
-let err (idopt:node_id option) =
-  let k str =
-    raise (Semant_err (idopt, str))
-  in
-    Printf.ksprintf k
 
 (*
  * #TODO: outdated helper functions, will be reconstructed later
