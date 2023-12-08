@@ -167,7 +167,7 @@ roc_operator_expr:
   | roc_assignment_expr {$1}
 
 roc_unary_expr:
-  | MINUS expr_nonempty %prec HIGHEST_PRECEDENCE { Roc_unary_expr(Neg, $2) }
+  | MINUS expr_nonempty { Roc_unary_expr(Neg, $2) }
   | NOT expr_nonempty { Roc_unary_expr(Not, $2) }
 
 roc_arith_expr:
