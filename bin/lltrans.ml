@@ -20,9 +20,7 @@ let trans_module
 
   let the_module = L.create_module the_context "theRoocProgram" in
 
-  let (item_to_llvalue : (string, L.llvalue) Hashtbl.t) = Hashtbl.create 10 in
-
-  let the_namespace = init_global_scope () in (* #TODO: should be cleaned*)
+  let the_namespace = init_global_scope () in 
 
   (* decl corresponding LL types *)
   (* #TODO: these part should be refactored out, be independent. *)
@@ -42,16 +40,16 @@ let trans_module
     (* //TODO: *)
     | _ -> todo "not supported. in ltype_of_stype"
   in
-
+  
   (**
     #TODO: add docstring
   *)
   let trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
     let e_content = e.se_expr in
-    match e_content with
+    (match e_content with
     | S_int_literal i -> 
         ignore ( L.const_int i32_t i)
-    | _ -> ()
+    | _ -> todo "not supported yet.")
   in
 
   (**
@@ -94,19 +92,20 @@ let trans_module
     | UserDefined body -> 
       (* Step 1: Determine LLVM function type *)
       (
-        let llvm_return_type = trans_type f.sf_type.sft_return_type in
-        let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
-        let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
-
-        let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
+        let the_function =
+          let the_entry = lookup f.sf_name (IRGlobalScope the_namespace) in
+          match the_entry with
+          | Some(IRFuncEntry f) -> f
+          | _ -> bug "Want if_function but get others."
+        in
+        let llvm_function = the_function.if_function in
 
         (* Builder for function body *)
         let builder = L.builder_at_end the_context (L.entry_block llvm_function) in
 
-        let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
   
         (* Process formals: Set names and allocate space *)
-        let local_scope = init_local_scope (GlobalScope the_namespace) in
+        let local_scope = init_local_scope (IRGlobalScope the_namespace) in
         let add_formal (param: s_variable) llvm_param =
           let local_name = param.sv_name in
           let local_type = trans_type param.sv_type in
@@ -138,14 +137,40 @@ let trans_module
   (**
     #TODO: add docstring     
   *)
-  let trans_item (key: string) (item: s_symbol_table_entry) : unit =
+  let trans_item 
+  (key: string) 
+  (item: s_symbol_table_entry) 
+  : unit =
     match item with
     | FuncEntry f -> trans_function f
     | _ -> todo "not supported. in translate_item"
   in
 
-  try
-    (* #TODO: *)
+  (**
+    pre-fill `the namespace` for following code generation.
+  *)
+  let register_item 
+    (key: string) 
+    (to_register:s_symbol_table_entry)
+    : unit =
+    match to_register with
+    | FuncEntry f ->         
+      let llvm_return_type = trans_type f.sf_type.sft_return_type in
+      let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
+      let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
+      let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
+      let llvm_function_scope = init_local_scope (IRGlobalScope the_namespace) in
+      let the_function = {
+        if_return_type=llvm_return_type;
+        if_param_types=llvm_param_types;
+        if_function_type=llvm_function_type;
+        if_function=llvm_function;  
+        if_scope=Some(llvm_function_scope);
+      }
+      in insert_global_function f.sf_name the_function the_namespace
+    | _ -> bug "Unallowed thing is in the highest-level." 
+  in 
+
+    Hashtbl.iter register_item to_trans.sm_namespace.sst_symbols;
     Hashtbl.iter trans_item to_trans.sm_namespace.sst_symbols;
     the_module
-  with e -> L.dispose_module the_module; raise e

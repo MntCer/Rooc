@@ -33,6 +33,8 @@ let builtins_semant = [
   let printf_type: L.lltype =
     L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in 
 
+  let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
+
   let printf_func: L.llvalue = L.declare_function "printf" printf_type the_module in
   (* Create the printf format string for integers *)
   insert_global_function "printf" {

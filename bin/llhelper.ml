@@ -37,7 +37,7 @@ and ir_global_scope = {
   igs_items: (string, ir_scope_entry) Hashtbl.t;
 }
 
-(* let rec lookup (identifier: string) (scope: ir_scope) : ir_scope_entry option =
+let rec lookup (identifier: string) (scope: ir_scope) : ir_scope_entry option =
   match scope with
   | IRLocalScope ls ->
     ( match Hashtbl.find_opt ls.ils_variables identifier with
@@ -45,7 +45,7 @@ and ir_global_scope = {
     | None -> lookup identifier ls.ils_parent  
     )
   | IRGlobalScope gs ->
-    Hashtbl.find_opt gs.igs_items identifier *)
+    Hashtbl.find_opt gs.igs_items identifier
 
 let insert_local_variable (identifier: string) (variable: ir_variable) (local_scope: ir_local_scope) : unit =
   Hashtbl.add local_scope.ils_variables identifier (IRVarEntry variable)
