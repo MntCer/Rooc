@@ -284,11 +284,16 @@ A constant value is not associated with a specific memory location in the progra
 ```ebnf
 Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type Block .
 
-FunctionParams     = Param { "," Param } [ "," ] .
-Param      = identifier ":" Type .
+FunctionDeclaration = "fun" identifier "(" [ FunctionParams ] ")" "->" Type.
 
-MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type .
+FunctionParams = Param { "," Param } [ "," ] .
+
+Param = identifier ":" Type .
+
+
 Method = "fun" identifier "(" [ MethodParams] ")" "->" Type Block ";".
+
+MethodSignature = "fun" identifier "(" [ MethodParams] ")" "->" Type .
 
 MethodParams = "self" { "," Param } [ "," ] .
 ```
@@ -298,9 +303,11 @@ A function consists of a block, along with a name, a set of parameters, and an o
 Functions may declare a set of input variables as parameters, through which the caller passes arguments into the function, and the output type of the value the function will return to its caller on completion. The parameters are optional.
 
 <!-- %TODO: revise the words -->
-Function must have a function body. Method can only be defined in a `impl` block and Methodsignature can only be defined in a `trait` block.
+Function must have a function body. Function without a function body is a FunctionDeclaration.
 
-The key difference between a function and a method is the `self` as parameter.
+Method works like function, the only difference is the use of `self` as parameter. Method can only be defined in a `impl` block or a `trait` block.
+
+Methodsignature and FunctionDeclaration can only be defined in a `trait` block. 
 
 Functions and methods could be forward referenced, that is to say, as long as the called function or method is visiable in the called scope, this call is valid.
 
@@ -353,21 +360,23 @@ A struct is a nominal struct type defined with the keyword `struct`.
 ```ebnf
 Trait =
     "trait" IDENTIFIER "{" 
-        { AssociatedItem 
-        | AssociatedDeclaration } 
+        { AssociatedDeclaration 
+        | AssociatedItem } 
     "}".
+
+AssociatedDeclaration = 
+    FunctionDeclaration
+    | MethodSignature .  
+
+AssociatedItem =
+    Function
+    | Method .
 ```
 
 A trait describes an abstract interface that types can implement.
 
 <!-- %TODO: syntax check or semantic check? -->
-This interface consists of associated items:
-
-* functions
-
-And Associated declarations:
-
-* function declarations
+This interface consists of associated declarations (function declarations and/or method signatures) and associated items (functions and/or methods).
 
 <!-- %TODO:
 types
@@ -400,12 +409,11 @@ InherentImpl =
     "impl" Type "{" { AssociatedItem } "}" .
 
 <!-- %TODO: not identifier, but type -->
-TraitImpl :
+TraitImpl =
     "impl" IDENTIFIER "for" IDENTIFIER
         "{" { AssociatedItem } "}"
 ```
-
-An implementation is an item that associates items with an implementing type. Implementations are defined with the keyword `impl` and contain functions that belong to an instance of the type that is being implemented or to the type statically.
+An implementation is an item that associates items with an implementing type. Implementations are defined with the keyword `impl` and contain functions and/or methods that belong to an instance of the type that is being implemented or to the type statically.
 
 
 Example:
