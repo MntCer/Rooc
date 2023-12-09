@@ -284,11 +284,13 @@ A constant value is not associated with a specific memory location in the progra
 ```ebnf
 Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type Block .
 
-FunctionParams     = Param { "," Param } [ "," ] .
-Param      = identifier ":" Type .
+FunctionParams = Param { "," Param } [ "," ] .
 
-MethodSignature    = "fun" identifier "(" [ MethodParams] ")" "->" Type .
+Param = identifier ":" Type .
+
 Method = "fun" identifier "(" [ MethodParams] ")" "->" Type Block ";".
+
+MethodSignature = "fun" identifier "(" [ MethodParams] ")" "->" Type .
 
 MethodParams = "self" { "," Param } [ "," ] .
 ```
@@ -298,9 +300,10 @@ A function consists of a block, along with a name, a set of parameters, and an o
 Functions may declare a set of input variables as parameters, through which the caller passes arguments into the function, and the output type of the value the function will return to its caller on completion. The parameters are optional.
 
 <!-- %TODO: revise the words -->
-Function must have a function body. Method can only be defined in a `impl` block and Methodsignature can only be defined in a `trait` block.
+Function must have a function body. 
 
-The key difference between a function and a method is the `self` as parameter.
+Method works like function, the only difference is the use of `self` as parameter. Method can only be defined in a `impl` block or a `trait` block.
+
 
 Functions and methods could be forward referenced, that is to say, as long as the called function or method is visiable in the called scope, this call is valid.
 
@@ -313,7 +316,7 @@ fun get_first (x:int,y:float) -> int {
 }
 ```
 
-#### function parameters
+#### Function parameters
 
 <!-- %TODO: Do after the struct type is cleared -->
 If the first parameter is a `self`, this indicates that the function is a method. 
@@ -321,9 +324,10 @@ Functions with a `self` parameter may only appear as an associated function in a
 
 #### Function body
 
-The block of a function is conceptually wrapped in a block that binds the argument and then returns the value of the function's block.
-<!--%TODO: ref  -->
-Functions without a body block are function declaration. This form may only appear in a trait.
+The block of a function is conceptually wrapped in a block that binds the argument and then returns the value of the function's block. 
+
+#TODO: add reference to block in statements
+
 
 
 ### Struct
@@ -348,35 +352,27 @@ struct Point {
 A struct is a nominal struct type defined with the keyword `struct`.
 <!--%TODO: memory layout-->
 
-### Traits
+### Trait
 
 ```ebnf
 Trait =
     "trait" IDENTIFIER "{" 
-        { AssociatedItem 
-        | AssociatedDeclaration } 
+        #TODO: not decided yet.
     "}".
+
 ```
 
 A trait describes an abstract interface that types can implement.
 
-<!-- %TODO: syntax check or semantic check? -->
-This interface consists of associated items:
-
-* functions
-
-And Associated declarations:
-
-* function declarations
-
-<!-- %TODO:
+<!-- 
+#TODO
 types
 constants -->
 
-<!-- %TODO: ref -->
+<!-- #TODO: ref -->
 Traits are implemented for specific types through separate implementations.
 
-<!-- %TODO: ref -->
+<!-- #TODO: ref -->
 All functions are public visibility by default.
 
 Trait functions may omit the function body by replacing it with a semicolon. This indicates that the implementation must define the function. If the trait function defines a body, this definition acts as a default for any implementation which does not override it.
@@ -400,12 +396,11 @@ InherentImpl =
     "impl" Type "{" { AssociatedItem } "}" .
 
 <!-- %TODO: not identifier, but type -->
-TraitImpl :
+TraitImpl =
     "impl" IDENTIFIER "for" IDENTIFIER
         "{" { AssociatedItem } "}"
 ```
-
-An implementation is an item that associates items with an implementing type. Implementations are defined with the keyword `impl` and contain functions that belong to an instance of the type that is being implemented or to the type statically.
+An implementation is an item that associates items with an implementing type. Implementations are defined with the keyword `impl` and contain methods that belong to an instance of the type that is being implemented or to the type statically.
 
 
 Example:
@@ -481,6 +476,18 @@ The variable introduced by a `let` statement is immutable, and `var` variable is
 ExprStmt = Expr ";" .
 ```
 
+### Block
+
+```ebnf
+Block = "{" [ Statements ] "}" .
+```
+
+A block is a sequences of statements and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
+
+The syntax for a block starts with a "`{`" along with any number of statements, and finally ends with "`}`".
+
+When evaluating a block each statement is executed sequentially.
+
 ### Return Statement
 
 ```ebnf
@@ -489,18 +496,6 @@ ReturnExpr =
 ```
 
 Return expressions are denoted with the keyword `return`. Evaluating a return expression moves its argument into the designated output location for the current function call, destroys the current function activation frame, and transfers control to the caller frame.
-
-### Block Statement
-
-```ebnf
-Block = "{" [ Statements ] "}" .
-```
-
-A block expression, or block, is a control flow expression and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
-
-The syntax for a block is `{`, then any number of statements, and finally a `}`.
-
-When evaluating a block expression, each statement, except for item declaration statements, is executed sequentially.
 
 
 ### For Statement
