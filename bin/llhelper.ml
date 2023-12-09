@@ -16,13 +16,12 @@ and ir_function ={
   if_param_types : lltype array;
   if_function_type : lltype;
   if_function : llvalue;
-  if_builder : llbuilder option;
   if_scope : ir_local_scope option;
 }
 
 and ir_scope = 
-  | GlobalScope of ir_global_scope
-  | LocalScope of ir_local_scope
+  | IRGlobalScope of ir_global_scope
+  | IRLocalScope of ir_local_scope
 
 and ir_local_scope = {
   ils_variables: (string, ir_scope_entry) Hashtbl.t;
@@ -38,15 +37,15 @@ and ir_global_scope = {
   igs_items: (string, ir_scope_entry) Hashtbl.t;
 }
 
-let rec lookup (identifier: string) (scope: ir_scope) : ir_scope_entry option =
+(* let rec lookup (identifier: string) (scope: ir_scope) : ir_scope_entry option =
   match scope with
-  | LocalScope ls ->
+  | IRLocalScope ls ->
     ( match Hashtbl.find_opt ls.ils_variables identifier with
     | Some var -> Some var
     | None -> lookup identifier ls.ils_parent  
     )
-  | GlobalScope gs ->
-    Hashtbl.find_opt gs.igs_items identifier
+  | IRGlobalScope gs ->
+    Hashtbl.find_opt gs.igs_items identifier *)
 
 let insert_local_variable (identifier: string) (variable: ir_variable) (local_scope: ir_local_scope) : unit =
   Hashtbl.add local_scope.ils_variables identifier (IRVarEntry variable)
