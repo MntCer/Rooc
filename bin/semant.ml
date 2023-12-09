@@ -35,56 +35,84 @@ let analyse_module (ast_root:roc_module) : s_module =
     (* Unary Expression *)
     | Roc_unary_expr (op, e) ->
       let analysed_expr = analyse_expr e symbol_table in
-      let result_type = match (op, analysed_expr.se_type) with
+      let analysed_type = match (op, analysed_expr.se_type) with
         | (Neg, ST_int) -> ST_int
         | (Neg, ST_float) -> ST_float
         | (Not, ST_bool) -> ST_bool
         | _ -> raise (type_err_failure "Unary expression type mismatch")
           (* ST_error  *)
       in
-      { se_type = result_type; se_expr = S_unary_expr (op, analysed_expr) }
+      { se_type = analysed_type; se_expr = S_unary_expr (op, analysed_expr) }
 
     (* Binary Expression *)
     | Roc_arith_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 symbol_table in
         let analysed_e2 = analyse_expr e2 symbol_table in
-        let result_type = match (analysed_e1.se_type, analysed_e2.se_type) with
+        let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_int, ST_int) -> ST_int
           | (ST_float, ST_float) -> ST_float
           | _ -> raise (type_err_failure "Arithmetic expression type mismatch")
             (* ST_error   *)
         in
-        { se_type = result_type; se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
+        { se_type = analysed_type; se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
     | Roc_logical_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 symbol_table in
         let analysed_e2 = analyse_expr e2 symbol_table in
-        let result_type = match (analysed_e1.se_type, analysed_e2.se_type) with
+        let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_bool, ST_bool) -> ST_bool
           | _ -> raise (type_err_failure "Logical expression type mismatch")
             (* ST_error *)
         in
-        { se_type = result_type; se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
+        { se_type = analysed_type; se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
     | Roc_comparison_expr (op, e1, e2) ->
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
-      let result_type = match (analysed_e1.se_type, analysed_e2.se_type) with
+      let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
         | (ST_int, ST_int) | (ST_float, ST_float) -> ST_bool
         | _ -> raise (type_err_failure "Comparison expression type mismatch")
           (* ST_error *)
       in
-      { se_type = result_type; se_expr = S_comparison_expr (op, analysed_e1, analysed_e2) }
+      { se_type = analysed_type; 
+        se_expr = S_comparison_expr (op, analysed_e1, analysed_e2) }
         
     | Roc_assignment_expr (e1, e2) ->
       (* //TODO: more check for left hand side*)
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
-      let result_type = if analysed_e1.se_type = analysed_e2.se_type then analysed_e1.se_type else ST_error
+      let analysed_type = if analysed_e1.se_type = analysed_e2.se_type then analysed_e1.se_type else ST_error
       in
-      { se_type = result_type; 
+      { se_type = analysed_type; 
         se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
 
+    (**
+      Analyse the params, and ensure the callee is a existing function. 
+      Use the function's return type as the type of this call expression.     
+    *)
     | Roc_call_expr (callee, arg_list) ->
-      todo "call expr"
+      let analysed_args = List.map (fun arg -> analyse_expr arg symbol_table) arg_list in
+      let search_result = lookup_symbol callee symbol_table in
+      (match search_result with
+      | None -> raise (SymbolTableError "callee not found")
+      | Some(VarEntry v) -> raise (SymbolTableError "callee is a variable")
+      | Some(FuncEntry f) -> 
+        let analysed_type = f.sf_type.sft_return_type in
+        let analysed_callee = callee in
+        { se_type = analysed_type; 
+          se_expr = SEXPR_call({
+            sc_callee = analysed_callee;
+            sc_arguments = analysed_args;
+          }) 
+        }
+      | Some (FuncSigEntry fs) ->
+        let analysed_type = fs.sfs_type.sft_return_type in
+        let analysed_callee = callee in 
+        { se_type = analysed_type; 
+          se_expr = SEXPR_call({
+            sc_callee = analysed_callee;
+            sc_arguments = analysed_args;
+          }) 
+        }
+      )
     
     | Roc_grouped_expr e ->
         let analysed_expr = analyse_expr e symbol_table in
@@ -93,7 +121,7 @@ let analyse_module (ast_root:roc_module) : s_module =
 
     | EXPR_field_access (struct_name, field_name) ->
       let () = todo "field access expr" in 
-      { se_type = ST_unit;
+      { se_type = ST_unit; (* #TODO: struct type *)
         se_expr = SEXPR_field_access (struct_name, field_name); }
     
   (**
@@ -130,10 +158,10 @@ let analyse_module (ast_root:roc_module) : s_module =
         SSTMT_block analysed_block
 
     | Roc_for_stmt (init, cond, update, body) ->
-      todo "for expr"
+      todo "for stmt"
 
     | Roc_while_stmt (cond, body) ->
-      todo "while expr"
+      todo "while stmt"
 
     | Roc_break_stmt ->
       SSTMT_break
@@ -142,7 +170,7 @@ let analyse_module (ast_root:roc_module) : s_module =
       SSTMT_continue
 
     | Roc_if_stmt (cond, then_branch, else_branch) ->
-      todo "if expr"
+      todo "if stmt"
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
@@ -192,6 +220,10 @@ let analyse_module (ast_root:roc_module) : s_module =
     List.map (fun param -> analyse_type param.rv_type) raw_params.rp_params
   in
 
+  (**
+    Analyse a function's name, params and return type and construct them into a `s_function_signature` type. 
+    Register this signature into symbol table for the following semantic analysis.
+  *)
   let register_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function_signature =
     let analysed_name = raw_func.rf_name in
     let raw_params =  raw_func.rf_params in

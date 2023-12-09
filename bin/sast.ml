@@ -36,15 +36,15 @@ and s_expr_structure =
   | S_logical_expr of logical_op * s_expr * s_expr
   | S_comparison_expr of comparison_op * s_expr * s_expr
   | S_assignment_expr of s_expr * s_expr
-  | S_call_expr of s_call_expr
+  | SEXPR_call of sexpr_call
   | S_grouped_expr of s_expr
   | SEXPR_field_access of string * string
 
 
 
-and s_call_expr = {
-  sce_callee: string;
-  sce_arguments: s_expr list;
+and sexpr_call= {
+  sc_callee: string;
+  sc_arguments: s_expr list;
 }
 
 and s_for_stmt = {
@@ -147,6 +147,11 @@ let init_symbol_table ?parent () : s_symbol_table =
   let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
   { sst_parent = parent; sst_symbols = symbol_table }
 
+(**
+  * Lookup a symbol in the symbol table. If not found, lookup in the parent table.
+  * If not found in the parent table, return None.
+
+*)
 let rec lookup_symbol identifier symbol_table =
   match Hashtbl.find_opt symbol_table.sst_symbols identifier with
   | Some entry -> Some entry

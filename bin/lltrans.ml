@@ -49,7 +49,7 @@ let trans_module
     (match e_content with
     | S_int_literal i -> 
         ignore ( L.const_int i32_t i)
-    | S_call_expr call_e -> todo "call expression"
+    | SEXPR_call call_e -> todo "call expression"
     | SEXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
   in
