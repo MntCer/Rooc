@@ -320,7 +320,7 @@ fun get_first (x:int,y:float) -> int {
 }
 ```
 
-#### function parameters
+#### Function parameters
 
 <!-- %TODO: Do after the struct type is cleared -->
 If the first parameter is a `self`, this indicates that the function is a method. 
@@ -328,10 +328,19 @@ Functions with a `self` parameter may only appear as an associated function in a
 
 #### Function body
 
-The block of a function is conceptually wrapped in a block that binds the argument and then returns the value of the function's block.
-<!--%TODO: ref  -->
-Functions without a body block are function declaration. This form may only appear in a trait.
+The block of a function is conceptually wrapped in a block that binds the argument and then returns the value of the function's block. 
 
+### Block
+
+```ebnf
+Block = "{" [ Statements ] "}" .
+```
+
+A block expression, or block, is a control flow expression and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
+
+The syntax for a block starts with a "`{`" along with any number of statements, and finally ends with "`}`".
+
+When evaluating a block expression, each statement, except for item declaration statements, is executed sequentially. Statements are defined later.
 
 ### Struct
 
@@ -355,7 +364,7 @@ struct Point {
 A struct is a nominal struct type defined with the keyword `struct`.
 <!--%TODO: memory layout-->
 
-### Traits
+### Trait
 
 ```ebnf
 Trait =
@@ -616,18 +625,6 @@ ReturnExpr =
 ```
 
 Return expressions are denoted with the keyword `return`. Evaluating a return expression moves its argument into the designated output location for the current function call, destroys the current function activation frame, and transfers control to the caller frame.
-
-### Block Statement
-
-```ebnf
-Block = "{" [ Statements ] "}" .
-```
-
-A block expression, or block, is a control flow expression and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
-
-The syntax for a block is `{`, then any number of statements, and finally a `}`.
-
-When evaluating a block expression, each statement, except for item declaration statements, is executed sequentially.
 
 
 ### For Statement
