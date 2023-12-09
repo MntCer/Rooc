@@ -42,8 +42,10 @@ type roc_expr =
   | Roc_assignment_expr of roc_expr * roc_expr
 
   | Roc_grouped_expr of roc_expr
-  | Roc_path_expr of string list
-  | Roc_call_expr of roc_expr * ( roc_expr list ) (* expr, callParams*)
+
+  | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
+  | EXPR_field_access of string * string
+
 
 and roc_variable =
     { rv_name : string;

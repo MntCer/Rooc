@@ -481,125 +481,6 @@ The variable introduced by a `let` statement is immutable, and `var` variable is
 ExprStmt = Expr ";" .
 ```
 
-## Expressions
-
-Most forms of value-producing or effect-causing evaluation are directed by the uniform syntax category of *expression*s in Rooc.
-
-```ebnf
-Expr =
-    LiteralExpr
-  | PathExpr
-  | OperatorExpr
-  | GroupedExpr
-  | StructExpr        %TODO
-  | CallExpr
-  | MethodCallExpr    %TODO
-  | FieldExpr .       %TODO
-
-```
-
-### Literal expression
-
-```ebnf
-LiteralExpr =
-     STRING_LITERAL
-   | INTEGER_LITERAL
-   | FLOAT_LITERAL
-   | BOOL_LITERAL .
-```
-
-A literal expression is an expression consisting of a single token, rather than a sequence of tokens, that immediately and directly denotes the value it evaluates to, rather than referring to it by name or some other evaluation rule.
-
-A literal is a form of constant expression, so is evaluated (primarily) at compile time.
-
-### Path expression
-
-```ebnf
-PathExpr = 
-    PathSegment { "::" PathSegment } .
-
-PathSegment = 
-    IDENTIFIER .
-  <!-- | "self" . -->
-```
-
-
-### Operator expression
-
-```ebnf
-OperatorExpr =
-    UnaryExpr
-  | ArithmeticExpr
-  | LogicalExpr
-  | ComparisonExpr
-  | AssignmentExpr .
-```
-
-#### unary expression
-
-```ebnf
-UnaryExpr =
-    "-" Expr 
-  | "!" Expr .
-```
-
-#### Arithmetic or logical expression
-
-```ebnf
-ArithmeticxExpr =
-    Expr "+" Expr
-  | Expr "-" Expr
-  | Expr "*" Expr
-  | Expr "/" Expr .
-
-LogicalExpr =
-  | Expr "&&" Expr
-  | Expr "||" Expr .
-```
-
-#### Comparison expression
-
-```ebnf
-ComparisonExpr =
-    Expr "==" Expr
-  | Expr "!=" Expr
-  | Expr ">" Expr
-  | Expr "<" Expr
-  | Expr ">=" Expr
-  | Expr "<=" Expr .
-```
-
-#### Assignment expression
-
-<!-- #TODO: Not right now -->
-
-```ebnf
-AssignmentExpr =
-    Expr "=" Expr .
-```
-
-### Grouped expression
-
-```ebnf
-GroupedExpr = 
-    "(" Expr ")" .
-```
-
-### Call expression
-
-```ebnf
-CallExpr =
-   PathExpr "(" { CallParams } ")" .
-
-CallParams =
-   Expr { "," Expr } [ "," ] .
-```
-
-A call expression calls a function.
-
-The syntax of a call expression is an expression, called the function operand, followed by a parenthesized comma-separated list of expression, called the argument operands.
-
-
 ### Return Statement
 
 ```ebnf
@@ -691,6 +572,131 @@ IfStatement =
     "if" "(" Expr ")" Block 
         "else"  Block .
 ```
+
+## Expressions
+
+Most forms of value-producing or effect-causing evaluation are directed by the uniform syntax category of *expression*s in Rooc.
+
+```ebnf
+Expr =
+    LiteralExpr
+  | OperatorExpr
+  | GroupedExpr
+  | StructExpr        #TODO
+  | CallExpr
+  | MethodCallExpr    #TODO
+  | FieldAccessExpr . 
+
+```
+
+Expressions are divided into two main categories: place expressions and value expressions. Which is, the left value and the right value.
+Within each expression, operands may likewise occur in either place context or value context. The evaluation of an expression depends both on its own category and the context it occurs within.
+
+#TODO: add each category's expression.
+
+
+### Literal expression
+
+```ebnf
+LiteralExpr =
+     STRING_LITERAL
+   | INTEGER_LITERAL
+   | FLOAT_LITERAL
+   | BOOL_LITERAL .
+```
+
+A literal expression is an expression consisting of a single token, rather than a sequence of tokens, that immediately and directly denotes the value it evaluates to, rather than referring to it by name or some other evaluation rule.
+
+A literal is a form of constant expression, so is evaluated (primarily) at compile time.
+
+
+### Operator expression
+
+```ebnf
+OperatorExpr =
+    UnaryExpr
+  | ArithmeticExpr
+  | LogicalExpr
+  | ComparisonExpr
+  | AssignmentExpr .
+```
+
+#### unary expression
+
+```ebnf
+UnaryExpr =
+    "-" Expr 
+  | "!" Expr .
+```
+
+#### Arithmetic or logical expression
+
+```ebnf
+ArithmeticxExpr =
+    Expr "+" Expr
+  | Expr "-" Expr
+  | Expr "*" Expr
+  | Expr "/" Expr .
+
+LogicalExpr =
+  | Expr "&&" Expr
+  | Expr "||" Expr .
+```
+
+#### Comparison expression
+
+```ebnf
+ComparisonExpr =
+    Expr "==" Expr
+  | Expr "!=" Expr
+  | Expr ">" Expr
+  | Expr "<" Expr
+  | Expr ">=" Expr
+  | Expr "<=" Expr .
+```
+
+#### Assignment expression
+
+<!-- #TODO: Not right now -->
+
+```ebnf
+AssignmentExpr =
+    Expr "=" Expr .
+```
+
+### Grouped expression
+
+```ebnf
+GroupedExpr = 
+    "(" Expr ")" .
+```
+
+### Call expression
+
+```ebnf
+CallExpr =
+   ID "(" { CallParams } ")" .
+
+CallParams =
+   Expr { "," Expr } [ "," ] .
+```
+
+A call expression calls a function.
+
+The syntax of a call expression is an expression, called the function operand, followed by a parenthesized comma-separated list of expression, called the argument operands.
+
+### Field access expression
+
+```ebnf
+FieldAccessExpr =
+    IDENTIFIER "." IDENTIFIER .
+```
+
+A field expression is a place expression that evaluates to the location of a field of a struct. When the operand is mutable, the field expression is also mutable.
+
+The syntax for a field expression is an expression, then a `.`, and finally an identifier. 
+Field expressions cannot be followed by a parenthetical comma-separated list of expressions, as that is instead parsed as a method call expression. That is, they cannot be the function operand of a call expression.
+
 
 <!-- 
 

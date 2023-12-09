@@ -38,7 +38,7 @@ let trans_module
     | ST_bool -> i1_t
     | ST_float -> float_t
     (* //TODO: *)
-    | _ -> todo "not supported. in ltype_of_stype"
+    | _ -> todo "other type"
   in
   
   (**
@@ -49,7 +49,9 @@ let trans_module
     (match e_content with
     | S_int_literal i -> 
         ignore ( L.const_int i32_t i)
-    | _ -> todo "not supported yet.")
+    | S_call_expr call_e -> todo "call expression"
+    | SEXPR_field_access (e, field_name) -> todo "field access"
+    | _ -> todo "trans_expr")
   in
 
   (**
@@ -76,6 +78,7 @@ let trans_module
       (trans_expr e builder scope)
     | S_var_decl_stmt v | S_let_decl_stmt v -> 
       (trans_var_decl v builder scope)
+    | _ -> todo "trans_stmt"
     )
   in
 
@@ -90,8 +93,6 @@ let trans_module
   let trans_function (f: s_function) =
     match f.sf_body with
     | UserDefined body -> 
-      (* Step 1: Determine LLVM function type *)
-      (
         let the_function =
           let the_entry = lookup f.sf_name (IRGlobalScope the_namespace) in
           match the_entry with
@@ -100,7 +101,6 @@ let trans_module
         in
         let llvm_function = the_function.if_function in
 
-        (* Builder for function body *)
         let builder = L.builder_at_end the_context (L.entry_block llvm_function) in
 
   
@@ -128,8 +128,6 @@ let trans_module
         let stmts=body.sb_stmts
         in
         List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
-      )
-
     | BuiltIn -> ()
 
   in

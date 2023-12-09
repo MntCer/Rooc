@@ -80,17 +80,21 @@ let analyse_module (ast_root:roc_module) : s_module =
       let analysed_e2 = analyse_expr e2 symbol_table in
       let result_type = if analysed_e1.se_type = analysed_e2.se_type then analysed_e1.se_type else ST_error
       in
-      { se_type = result_type; se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
+      { se_type = result_type; 
+        se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
 
-    | Roc_path_expr path -> 
-      todo "path expr"
-    
     | Roc_call_expr (callee, arg_list) ->
       todo "call expr"
     
     | Roc_grouped_expr e ->
         let analysed_expr = analyse_expr e symbol_table in
-        { se_type = analysed_expr.se_type; se_expr = S_grouped_expr analysed_expr }
+        { se_type = analysed_expr.se_type; 
+          se_expr = S_grouped_expr analysed_expr }
+
+    | EXPR_field_access (struct_name, field_name) ->
+      let () = todo "field access expr" in 
+      { se_type = ST_unit;
+        se_expr = SEXPR_field_access (struct_name, field_name); }
     
   (**
     #TODO: add docstring

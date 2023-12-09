@@ -22,8 +22,9 @@ open Util
 %type <Ast.roc_module> roc_module
 
 %nonassoc LOWEST_PRECEDENCE
-%nonassoc RETURN
+%nonassoc RETURN BREAK
 %nonassoc ELSE
+
 %right ASSIGN
 %left OR
 %left AND
@@ -31,6 +32,11 @@ open Util
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT
+
+%nonassoc OPERATOR
+%nonassoc CALL
+%nonassoc FIELD
+%nonassoc METHOD_CALL
 %nonassoc HIGHEST_PRECEDENCE
 
 %%
@@ -142,15 +148,15 @@ expr_empty:
     /* empty */ { EXPR_null }
 
 expr_nonempty:
+  | roc_call_expr %prec CALL {$1}
+  | roc_operator_expr %prec OPERATOR {$1}
   | roc_literal_expr {$1}
-  | roc_operator_expr {$1}
   | roc_grouped_expr {$1}
-  | roc_path_expr {$1}
-  | roc_call_expr {$1}
+  | expr_field_access %prec FIELD {$1}
 
 roc_expr:
   | expr_empty %prec LOWEST_PRECEDENCE { $1 }
-  | expr_nonempty { $1 }
+  | expr_nonempty %prec HIGHEST_PRECEDENCE { $1 }
 
 roc_literal_expr:
   | SLIT { Roc_string_literal($1) }
@@ -195,19 +201,10 @@ roc_assignment_expr:
 roc_grouped_expr:
     LPAREN expr_nonempty RPAREN { Roc_grouped_expr($2) }
 
-roc_path_expr:
-    roc_path_segments { Roc_path_expr(List.rev $1) }
-
-roc_path_segments:
-    roc_path_segment { [$1] }
-  | roc_path_segments COLON COLON roc_path_segment { $4 :: $1 }
-
-roc_path_segment:
-    ID { $1 }
 
 roc_call_expr:    
-    roc_path_expr LPAREN roc_call_params RPAREN { Roc_call_expr($1, $3) }
-  | roc_path_expr LPAREN RPAREN { Roc_call_expr($1, []) }
+    ID LPAREN roc_call_params RPAREN { Roc_call_expr($1, $3) }
+  | ID LPAREN RPAREN { Roc_call_expr($1, []) }
 
 roc_call_params:
     roc_call_params_no_comma optional_comma { List.rev $1 }
@@ -220,6 +217,10 @@ optional_comma:
     /* empty */ { () }
   | COMMA { () }
 
+expr_field_access:
+    // #TODO: it's a simplified version, but the complele version has some unsolvable problems now.
+    ID DOT ID { EXPR_field_access ($1, $3) } 
+
 roc_continue_stmt:
     CONTINUE SEMI { Roc_continue_stmt }
 
@@ -228,8 +229,6 @@ roc_break_stmt:
 
 roc_return_stmt:
     RETURN roc_expr SEMI { Roc_return_stmt($2) }
-
-
 
 
 roc_block:
@@ -248,7 +247,7 @@ roc_if_stmt:
     IF LPAREN expr_nonempty roc_block ELSE roc_block { Roc_if_stmt($3, $4, $6) }
 
 roc_loop_stmt:
-  |  roc_for_stmt  { $1 }
+  | roc_for_stmt  { $1 }
   | roc_while_stmt { $1 }
 
 roc_for_stmt:

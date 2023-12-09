@@ -36,18 +36,14 @@ and s_expr_structure =
   | S_logical_expr of logical_op * s_expr * s_expr
   | S_comparison_expr of comparison_op * s_expr * s_expr
   | S_assignment_expr of s_expr * s_expr
-  | S_path_expr of s_path_expr
   | S_call_expr of s_call_expr
   | S_grouped_expr of s_expr
+  | SEXPR_field_access of string * string
 
 
 
-and s_path_expr = {
-  spe_path: string list;
-}
-  
 and s_call_expr = {
-  sce_callee: s_path_expr;
+  sce_callee: string;
   sce_arguments: s_expr list;
 }
 

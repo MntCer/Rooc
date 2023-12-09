@@ -13,7 +13,8 @@ type ir_variable = {
 
 and ir_function ={
   if_return_type : lltype;
-  if_param_types : lltype array;
+  if_param_types : lltype array; 
+  (* #TODO: those two above infact is also unnecessary *)
   if_function_type : lltype;
   if_function : llvalue;
   if_scope : ir_local_scope option;
