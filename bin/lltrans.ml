@@ -38,9 +38,9 @@ let trans_module
     | ST_int -> i32_t
     | ST_bool -> i1_t
     | ST_float -> float_t
-    (* //TODO: *)
+    (* | ST_string -> char pointer *)
     | ST_unit -> void_t (* #TODO: ad hoc solution, need re reclear it *)
-    | _ -> todo "other type"
+    | _ -> todo "other type: ST_function & ST_error"
   in
   
   (**
@@ -56,14 +56,23 @@ let trans_module
     (match structual_e with
     | S_int_literal i -> 
         L.const_int i32_t i
-    | S_float_literal f -> 
-      todo "float literal"
+    | S_float_literal f ->
+        L.const_float float_t f
     | S_bool_literal b ->
         L.const_int i1_t (if b then 1 else 0)
-    | S_string_literal s -> 
-      todo "string literal"
+    (* TODO: | S_string_literal s -> L.const_string or L.const_stringz (null terminated)*)
+    | S_EXPR_null ->
+      L.const_null void_t (*TODO: not sure*)
     | S_unary_expr (op, e) -> 
-      todo "unary expression"
+      let operand = trans_expr e the_builder the_scope in
+      let op_instr = 
+        match op with
+         | A.Neg -> 
+          (match e_type with
+           | ST_float -> L.build_fneg
+           | _ -> L.build_neg)
+         | A.Not -> L.build_not in
+         op_instr operand "tmp" the_builder
     | S_arith_expr (op, e1, e2) -> 
       let operand1 = trans_expr e1 the_builder the_scope in
       let operand2 = trans_expr e2 the_builder the_scope in
@@ -75,9 +84,27 @@ let trans_module
           | A.Sub -> L.build_sub 
           | A.Mult -> L.build_mul
           | A.Div -> L.build_sdiv)
-        | _ -> todo "other type in arith expr than int" in 
+        | ST_float ->
+          (match op with
+          | A.Add -> L.build_fadd 
+          | A.Sub -> L.build_fsub 
+          | A.Mult -> L.build_fmul
+          | A.Div -> L.build_fdiv)
+        | _ -> raise (type_err_failure "Arithmetic expression not supported for other types than int and float") in 
+      op_instr operand1 operand2 "tmp" the_builder
+    | S_logical_expr (op, e1, e2) -> 
+      let operand1 = trans_expr e1 the_builder the_scope in
+      let operand2 = trans_expr e2 the_builder the_scope in
+      let op_instr = 
+        match e_type with
+        | ST_bool ->
+          (match op with
+          | A.And -> L.build_and
+          | A.Or -> L.build_or)
+        | _ -> raise (type_err_failure "Logical expression not supported for other types than bool") in 
       op_instr operand1 operand2 "tmp" the_builder
     | S_EXPR_call call_e -> todo "call expression"
+    | S_grouped_expr
     | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
   in

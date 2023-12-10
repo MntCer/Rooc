@@ -82,7 +82,7 @@ rule token = parse
 | "true"   { BLIT(true)  }
 | "false"  { BLIT(false) }
 | digit+ as int_str { ILIT(int_of_string int_str) }
-| digit+ '.' digit* as float_str { FLIT(float_str) }
+| digit+ '.' digit* as float_str { FLIT(safe_float_of_string float_str) }
 | '"' { string_processor lexbuf }
 (* identifier, should not have higher precedence than keywords. *)
 | letter ['a'-'z' 'A'-'Z' '0'-'9' '_']* as id_str { ID(id_str) }
