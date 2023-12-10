@@ -7,3 +7,19 @@ fun main() -> int {
     
     return 0;
 }
+
+fun test1() -> int {
+    return 10+5;
+}
+
+fun test2() -> int{
+    return 10-5;
+}
+
+fun test3() -> int{
+    return 10*5;
+}
+
+fun test4() -> int{
+    return 10/5;
+}

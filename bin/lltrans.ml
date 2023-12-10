@@ -28,6 +28,7 @@ let trans_module
   and i8_t      = L.i8_type     the_context
   and i1_t       = L.i1_type     the_context
   and float_t    = L.double_type the_context
+  and void_t     = L.void_type   the_context
   in
 
   (** 
@@ -38,6 +39,7 @@ let trans_module
     | ST_bool -> i1_t
     | ST_float -> float_t
     (* //TODO: *)
+    | ST_unit -> void_t (* #TODO: ad hoc solution, need re reclear it *)
     | _ -> todo "other type"
   in
   
@@ -190,7 +192,8 @@ let trans_module
           | _ -> todo "other return type"
           );)
     | BuiltIn -> 
-      todo "built-in function"
+      ()
+      (* todo "built-in function" *)
 
   in
 
@@ -218,6 +221,7 @@ let trans_module
       put the type, llvm function value and the scope into the wrapper.     
     *)
     | FuncEntry f ->         
+      let () = print_string(string_of_stype (f.sf_type.sft_return_type)) in
       let llvm_return_type = trans_type f.sf_type.sft_return_type in
       let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
       let llvm_function_type = L.function_type llvm_return_type llvm_param_types in

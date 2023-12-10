@@ -16,8 +16,8 @@
 (env
  (dev
   (flags
-   (:standard -warn-error -A)
-  ;  (:standard -w -A)
+  ;  (:standard -warn-error -A)
+   (:standard -w -A)
    )))
 
 (executable

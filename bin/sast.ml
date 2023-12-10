@@ -1,5 +1,6 @@
 
 open Ast
+open Util
 
 type s_type =
   | ST_unit
@@ -139,7 +140,9 @@ type s_module = {
   sm_namespace: s_symbol_table;
 }
 
-(* some helper functions *)
+(* ************************************************************ *)
+(* Some helper functions *)
+(* ************************************************************ *)
 
 exception SymbolTableError of string
 
@@ -173,7 +176,19 @@ let update_symbol_table symbol_table identifier new_entry =
   else
     raise (SymbolTableError ("Symbol not found for update: " ^ identifier))
 
-(* to string *)
+(* ************************************************************ *)
+(* Pretty-printing functions *)
+(* ************************************************************ *)
 
-let string_of_module = function
+let string_of_smodule = function
   _ -> "TODO"
+
+let string_of_stype = function
+  | ST_unit -> "unit"
+  | ST_int -> "int"
+  | ST_float -> "float"
+  | ST_string -> "string"
+  | ST_bool -> "bool"
+  | ST_function _ -> todo "function type"
+  | ST_error -> "type error"
+
