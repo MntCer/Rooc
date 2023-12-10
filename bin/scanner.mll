@@ -1,6 +1,7 @@
 (* Ocamllex scanner for Rooc *)
 
-{ open Parser }
+{ open Parser 
+open Util}
 (* { 
   (* for test *)
 type token = 

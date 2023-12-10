@@ -71,7 +71,7 @@ let analyse_module (ast_root:roc_module) : s_module =
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
       let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
-        | (ST_int, ST_int) | (ST_float, ST_float) -> ST_bool
+        | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool
         | _ -> raise (type_err_failure "Comparison expression type mismatch")
           (* ST_error *)
       in
