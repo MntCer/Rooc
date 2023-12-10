@@ -16,9 +16,16 @@ And also for other "uncommon" expr.
 
 Today, we aim to successfully run our project end2end.
 
-* [x] function's code generation part.
+* [ ] function's code generation part.
 * [ ] builtin functions' codegen
-* [x] more about expression codegen.
+* [ ] more about expression codegen.
+
+## Dec 10
+
+* [x] skeleton of function codegen.
+* [x] int arith -> expression codegen.
+* [ ] builtin functions -> codegen and sement.
+
 
 
 ## Target List
