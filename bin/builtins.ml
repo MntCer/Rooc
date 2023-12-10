@@ -1,7 +1,8 @@
 open Sast
+open Llhelper
+
 open Util
 module L = Llvm
-open Llhelper
 
 
 let print_int = {
@@ -20,40 +21,61 @@ let print_int = {
   sf_body = BuiltIn;
 }
 
+
 let builtins_semant = [
   print_int;
 ]
 
-(* let trans_builtins (the_module:L.llmodule) =
-  let the_context = Llhelper.the_global_context in
 
-  let i32_t = L.i32_type the_context 
-  and i8_t  = L.i8_type  the_context in
+let declare_printf 
+  (the_context:L.llcontext)
+  (the_module:L.llmodule) 
+  (the_scope:ir_global_scope)
+  : unit =
+  let i32_t = L.i32_type the_context in
+  let i8_t = L.i8_type the_context in
+  let printf_type = 
+    L.var_arg_function_type 
+    (i32_t) 
+    [| L.pointer_type i8_t |] in
+  let the_printf = L.declare_function "printf" printf_type the_module in
+  let wrapped_printf = {
+    ief_function_type = printf_type;
+    ief_function = the_printf;
+  } in
+  insert_global_function "printf" (IRExternFunction wrapped_printf) the_scope;
 
-  let printf_type: L.lltype =
-    L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in 
 
-  let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
+type builtin_translator =  L.llbuilder -> ir_local_scope -> ir_global_scope -> L.llbuilder
 
-  let printf_func: L.llvalue = L.declare_function "printf" printf_type the_module in
-  (* Create the printf format string for integers *)
-  insert_global_function "printf" {
-      if_return_type = i32_t;
-      if_param_types = [| L.pointer_type i8_t |];
-      if_function_type = printf_type;
-      if_function = printf_func;
-      if_builder = None;
-      if_scope = None;
-    } the_namespace;
+(**
+    translate the built-in print_int into LLVM IR.
 
-  (* Declare print_int as a wrapper around printf *)
-  let print_int_type = L.function_type i32_t [| i32_t |] in
-  let print_int_func = L.declare_function "print_int" print_int_type the_module in
-  insert_global_function "print_int" {
-      if_return_type = i32_t;
-      if_param_types = [| i32_t |];
-      if_function_type = print_int_type;
-      if_function = print_int_func;
-      if_builder = None;
-      if_scope = None;
-    } the_namespace; *)
+*)
+let trans_print_int
+  (the_builder:L.llbuilder)
+  (the_scope:ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+
+  let the_printf = 
+    match lookup "printf" (IRGlobalScope the_namespace) with
+    | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
+    | None | _ -> bug "printf is not declared"
+  in
+  let format_str = L.build_global_stringptr "%d\n" "fmt" the_builder in  
+  let the_param =
+    let search_result=lookup "i" (IRLocalScope the_scope) in
+    match search_result with
+    | Some (IRVarEntry (v)) -> v
+    | None | _ -> bug "print_int's pamameter is not right in its scope"
+  in
+  (* #NOTE: I guess here is abstraction leak. *)
+  let i = L.build_load the_param.iv_value_addr "i" the_builder in
+  let _ = L.build_call the_printf [| format_str; i |] "" the_builder in
+  the_builder
+
+
+let builtins_map:(string, builtin_translator) Hashtbl.t = Hashtbl.create 10
+let () = Hashtbl.add builtins_map "print_int" trans_print_int
+

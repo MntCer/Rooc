@@ -11,7 +11,12 @@ type ir_variable = {
   iv_type : lltype;
 }
 
-and ir_function ={
+and ir_extern_function = {
+  ief_function_type: lltype;
+  ief_function: llvalue;
+}
+
+and ir_rooc_function = {
   if_return_type : lltype;
   if_param_types : lltype array; 
   (* #TODO: those two above infact is also unnecessary *)
@@ -19,6 +24,10 @@ and ir_function ={
   if_function : llvalue;
   if_scope : ir_local_scope;
 }
+
+and ir_function = 
+  | IRExternFunction of ir_extern_function
+  | IRRoocFunction of ir_rooc_function
 
 and ir_scope = 
   | IRGlobalScope of ir_global_scope
