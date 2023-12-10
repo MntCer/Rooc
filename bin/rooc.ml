@@ -9,7 +9,7 @@ type action =
   | Compile
 
 let () =
-  let action = ref Sast in
+  let action = ref LLVM_IR in
   let set_action a () = action := a in
   let speclist = [
     ("-a", Arg.Unit (set_action Ast), "Print the AST");
@@ -34,7 +34,7 @@ let () =
       | LLVM_IR -> 
         let the_context= Llhelper.the_global_context in
         let translated_module = Lltrans.trans_module sast the_context in
-        print_string(Llvm.string_of_llmodule( translated_module))
+        print_string(Llvm.string_of_llmodule(translated_module))
 
       | Compile -> 
         let the_context= Llhelper.the_global_context in

@@ -201,7 +201,6 @@ roc_assignment_expr:
 roc_grouped_expr:
     LPAREN expr_nonempty RPAREN { Roc_grouped_expr($2) }
 
-
 roc_call_expr:    
     ID LPAREN roc_call_params RPAREN { Roc_call_expr($1, $3) }
   | ID LPAREN RPAREN { Roc_call_expr($1, []) }

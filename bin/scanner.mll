@@ -24,7 +24,7 @@ let letter = ['a'-'z' 'A'-'Z']
 
 rule token = parse
 (* comments *)
-| "//" [^ '\n' '\r']* ('\r' '\n' | '\n'| eof) { token lexbuf } 
+| "//" [^ '\n' '\r']* ('\r' '\n' | '\n'| eof ) { token lexbuf } 
 | "/*"                                   { comment lexbuf }
 (* whitespace *)
 | [' ' '\t' '\r' '\n'] { token lexbuf } 

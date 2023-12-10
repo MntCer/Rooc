@@ -124,6 +124,9 @@ let trans_module
       let _ = trans_expr e builder scope in builder
     | S_var_decl_stmt v | S_let_decl_stmt v -> 
       trans_var_decl v builder scope
+    | S_STMT_return e ->
+      let the_v = trans_expr e builder scope in
+      let _ = L.build_ret the_v builder in builder
     | _ -> todo "trans_stmt"
     )
   in
@@ -138,7 +141,7 @@ let trans_module
   *)
   let trans_function (f: s_function) =
     match f.sf_body with
-    | UserDefined body -> 
+    | UserDefined body -> (
         let search_result =
           let the_entry = lookup f.sf_name (IRGlobalScope the_namespace) in
           match the_entry with
@@ -172,15 +175,20 @@ let trans_module
 
         (* translate the function body *)
         let stmts=body.sb_stmts in
-
         let the_builder = (* #TODO: this line is a little ugly *)
           List.fold_left 
           (fun the_builder s -> 
             trans_stmt s the_builder the_scope) 
             the_builder stmts 
         in
-        todo "add terminator to function body"
 
+        (* add the final terminator *)
+        add_terminator 
+          the_builder 
+          (match search_result.if_return_type with
+          | i32_t -> L.build_ret (L.const_int i32_t 0)
+          | _ -> todo "other return type"
+          );)
     | BuiltIn -> 
       todo "built-in function"
 

@@ -9,15 +9,15 @@
 
 (menhir
   (modules parser)
-  ; (flags --trace)
-  (flags --unused-tokens --unused-precedence-levels)
+  (flags --trace)
+  ; (flags --unused-tokens --unused-precedence-levels)
   )
 
 (env
  (dev
   (flags
-  ;  (:standard -warn-error -A)
-   (:standard -w -A)
+   (:standard -warn-error -A)
+  ;  (:standard -w -A)
    )))
 
 (executable
