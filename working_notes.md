@@ -16,9 +16,9 @@ And also for other "uncommon" expr.
 
 Today, we aim to successfully run our project end2end.
 
-* [ ] function's code generation part.
+* [x] function's code generation part.
 * [ ] builtin functions' codegen
-* [ ] more about expression codegen.
+* [x] more about expression codegen.
 
 
 ## Target List
