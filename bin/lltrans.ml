@@ -44,40 +44,86 @@ let trans_module
   (**
     #TODO: add docstring
   *)
-  let trans_expr (e:s_expr) builder (scope:ir_local_scope): unit = 
-    let e_content = e.se_expr in
-    (match e_content with
+  let rec trans_expr 
+    (e:s_expr) 
+    the_builder 
+    (the_scope:ir_local_scope)
+    : L.llvalue = 
+    let e_type = e.se_type in
+    let structual_e = e.se_expr in
+    (match structual_e with
     | S_int_literal i -> 
-        ignore ( L.const_int i32_t i)
-    | SEXPR_call call_e -> todo "call expression"
-    | SEXPR_field_access (e, field_name) -> todo "field access"
+        L.const_int i32_t i
+    | S_float_literal f -> 
+      todo "float literal"
+    | S_bool_literal b ->
+        L.const_int i1_t (if b then 1 else 0)
+    | S_string_literal s -> 
+      todo "string literal"
+    | S_unary_expr (op, e) -> 
+      todo "unary expression"
+    | S_arith_expr (op, e1, e2) -> 
+      let operand1 = trans_expr e1 the_builder the_scope in
+      let operand2 = trans_expr e2 the_builder the_scope in
+      let op_instr = 
+        match e_type with
+        | ST_int -> 
+          (match op with
+          | A.Add -> L.build_add 
+          | A.Sub -> L.build_sub 
+          | A.Mult -> L.build_mul
+          | A.Div -> L.build_sdiv)
+        | _ -> todo "other type in arith expr than int" in 
+      op_instr operand1 operand2 "tmp" the_builder
+    | S_EXPR_call call_e -> todo "call expression"
+    | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
   in
 
   (**
     #TODO: add docstring
   *)
-  let trans_var_decl (v: s_variable) builder (scope:ir_local_scope) : unit =
+  let trans_var_decl 
+    (v: s_variable) 
+    the_builder 
+    (the_scope:ir_local_scope) 
+    : L.llbuilder =
     let local_name = v.sv_name in
     let local_type = trans_type v.sv_type in
-    let alloca = L.build_alloca local_type local_name builder in
+    let alloca = L.build_alloca local_type local_name the_builder in
     let local_var = {
       iv_name = local_name;
       iv_type = local_type;
       iv_value_addr = alloca;
     } in
-    insert_local_variable local_name local_var scope
+    let () = insert_local_variable local_name local_var the_scope in 
+    the_builder
   in
 
-  (**
-    #TODO: add docstring
+  (** 
+    Invoke "goto_instr builder" if the current block 
+    doesn't already have a terminator 
   *)
-  let rec trans_stmt (s: s_stmt) builder (scope:ir_local_scope) : unit =
+  let add_terminator builder goto_instr =
+    match L.block_terminator (L.insertion_block builder) with
+    Some _ -> ()
+    | None -> ignore (goto_instr builder) in
+
+
+  (**
+    Translate the code for the given statement; 
+    return the builder for the statement's successor.
+  *)
+  let rec trans_stmt 
+    (s: s_stmt) 
+    builder 
+    (scope:ir_local_scope) 
+    : L.llbuilder =
     (match s with
     | S_expr_stmt e -> 
-      (trans_expr e builder scope)
+      let _ = trans_expr e builder scope in builder
     | S_var_decl_stmt v | S_let_decl_stmt v -> 
-      (trans_var_decl v builder scope)
+      trans_var_decl v builder scope
     | _ -> todo "trans_stmt"
     )
   in
@@ -93,42 +139,50 @@ let trans_module
   let trans_function (f: s_function) =
     match f.sf_body with
     | UserDefined body -> 
-        let the_function =
+        let search_result =
           let the_entry = lookup f.sf_name (IRGlobalScope the_namespace) in
           match the_entry with
           | Some(IRFuncEntry f) -> f
           | _ -> bug "Want if_function but get others."
         in
-        let llvm_function = the_function.if_function in
+        let the_function = search_result.if_function in
+        let the_scope = search_result.if_scope in
+        let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
 
-        let builder = L.builder_at_end the_context (L.entry_block llvm_function) in
-
-  
         (* Process formals: Set names and allocate space *)
-        let local_scope = init_local_scope (IRGlobalScope the_namespace) in
         let add_formal (param: s_variable) llvm_param =
           let local_name = param.sv_name in
           let local_type = trans_type param.sv_type in
           let () = L.set_value_name local_name llvm_param in
-          let alloca = L.build_alloca local_type local_name builder in
-          let _ = L.build_store llvm_param alloca builder in
+          let alloca = L.build_alloca local_type local_name the_builder in
+          let _ = L.build_store llvm_param alloca the_builder in
           let local_var = {
             iv_name = local_name;
             iv_type = local_type;
             iv_value_addr = alloca;
           } in
-          insert_local_variable local_name local_var local_scope;
+          insert_local_variable local_name local_var the_scope;
         in
+        (* get the params of `the_function` and apply `add_formal` on them. *)
         (match f.sf_params with
         | Some params -> 
           List.iter2 add_formal params.sp_params
-                            (Array.to_list (L.params llvm_function))
+                            (Array.to_list (L.params the_function))
         | None -> ());
-        (* ... translate the function body ... *)
-        let stmts=body.sb_stmts
+
+        (* translate the function body *)
+        let stmts=body.sb_stmts in
+
+        let the_builder = (* #TODO: this line is a little ugly *)
+          List.fold_left 
+          (fun the_builder s -> 
+            trans_stmt s the_builder the_scope) 
+            the_builder stmts 
         in
-        List.iter (fun s -> ignore( trans_stmt s builder local_scope)) stmts;
-    | BuiltIn -> ()
+        todo "add terminator to function body"
+
+    | BuiltIn -> 
+      todo "built-in function"
 
   in
 
@@ -152,6 +206,9 @@ let trans_module
     (to_register:s_symbol_table_entry)
     : unit =
     match to_register with
+    (**
+      put the type, llvm function value and the scope into the wrapper.     
+    *)
     | FuncEntry f ->         
       let llvm_return_type = trans_type f.sf_type.sft_return_type in
       let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
@@ -163,7 +220,7 @@ let trans_module
         if_param_types=llvm_param_types;
         if_function_type=llvm_function_type;
         if_function=llvm_function;  
-        if_scope=Some(llvm_function_scope);
+        if_scope=llvm_function_scope;
       }
       in insert_global_function f.sf_name the_function the_namespace
     | _ -> bug "Unallowed thing is in the highest-level." 

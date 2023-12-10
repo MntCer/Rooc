@@ -24,7 +24,7 @@ let analyse_module (ast_root:roc_module) : s_module =
   let rec analyse_expr (raw_expr: roc_expr) (symbol_table: s_symbol_table) : s_expr =
     match raw_expr with
     (* empty expression *)
-    | EXPR_null -> { se_type = ST_unit; se_expr = SEXPR_null }
+    | EXPR_null -> { se_type = ST_unit; se_expr = S_EXPR_null }
 
     (* literals *)
     | Roc_string_literal strl -> {se_type = ST_string; se_expr = S_string_literal strl}
@@ -42,7 +42,8 @@ let analyse_module (ast_root:roc_module) : s_module =
         | _ -> raise (type_err_failure "Unary expression type mismatch")
           (* ST_error  *)
       in
-      { se_type = analysed_type; se_expr = S_unary_expr (op, analysed_expr) }
+      { se_type = analysed_type; 
+        se_expr = S_unary_expr (op, analysed_expr) }
 
     (* Binary Expression *)
     | Roc_arith_expr (op, e1, e2) ->
@@ -54,7 +55,8 @@ let analyse_module (ast_root:roc_module) : s_module =
           | _ -> raise (type_err_failure "Arithmetic expression type mismatch")
             (* ST_error   *)
         in
-        { se_type = analysed_type; se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
+        { se_type = analysed_type; 
+          se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
     | Roc_logical_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 symbol_table in
         let analysed_e2 = analyse_expr e2 symbol_table in
@@ -63,7 +65,8 @@ let analyse_module (ast_root:roc_module) : s_module =
           | _ -> raise (type_err_failure "Logical expression type mismatch")
             (* ST_error *)
         in
-        { se_type = analysed_type; se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
+        { se_type = analysed_type; 
+          se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
     | Roc_comparison_expr (op, e1, e2) ->
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
@@ -98,31 +101,26 @@ let analyse_module (ast_root:roc_module) : s_module =
         let analysed_type = f.sf_type.sft_return_type in
         let analysed_callee = callee in
         { se_type = analysed_type; 
-          se_expr = SEXPR_call({
+          se_expr = S_EXPR_call({
             sc_callee = analysed_callee;
-            sc_arguments = analysed_args;
-          }) 
-        }
+            sc_arguments = analysed_args; }) }
       | Some (FuncSigEntry fs) ->
         let analysed_type = fs.sfs_type.sft_return_type in
         let analysed_callee = callee in 
         { se_type = analysed_type; 
-          se_expr = SEXPR_call({
+          se_expr = S_EXPR_call({
             sc_callee = analysed_callee;
-            sc_arguments = analysed_args;
-          }) 
-        }
-      )
+            sc_arguments = analysed_args; }) } )
     
     | Roc_grouped_expr e ->
         let analysed_expr = analyse_expr e symbol_table in
         { se_type = analysed_expr.se_type; 
-          se_expr = S_grouped_expr analysed_expr }
+          se_expr = S_grouped_expr analysed_expr}
 
     | EXPR_field_access (struct_name, field_name) ->
       let () = todo "field access expr" in 
       { se_type = ST_unit; (* #TODO: struct type *)
-        se_expr = SEXPR_field_access (struct_name, field_name); }
+        se_expr = S_EXPR_field_access (struct_name, field_name); }
     
   (**
     #TODO: add docstring
@@ -150,12 +148,12 @@ let analyse_module (ast_root:roc_module) : s_module =
 
     | Roc_return_stmt e ->
         let analysed_expr = analyse_expr e the_table in
-        SSTMT_return analysed_expr
+        S_STMT_return analysed_expr
 
     
     | STMT_block b ->
         let analysed_block = analyse_block b the_table true in
-        SSTMT_block analysed_block
+        S_STMT_block analysed_block
 
     | Roc_for_stmt (init, cond, update, body) ->
       todo "for stmt"
@@ -164,10 +162,10 @@ let analyse_module (ast_root:roc_module) : s_module =
       todo "while stmt"
 
     | Roc_break_stmt ->
-      SSTMT_break
+      S_STMT_break
     
     | Roc_continue_stmt ->
-      SSTMT_continue
+      S_STMT_continue
 
     | Roc_if_stmt (cond, then_branch, else_branch) ->
       todo "if stmt"

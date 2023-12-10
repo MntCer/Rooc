@@ -1,0 +1,9 @@
+// Adding two positive numbers
+fun main() -> int {
+    10 + 5;  
+    10 - 5;
+    10 * 5;
+    10 / 5;
+    
+    return 0;
+}

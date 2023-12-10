@@ -17,7 +17,7 @@ and ir_function ={
   (* #TODO: those two above infact is also unnecessary *)
   if_function_type : lltype;
   if_function : llvalue;
-  if_scope : ir_local_scope option;
+  if_scope : ir_local_scope;
 }
 
 and ir_scope = 
