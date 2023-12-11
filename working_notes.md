@@ -24,7 +24,9 @@ Today, we aim to successfully run our project end2end.
 
 * [x] skeleton of function codegen.
 * [x] int arith -> expression codegen.
-* [ ] builtin functions -> codegen and sement.
+* [x] builtin functions -> codegen and sement.
+* [x] call_expr -> codegen.
+* [ ] call_expr -> sement
 
 
 
