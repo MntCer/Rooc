@@ -132,7 +132,19 @@ let trans_module
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
     | S_assignment_expr (e1, e2) -> todo "assignment"
-    | S_EXPR_call call_e -> todo "call expression"
+    | S_EXPR_call call_e -> 
+      let the_callee_name = call_e.sc_callee in 
+      let the_callee = 
+        match lookup the_callee_name (IRGlobalScope the_namespace) with
+        | Some (IRFuncEntry (IRRoocFunction f)) -> f.if_function
+        | _ -> bug "callee not found"
+      in 
+      let args = 
+        Array.of_list (List.map 
+        (fun arg -> trans_expr arg the_builder the_scope) call_e.sc_arguments )
+      in
+      L.build_call the_callee args the_callee_name the_builder
+
     | S_grouped_expr e -> todo "grouped?"
     | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")

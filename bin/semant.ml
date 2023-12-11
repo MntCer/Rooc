@@ -92,11 +92,14 @@ let analyse_module (ast_root:roc_module) : s_module =
       Use the function's return type as the type of this call expression.     
     *)
     | Roc_call_expr (callee, arg_list) ->
-      let analysed_args = List.map (fun arg -> analyse_expr arg symbol_table) arg_list in
+      let analysed_args = 
+        List.map (fun arg -> analyse_expr arg symbol_table) arg_list 
+      in
       let search_result = lookup_symbol callee symbol_table in
       (match search_result with
       | None -> raise (SymbolTableError "callee not found")
       | Some(VarEntry v) -> raise (SymbolTableError "callee is a variable")
+      (* #TODO: need to do arguments type checking. *)
       | Some(FuncEntry f) -> 
         let analysed_type = f.sf_type.sft_return_type in
         let analysed_callee = callee in

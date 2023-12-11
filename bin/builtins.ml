@@ -16,7 +16,7 @@ let print_int = {
   }]});
   sf_type = {
     sft_params_type = [ST_int];
-    sft_return_type = ST_unit;
+    sft_return_type = ST_int;
   };
   sf_body = BuiltIn;
 }
