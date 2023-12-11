@@ -62,7 +62,7 @@ let trans_module
         L.const_int i1_t (if b then 1 else 0)
     (* TODO: | S_string_literal s -> L.const_string or L.const_stringz (null terminated)*)
     | S_EXPR_null ->
-      L.const_null void_t (*TODO: not sure*)
+      L.const_null i8_t
     | S_unary_expr (op, e) -> 
       let operand = trans_expr e the_builder the_scope in
       let op_instr = 
