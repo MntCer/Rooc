@@ -103,8 +103,37 @@ let trans_module
           | A.Or -> L.build_or)
         | _ -> raise (type_err_failure "Logical expression not supported for other types than bool") in 
       op_instr operand1 operand2 "tmp" the_builder
+    | S_comparison_expr (op, e1, e2) -> 
+      let operand1 = trans_expr e1 the_builder the_scope in
+      let operand2 = trans_expr e2 the_builder the_scope in
+      let op_instr = 
+        match e_type with
+        | ST_int -> 
+          (match op with
+          | A.Equal   -> L.build_icmp L.Icmp.Eq
+	        | A.Neq     -> L.build_icmp L.Icmp.Ne
+	        | A.Less    -> L.build_icmp L.Icmp.Slt
+	        | A.Leq     -> L.build_icmp L.Icmp.Sle
+	        | A.Greater -> L.build_icmp L.Icmp.Sgt
+	        | A.Geq     -> L.build_icmp L.Icmp.Sge)
+        | ST_float ->
+          (match op with
+          | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+          | A.Neq     -> L.build_fcmp L.Fcmp.One
+          | A.Less    -> L.build_fcmp L.Fcmp.Olt
+          | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+          | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+          | A.Geq     -> L.build_fcmp L.Fcmp.Oge)
+        | ST_bool ->
+          (match op with
+          | A.Equal   -> L.build_icmp L.Icmp.Eq
+          | A.Neq     -> L.build_icmp L.Icmp.Ne
+          | _ -> raise (type_err_failure "Comparison expression not supported for other operations than eql and neq for bool"))
+        | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
+      op_instr operand1 operand2 "tmp" the_builder
+    | S_assignment_expr (e1, e2) -> todo "assignment"
     | S_EXPR_call call_e -> todo "call expression"
-    | S_grouped_expr grouped_e -> todo "grouped expression"
+    | S_grouped_expr e -> todo "grouped?"
     | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
   in
