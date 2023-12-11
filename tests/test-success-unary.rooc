@@ -20,13 +20,13 @@ fun test4() -> bool{
 }
 
 fun test5() -> float {
-    return --5.0; //-(-5.0)
+    return -(-5.0);
 }
 
 fun test6() -> int{
-    return --5;  //-(-5)
+    return -(-5);
 }
 
 fun test7() -> bool{
-    return !!true;  //!(!true)
+    return !(!true);
 }
