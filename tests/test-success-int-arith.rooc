@@ -23,3 +23,11 @@ fun test3() -> int{
 fun test4() -> int{
     return 10/5;
 }
+
+fun test5() -> int{
+    return 10/0;
+}
+
+fun test6() -> int{
+    return 0/0;
+}

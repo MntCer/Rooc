@@ -83,8 +83,9 @@ Check() {
     echo "###### Testing $basename" 1>&2
 
     generatedfiles=""
+    keepfiles="${basename}.ll" #keep all the .ll files automatically
 
-    generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
+    generatedfiles="$generatedfiles ${basename}.s ${basename}.exe ${basename}.out" &&
     Run "dune exec $Rooc" "$1" ">" "${basename}.ll" && # generate result
     Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
     Run "$CC" "-o" "${basename}.exe" "${basename}.s" &&
