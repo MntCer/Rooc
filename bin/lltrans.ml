@@ -96,12 +96,10 @@ let trans_module
       let operand1 = trans_expr e1 the_builder the_scope in
       let operand2 = trans_expr e2 the_builder the_scope in
       let op_instr = 
-        match e_type with
-        | ST_bool ->
-          (match op with
-          | A.And -> L.build_and
-          | A.Or -> L.build_or)
-        | _ -> raise (type_err_failure "Logical expression not supported for other types than bool") in 
+        match op with
+        | A.And -> L.build_and
+        | A.Or -> L.build_or
+        | _ -> raise (type_err_failure "Logical expression only support && and || for bool") in 
       op_instr operand1 operand2 "tmp" the_builder
     | S_comparison_expr (op, e1, e2) -> 
       let operand1 = trans_expr e1 the_builder the_scope in
@@ -145,7 +143,7 @@ let trans_module
       in
       L.build_call the_callee args the_callee_name the_builder
 
-    | S_grouped_expr e -> todo "grouped?"
+    | S_grouped_expr e -> trans_expr e the_builder the_scope
     | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
   in
