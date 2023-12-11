@@ -92,11 +92,14 @@ let analyse_module (ast_root:roc_module) : s_module =
       Use the function's return type as the type of this call expression.     
     *)
     | Roc_call_expr (callee, arg_list) ->
-      let analysed_args = List.map (fun arg -> analyse_expr arg symbol_table) arg_list in
+      let analysed_args = 
+        List.map (fun arg -> analyse_expr arg symbol_table) arg_list 
+      in
       let search_result = lookup_symbol callee symbol_table in
       (match search_result with
       | None -> raise (SymbolTableError "callee not found")
       | Some(VarEntry v) -> raise (SymbolTableError "callee is a variable")
+      (* #TODO: need to do arguments type checking. *)
       | Some(FuncEntry f) -> 
         let analysed_type = f.sf_type.sft_return_type in
         let analysed_callee = callee in
@@ -304,17 +307,21 @@ let analyse_module (ast_root:roc_module) : s_module =
   in
 
   let the_namespace = init_symbol_table () in
+
   (* Insert builtins *)
-  (* List.iter (fun builtin -> 
+  List.iter (fun builtin -> 
     let name = builtin.sf_name in
     let entry = FuncEntry builtin in
-    insert_symbol the_namespace name entry) builtins_semant; *)
+    insert_symbol the_namespace name entry) builtins_semant;
+
   (* register items *)
   register_items ast_root the_namespace;
   (match lookup_symbol "main" the_namespace with
   | None -> raise (SymbolTableError "main function not found")
   | _ -> ());
+
   (* special check for main *)
+  
   (* analyse items *)
   analyse_items ast_root the_namespace;
 

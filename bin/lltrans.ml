@@ -132,7 +132,19 @@ let trans_module
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
     | S_assignment_expr (e1, e2) -> todo "assignment"
-    | S_EXPR_call call_e -> todo "call expression"
+    | S_EXPR_call call_e -> 
+      let the_callee_name = call_e.sc_callee in 
+      let the_callee = 
+        match lookup the_callee_name (IRGlobalScope the_namespace) with
+        | Some (IRFuncEntry (IRRoocFunction f)) -> f.if_function
+        | _ -> bug "callee not found"
+      in 
+      let args = 
+        Array.of_list (List.map 
+        (fun arg -> trans_expr arg the_builder the_scope) call_e.sc_arguments )
+      in
+      L.build_call the_callee args the_callee_name the_builder
+
     | S_grouped_expr e -> todo "grouped?"
     | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
@@ -198,58 +210,70 @@ let trans_module
     take a s_function in and get a LLVM function in llvalue type
   *)
   let trans_function (f: s_function) =
-    match f.sf_body with
-    | UserDefined body -> (
-        let search_result =
-          let the_entry = lookup f.sf_name (IRGlobalScope the_namespace) in
-          match the_entry with
-          | Some(IRFuncEntry f) -> f
-          | _ -> bug "Want if_function but get others."
-        in
-        let the_function = search_result.if_function in
-        let the_scope = search_result.if_scope in
-        let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
+    let the_name=f.sf_name in
+    let search_result =
+      let the_entry = lookup the_name (IRGlobalScope the_namespace) in
+      match the_entry with
+      | Some(IRFuncEntry (IRRoocFunction (f))) -> f
+      | _ -> bug "Want if_function but get others."
+    in
+    let the_function = search_result.if_function in
+    let the_scope = search_result.if_scope in
+    let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
 
-        (* Process formals: Set names and allocate space *)
-        let add_formal (param: s_variable) llvm_param =
-          let local_name = param.sv_name in
-          let local_type = trans_type param.sv_type in
-          let () = L.set_value_name local_name llvm_param in
-          let alloca = L.build_alloca local_type local_name the_builder in
-          let _ = L.build_store llvm_param alloca the_builder in
-          let local_var = {
-            iv_name = local_name;
-            iv_type = local_type;
-            iv_value_addr = alloca;
-          } in
-          insert_local_variable local_name local_var the_scope;
-        in
-        (* get the params of `the_function` and apply `add_formal` on them. *)
-        (match f.sf_params with
-        | Some params -> 
-          List.iter2 add_formal params.sp_params
-                            (Array.to_list (L.params the_function))
-        | None -> ());
+    (* Process formals: Set names and allocate space *)
+    let add_formal (param: s_variable) llvm_param =
+      let local_name = param.sv_name in
+      let local_type = trans_type param.sv_type in
+      let () = L.set_value_name local_name llvm_param in
+      let alloca = L.build_alloca local_type local_name the_builder in
+      let _ = L.build_store llvm_param alloca the_builder in
+      let local_var = {
+        iv_name = local_name;
+        iv_type = local_type;
+        iv_value_addr = alloca;
+      } in
+      insert_local_variable local_name local_var the_scope;
+    in
+    (* get the params of `the_function` and apply `add_formal` on them. *)
+    (match f.sf_params with
+    | Some params -> 
+      List.iter2 add_formal params.sp_params
+                        (Array.to_list (L.params the_function))
+    | None -> ());
 
-        (* translate the function body *)
-        let stmts=body.sb_stmts in
-        let the_builder = (* #TODO: this line is a little ugly *)
-          List.fold_left 
+    (* translate the function body *)
+    let the_builder = 
+      match f.sf_body with
+      | UserDefined body -> (
+          let stmts=body.sb_stmts in
+          List.fold_left  (* #TODO: this line is a little ugly *)
           (fun the_builder s -> 
             trans_stmt s the_builder the_scope) 
-            the_builder stmts 
-        in
-
-        (* add the final terminator *)
-        add_terminator 
+            the_builder stmts)
+      | BuiltIn -> (
+        let translate_builtin_func 
+          the_name 
           the_builder 
-          (match search_result.if_return_type with
-          | i32_t -> L.build_ret (L.const_int i32_t 0)
-          | _ -> todo "other return type"
-          );)
-    | BuiltIn -> 
-      ()
-      (* todo "built-in function" *)
+          the_scope
+          the_namespace =
+          try
+            let trans_func = Hashtbl.find builtins_map the_name in
+            trans_func the_builder the_scope the_namespace
+          with
+          | Not_found -> bug "not supported built-in function" 
+        in 
+        translate_builtin_func the_name the_builder the_scope the_namespace;
+      )
+    in
+
+    (* add the final terminator *)
+    add_terminator 
+    the_builder 
+    (match search_result.if_return_type with
+    | i32_t -> L.build_ret (L.const_int i32_t 0)
+    | _ -> todo "other return type"
+    );
 
   in
 
@@ -277,7 +301,7 @@ let trans_module
       put the type, llvm function value and the scope into the wrapper.     
     *)
     | FuncEntry f ->         
-      let () = print_string(string_of_stype (f.sf_type.sft_return_type)) in
+      (* let () = print_string(string_of_stype (f.sf_type.sft_return_type)) in (* #DEBUG *) *)
       let llvm_return_type = trans_type f.sf_type.sft_return_type in
       let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
       let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
@@ -290,10 +314,10 @@ let trans_module
         if_function=llvm_function;  
         if_scope=llvm_function_scope;
       }
-      in insert_global_function f.sf_name the_function the_namespace
+      in insert_global_function f.sf_name (IRRoocFunction the_function) the_namespace
     | _ -> bug "Unallowed thing is in the highest-level." 
   in 
-
+    declare_printf the_context the_module the_namespace;
     Hashtbl.iter register_item to_trans.sm_namespace.sst_symbols;
     Hashtbl.iter trans_item to_trans.sm_namespace.sst_symbols;
     the_module

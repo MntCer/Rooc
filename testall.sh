@@ -90,7 +90,7 @@ Check() {
     Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
     Run "$CC" "-o" "${basename}.exe" "${basename}.s" &&
     Run "./${basename}.exe" > "${basename}.out" &&
-    Compare ${basename}.out ${reffile} ${basename}.diff
+    Compare ${basename}.out ${reffile}.std ${basename}.diff
 
     # Report the status and clean up the generated files
     if [ $error -eq 0 ] ; then
@@ -122,7 +122,7 @@ CheckFail() {
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
     RunFail "dune exec $Rooc" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
-    Compare ${basename}.err ${reffile} ${basename}.diff
+    Compare ${basename}.err ${reffile}.std ${basename}.diff
 
     # Report the status and clean up the generated files
 
