@@ -1,0 +1,24 @@
+// Testing failed unary expression
+fun main() -> int {    
+    return 0;
+}
+
+//The failed 4 testcases are all handled in semant level
+//Need to check whether the output error match with 
+//"Unary expression type mismatch"
+
+//fun test3() -> bool{
+//    return -false;
+//}
+
+//fun test4() -> bool{
+//    return -true;
+//}
+
+//fun test5() -> int{
+//    return !100;
+//}
+
+//fun test6() -> float{
+//    return !1.0;
+//}
