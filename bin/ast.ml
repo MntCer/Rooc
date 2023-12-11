@@ -32,7 +32,7 @@ type roc_expr =
   (* | Roc_unit_literal #TODO *)
   | Roc_string_literal of string
   | Roc_int_literal of int
-  | Roc_float_literal of string
+  | Roc_float_literal of float
   | Roc_bool_literal of bool
 (* operator expr *)
   | Roc_unary_expr of unary_op * roc_expr

@@ -104,7 +104,7 @@ let trans_module
         | _ -> raise (type_err_failure "Logical expression not supported for other types than bool") in 
       op_instr operand1 operand2 "tmp" the_builder
     | S_EXPR_call call_e -> todo "call expression"
-    | S_grouped_expr
+    | S_grouped_expr grouped_e -> todo "grouped expression"
     | S_EXPR_field_access (e, field_name) -> todo "field access"
     | _ -> todo "trans_expr")
   in

@@ -28,7 +28,7 @@ and s_structual_expr =
 (* literal expr *)
   | S_string_literal of string
   | S_int_literal of int
-  | S_float_literal of string
+  | S_float_literal of float
   | S_bool_literal of bool
 (* unary expr *)
   | S_unary_expr of unary_op * s_expr

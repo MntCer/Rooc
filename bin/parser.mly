@@ -161,8 +161,10 @@ roc_expr:
 roc_literal_expr:
   | SLIT { Roc_string_literal($1) }
   | ILIT { Roc_int_literal($1) }
-  // %TODO: can convert the float literal here.
-  | FLIT { Roc_float_literal($1) } 
+  | FLIT 
+    { (match safe_float_of_string $1 with
+      | Some f -> Roc_float_literal f
+      | None -> bug "have syntax error on float literal.") } 
   | BLIT { Roc_bool_literal($1) }
 
 roc_operator_expr:
