@@ -27,6 +27,7 @@ Today, we aim to successfully run our project end2end.
 * [x] builtin functions -> codegen and sement.
 * [x] call_expr -> codegen.
 * [ ] call_expr -> sement
+* [ ] check the test's standard output.
 
 
 
