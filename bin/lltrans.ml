@@ -24,11 +24,11 @@ let trans_module
 
   (* decl corresponding LL types *)
   (* #TODO: these part should be refactored out, be independent. *)
-  let i32_t     = L.i32_type    the_context 
-  and i8_t      = L.i8_type     the_context
-  and i1_t       = L.i1_type     the_context
-  and float_t    = L.double_type the_context
-  and void_t     = L.void_type   the_context
+  let i32_t     = L.i32_type    the_context in
+  let i8_t      = L.i8_type     the_context in
+  let i1_t       = L.i1_type     the_context in
+  let float_t    = L.double_type the_context in
+  let void_t     = L.void_type   the_context
   in
 
   (** 
@@ -56,13 +56,17 @@ let trans_module
     (match structual_e with
     | S_int_literal i -> 
         L.const_int i32_t i
+
     | S_float_literal f ->
         L.const_float float_t f
+
     | S_bool_literal b ->
         L.const_int i1_t (if b then 1 else 0)
     (* TODO: | S_string_literal s -> L.const_string or L.const_stringz (null terminated)*)
+
     | S_EXPR_null ->
       L.const_null i8_t
+
     | S_unary_expr (op, e) -> 
       let operand = trans_expr e the_builder the_scope in
       let op_instr = 
@@ -73,6 +77,7 @@ let trans_module
            | _ -> L.build_neg)
          | A.Not -> L.build_not in
          op_instr operand "tmp" the_builder
+
     | S_arith_expr (op, e1, e2) -> 
       let operand1 = trans_expr e1 the_builder the_scope in
       let operand2 = trans_expr e2 the_builder the_scope in
@@ -92,6 +97,7 @@ let trans_module
           | A.Div -> L.build_fdiv)
         | _ -> raise (type_err_failure "Arithmetic expression not supported for other types than int and float") in 
       op_instr operand1 operand2 "tmp" the_builder
+
     | S_logical_expr (op, e1, e2) -> 
       let operand1 = trans_expr e1 the_builder the_scope in
       let operand2 = trans_expr e2 the_builder the_scope in
@@ -101,6 +107,7 @@ let trans_module
         | A.Or -> L.build_or
         | _ -> raise (type_err_failure "Logical expression only support && and || for bool") in 
       op_instr operand1 operand2 "tmp" the_builder
+
     | S_comparison_expr (op, e1, e2) -> 
       let operand1 = trans_expr e1 the_builder the_scope in
       let operand2 = trans_expr e2 the_builder the_scope in
@@ -129,22 +136,32 @@ let trans_module
           | _ -> raise (type_err_failure "Comparison expression not supported for other operations than eql and neq for bool"))
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
+
     | S_assignment_expr (e1, e2) -> todo "assignment"
+
     | S_EXPR_call call_e -> 
       let the_callee_name = call_e.sc_callee in 
-      let the_callee = 
+      let the_wrapped_callee = 
         match lookup the_callee_name (IRGlobalScope the_namespace) with
-        | Some (IRFuncEntry (IRRoocFunction f)) -> f.if_function
+        | Some (IRFuncEntry (IRRoocFunction f)) -> f
         | _ -> bug "callee not found"
-      in 
+      in
+      let the_callee = the_wrapped_callee.irf_function in 
       let args = 
         Array.of_list (List.map 
         (fun arg -> trans_expr arg the_builder the_scope) call_e.sc_arguments )
       in
-      L.build_call the_callee args the_callee_name the_builder
+      let the_instr_name = 
+        match the_wrapped_callee.irf_return_type with
+          | ST_unit -> ""
+          | _ -> the_callee_name ^ "_result"
+      in
+      L.build_call the_callee args the_instr_name the_builder
 
     | S_grouped_expr e -> trans_expr e the_builder the_scope
+
     | S_EXPR_field_access (e, field_name) -> todo "field access"
+
     | _ -> todo "trans_expr")
   in
 
@@ -159,6 +176,12 @@ let trans_module
     let local_name = v.sv_name in
     let local_type = trans_type v.sv_type in
     let alloca = L.build_alloca local_type local_name the_builder in
+    let initial_value =
+      match v.sv_initial_value with
+      | Some (e) -> trans_expr e the_builder the_scope
+      | None -> todo "deal with non intial value" 
+    in
+    let _ = L.build_store initial_value alloca the_builder in
     let local_var = {
       iv_name = local_name;
       iv_type = local_type;
@@ -174,7 +197,7 @@ let trans_module
   *)
   let add_terminator builder goto_instr =
     match L.block_terminator (L.insertion_block builder) with
-    Some _ -> ()
+    | Some _ -> ()
     | None -> ignore (goto_instr builder) in
 
 
@@ -184,39 +207,53 @@ let trans_module
   *)
   let rec trans_stmt 
     (s: s_stmt) 
-    builder 
-    (scope:ir_local_scope) 
+    the_builder 
+    (the_scope:ir_local_scope) 
     : L.llbuilder =
     (match s with
     | S_expr_stmt e -> 
-      let _ = trans_expr e builder scope in builder
-    | S_var_decl_stmt v | S_let_decl_stmt v -> 
-      trans_var_decl v builder scope
+      let _ = trans_expr e the_builder the_scope in the_builder
+
+    | S_var_decl_stmt v -> (* #TODO: need to treat seperately. *)
+      trans_var_decl v the_builder the_scope
+
+    | S_let_decl_stmt v ->
+      todo "let decl"
+
     | S_STMT_return e ->
-      let the_v = trans_expr e builder scope in
-      let _ = L.build_ret the_v builder in builder
+      let the_return_value = trans_expr e the_builder the_scope in
+      let _ = L.build_ret the_return_value the_builder in 
+      the_builder
+
+    | S_STMT_block b ->
+      (* #TODO: need new block? *)
+      let new_scope = init_local_scope (IRLocalScope the_scope) in
+      let the_stmts = b.sb_stmts in
+      let the_builder = 
+        List.fold_left (
+          fun the_builder stmt ->
+            trans_stmt stmt the_builder new_scope)
+          the_builder the_stmts
+      in the_builder
+
     | _ -> todo "trans_stmt"
     )
   in
-
-  (** 
-    Declare built-in functions 
-  *)
-  (* #TODO *)
 
   (**
     take a s_function in and get a LLVM function in llvalue type
   *)
   let trans_function (f: s_function) =
     let the_name=f.sf_name in
+    (* let () = print_string the_name in *)
     let search_result =
       let the_entry = lookup the_name (IRGlobalScope the_namespace) in
       match the_entry with
       | Some(IRFuncEntry (IRRoocFunction (f))) -> f
-      | _ -> bug "Want if_function but get others."
+      | _ -> bug "Want irf_function but get others."
     in
-    let the_function = search_result.if_function in
-    let the_scope = search_result.if_scope in
+    let the_function = search_result.irf_function in
+    let the_scope = search_result.irf_scope in
     let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
 
     (* Process formals: Set names and allocate space *)
@@ -246,8 +283,8 @@ let trans_module
       | UserDefined body -> (
           let stmts=body.sb_stmts in
           List.fold_left  (* #TODO: this line is a little ugly *)
-          (fun the_builder s -> 
-            trans_stmt s the_builder the_scope) 
+          (fun the_builder stmt -> 
+            trans_stmt stmt the_builder the_scope) 
             the_builder stmts)
       | BuiltIn -> (
         let translate_builtin_func 
@@ -268,8 +305,13 @@ let trans_module
     (* add the final terminator *)
     add_terminator 
     the_builder 
-    (match search_result.if_return_type with
-    | i32_t -> L.build_ret (L.const_int i32_t 0)
+    (match search_result.irf_return_type with
+    | ST_int -> 
+      (* let () = print_string "2" in #DEBUG  *)
+      L.build_ret (L.const_int i32_t 0)
+    | ST_unit -> 
+      (* let () = print_string "1" in  #DEBUG  *)
+      L.build_ret_void
     | _ -> todo "other return type"
     );
 
@@ -306,11 +348,11 @@ let trans_module
       let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
       let llvm_function_scope = init_local_scope (IRGlobalScope the_namespace) in
       let the_function = {
-        if_return_type=llvm_return_type;
-        if_param_types=llvm_param_types;
-        if_function_type=llvm_function_type;
-        if_function=llvm_function;  
-        if_scope=llvm_function_scope;
+        irf_return_type=f.sf_type.sft_return_type;
+        irf_param_types=f.sf_type.sft_params_type;
+        irf_function_type=llvm_function_type;
+        irf_function=llvm_function;  
+        irf_scope=llvm_function_scope;
       }
       in insert_global_function f.sf_name (IRRoocFunction the_function) the_namespace
     | _ -> bug "Unallowed thing is in the highest-level." 

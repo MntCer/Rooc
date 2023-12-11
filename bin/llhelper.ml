@@ -2,6 +2,7 @@
  * 
  *)
 open Llvm
+open Sast
 
 let the_global_context = global_context ()
 
@@ -17,12 +18,12 @@ and ir_extern_function = {
 }
 
 and ir_rooc_function = {
-  if_return_type : lltype;
-  if_param_types : lltype array; 
+  irf_return_type : s_type;
+  irf_param_types : s_type list; 
   (* #TODO: those two above infact is also unnecessary *)
-  if_function_type : lltype;
-  if_function : llvalue;
-  if_scope : ir_local_scope;
+  irf_function_type : lltype;
+  irf_function : llvalue;
+  irf_scope : ir_local_scope;
 }
 
 and ir_function = 

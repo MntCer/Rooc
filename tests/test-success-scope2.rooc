@@ -1,10 +1,10 @@
 fun main() -> int {
     test(); // forward reference
-};
+    return 0;
+}
 
 
 fun test() -> () {
     print_int(1);
-    return 0;
-};
+}
 
