@@ -1,10 +1,12 @@
-// Adding two positive numbers
+// Test integer arithmetic and call print_int
 fun main() -> int {
-    10 + 5;  
-    10 - 5;
-    10 * 5;
-    10 / 5;
-    
+    print_int(test1());
+    print_int(test2());
+    print_int(test3());
+    print_int(test4());
+    print_int(test5());
+    print_int(test6());
+    print_int(test7());
     return 0;
 }
 
@@ -30,4 +32,8 @@ fun test5() -> int{
 
 fun test6() -> int{
     return 0/0;
+}
+
+fun test7() -> int{
+    return 3/2;
 }
