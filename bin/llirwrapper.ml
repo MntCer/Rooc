@@ -20,7 +20,6 @@ and ir_extern_function = {
 and ir_rooc_function = {
   irf_return_type : s_type;
   irf_param_types : s_type list; 
-  (* #TODO: those two above infact is also unnecessary *)
   irf_function_type : lltype;
   irf_function : llvalue;
   irf_scope : ir_local_scope;

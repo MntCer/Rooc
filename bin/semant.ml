@@ -8,7 +8,7 @@ let analyse_module (ast_root:roc_module) : s_module =
   (**
     #TODO: add docstring
       *)
-  let analyse_type (raw_type: roc_type) : s_type =
+  let analyse_type (raw_type: r_type) : s_type =
     match raw_type with
     | T_unit -> ST_unit
     | T_int -> ST_int
@@ -225,7 +225,10 @@ let analyse_module (ast_root:roc_module) : s_module =
     Analyse a function's name, params and return type and construct them into a `s_function_signature` type. 
     Register this signature into symbol table for the following semantic analysis.
   *)
-  let register_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function_signature =
+  let register_function 
+  (raw_func: roc_function) 
+  (symbol_table: s_symbol_table) 
+  : s_function_signature =
     let analysed_name = raw_func.rf_name in
     let raw_params =  raw_func.rf_params in
     let analysed_params = 
@@ -248,12 +251,27 @@ let analyse_module (ast_root:roc_module) : s_module =
       sfs_type = analysed_type; }
   in
 
+  let register_struct 
+  (raw_struct: r_struct) 
+  (symbol_table: s_symbol_table) 
+  : s_struct_sig =
+    let analysed_name = raw_struct.rs_name in
+    (* #TODO: should also register related type, I guess *)
+    { sss_name = analysed_name;}
+
+  in
+
   let register_items (ast_root: roc_module) (symbol_table: s_symbol_table) : unit =
     List.iter (fun item ->
       (match item with
-      | FunctionItem func -> 
-        let func_sig = register_function func symbol_table in
+      | FunctionItem the_function -> 
+        let func_sig = register_function the_function symbol_table in
         insert_symbol symbol_table func_sig.sfs_name (FuncSigEntry func_sig)
+      | StructItem the_struct ->
+        let struct_sig = register_struct the_struct symbol_table in
+        insert_symbol symbol_table struct_sig.sss_name (StructSigEntry struct_sig)
+
+        
       | _ -> 
         todo "not yet supported item.")
     ) ast_root.rm_items
@@ -316,9 +334,11 @@ let analyse_module (ast_root:roc_module) : s_module =
 
   (* register items *)
   register_items ast_root the_namespace;
+
   (match lookup_symbol "main" the_namespace with
   | None -> raise (SymbolTableError "main function not found")
-  | _ -> ());
+  | Some (FuncSigEntry f) -> ()
+  | _ -> raise (SymbolTableError "main is not a function"));
 
   (* special check for main *)
   

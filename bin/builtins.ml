@@ -1,5 +1,5 @@
 open Sast
-open Llhelper
+open Llirwrapper
 
 open Util
 module L = Llvm

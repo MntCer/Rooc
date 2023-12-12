@@ -13,13 +13,16 @@ type unary_op = Not | Neg
 
 
 (* Define the possible types in Rooc *)
-type roc_type = 
+type r_type = 
   | T_unit
   | T_int
   | T_float
   | T_string
   | T_bool
   (*%TODO:*)
+
+
+
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
@@ -49,7 +52,7 @@ type roc_expr =
 
 and roc_variable =
     { rv_name : string;
-      rv_type : roc_type;
+      rv_type : r_type;
       rv_initial_expr : roc_expr option; }
 
 and roc_stmt =
@@ -77,28 +80,38 @@ type roc_params = {
 type roc_function = {
   rf_name : string;
   rf_params : roc_params option;
-  rf_return_type : roc_type;
+  rf_return_type : r_type;
   rf_body : roc_block;
 }
 
 type roc_method_signature = {
   rms_name : string;
   rms_params : roc_params option;
-  rms_return_type : roc_type;
+  rms_return_type : r_type;
 }
 
 type roc_method = {
   rm_name : string;
   rm_params : roc_params option;
-  rm_return_type : roc_type;
+  rm_return_type : r_type;
   rm_body : roc_block;
+}
+
+type r_struct_field ={
+  rsf_name : string;
+  rsf_type : r_type;
+}
+
+type r_struct = {
+  rs_name : string;
+  rs_fields : r_struct_field list;
 }
 
 type roc_item = 
     FunctionItem of roc_function
+  | StructItem of r_struct
   (* | ConstantItem of roc_constant *)
   (* | ConstantItem of roc_constant *)
-  (* | StructItem of roc_struct *)
   (* | TraitItem of roc_trait *)
 
 type roc_module = {
@@ -117,11 +130,6 @@ type func_sig = {
 type trait_decl = {
   tr_name : string;
   tr_methods : func_sig list;
-}
-
-type struct_decl = {
-  s_name : string;
-  s_fields : bind list;
 }
 
 type impl_decl = {
@@ -159,7 +167,7 @@ let string_of_unary_op = function
     Neg -> "-"
   | Not -> "!"
 
-let string_of_roc_type = function
+let string_of_r_type = function
   T_int -> "int"
 | T_bool -> "bool"
 | T_float -> "float"

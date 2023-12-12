@@ -8,8 +8,21 @@ type s_type =
   | ST_float
   | ST_string
   | ST_bool
+
   | ST_function of s_function_type
+  | ST_struct of s_struct_type
+  | ST_sequence of s_sequence_type
+
   | ST_error
+
+and s_sequence_type = 
+  | T_list of s_type
+
+
+and s_struct_type = {
+  st_name : string;
+  st_type_list : s_type list;
+}
 
 and s_function_type = {
   sft_params_type: s_type list;
@@ -126,9 +139,25 @@ and s_function_signature = {
   sfs_type : s_function_type;
 }
 
+and s_struct_field = {
+  ssf_name : string;
+  ssf_type : s_type;
+}
+
+and s_struct_sig = {
+  sss_name : string;
+}
+
+and s_struct = {
+  ss_name : string;
+  ss_fields : s_struct_field list;
+}
+
 and s_symbol_table_entry =
-    FuncEntry of s_function
   | FuncSigEntry of s_function_signature
+  | FuncEntry of s_function
+  | StructSigEntry of s_struct_sig
+  | StructEntry of s_struct
   | VarEntry of s_variable
 
 and s_symbol_table = {

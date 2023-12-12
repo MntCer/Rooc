@@ -52,17 +52,18 @@ roc_items:
 
 roc_item:
     roc_function { FunctionItem($1) }
+  | r_struct { StructItem($1) }
   // | %TODO
 
 roc_function:
-    FUN ID LPAREN roc_function_params RPAREN RARROW roc_type roc_block
+    FUN ID LPAREN roc_function_params RPAREN RARROW r_type roc_block
     { { 
       rf_name = $2;
       rf_params = Some ($4);
       rf_return_type = $7;
       rf_body = $8 } }
 
-  | FUN ID LPAREN RPAREN RARROW roc_type roc_block
+  | FUN ID LPAREN RPAREN RARROW r_type roc_block
       { {
         rf_name = $2;
         rf_params = None;
@@ -79,20 +80,20 @@ roc_params :
   | roc_params COMMA roc_param  { $3 :: $1 }
 
 roc_param:
-    ID COLON roc_type { {
+    ID COLON r_type { {
       rv_name = $1;
       rv_type = $3;
       rv_initial_expr = None } }
     
 // roc_method_signature:
-//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type SEMI
+//     FUN ID LPAREN roc_method_params RPAREN RARROW r_type SEMI
 //     { {
 //       rms_name = $2;
 //       rms_params = $4;
 //       rms_return_type = $7 } }
 
 // roc_method:
-//     FUN ID LPAREN roc_method_params RPAREN RARROW roc_type roc_block
+//     FUN ID LPAREN roc_method_params RPAREN RARROW r_type roc_block
 //     { {
 //       rm_name = $2;
 //       rm_params = $4;
@@ -104,6 +105,21 @@ roc_param:
 //   | SELF COMMA roc_params  { Some ({
 //     rp_params=List.rev $3}) }
 
+r_struct:
+    STRUCT ID LPAREN struct_fields RPAREN 
+    { {
+      rs_name = $2 ;
+      rs_fields = List.rev $4; } }
+
+struct_fields:
+    struct_field { [$1] }
+  | struct_fields struct_field { $2 :: $1 }
+
+struct_field:
+    ID COLON r_type SEMI 
+    { {
+      rsf_name = $1;
+      rsf_type = $3; } }
 
 roc_statement:
   | roc_expr_stmt { $1 }
@@ -116,25 +132,25 @@ roc_statement:
   | roc_return_stmt {$1}
 
 roc_decl_stmt:
-    VAR ID COLON roc_type ASSIGN roc_expr SEMI
+    VAR ID COLON r_type ASSIGN roc_expr SEMI
     {
       Roc_var_decl_stmt({
         rv_name = $2;
         rv_type = $4;
         rv_initial_expr = Some ($6) }) }
-  | VAR ID COLON roc_type SEMI
+  | VAR ID COLON r_type SEMI
     {
       Roc_var_decl_stmt({
         rv_name = $2;
         rv_type = $4;
         rv_initial_expr = None }) }
-  | LET ID COLON roc_type ASSIGN roc_expr SEMI
+  | LET ID COLON r_type ASSIGN roc_expr SEMI
     {
       Roc_let_decl_stmt({
         rv_name = $2;
         rv_type = $4;
         rv_initial_expr = Some ($6) }) }
-  | LET ID COLON roc_type SEMI
+  | LET ID COLON r_type SEMI
     {
       Roc_let_decl_stmt({
         rv_name = $2;
@@ -258,7 +274,7 @@ roc_while_stmt:
     WHILE LPAREN expr_nonempty RPAREN roc_block { Roc_while_stmt($3, $5) }
 
 
-roc_type:
+r_type:
     INT   { T_int    }
   | FLOAT { T_float  }
   | BOOL  { T_bool   }

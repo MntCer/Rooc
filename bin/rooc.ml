@@ -32,12 +32,12 @@ let () =
         Ast     -> print_string (Ast.string_of_module ast)
       | Sast    -> print_string (Sast.string_of_smodule sast)
       | LLVM_IR -> 
-        let the_context= Llhelper.the_global_context in
+        let the_context= Llirwrapper.the_global_context in
         let translated_module = Lltrans.trans_module sast the_context in
         print_string(Llvm.string_of_llmodule(translated_module))
 
       | Compile -> 
-        let the_context= Llhelper.the_global_context in
+        let the_context= Llirwrapper.the_global_context in
         let translated_module = Lltrans.trans_module sast the_context in
         let () = Llvm_analysis.assert_valid_module translated_module in
         print_string (Llvm.string_of_llmodule translated_module);

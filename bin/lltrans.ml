@@ -2,7 +2,7 @@
 
 open Sast
 open Util
-open Llhelper
+open Llirwrapper
 open Builtins
 module L = Llvm
 module A = Ast
