@@ -35,6 +35,19 @@ Today, we aim to successfully run our project end2end.
 * [ ] check no return if 'void'
 * [ ] "return;"
 
+# Dec 12
+
+## For box and reference type
+
+Semantic Analysis:
+
+For Box, you'll manage heap allocation and ownership semantics.
+
+Box cannot take a reference.
+
+Code Generation:
+
+In Rust, Box<T> is a smart pointer that allocates T on the heap and owns it. need to decide how Box manages the lifecycle of the object it owns, especially regarding allocation and deallocation.
 
 ## Target List
 

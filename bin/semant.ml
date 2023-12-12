@@ -4,7 +4,7 @@ open Util
 open Builtins
 
 
-let analyse_module (ast_root:roc_module) : s_module =
+let analyse_module (the_module:roc_module) : s_module =
   (**
     #TODO: add docstring
       *)
@@ -21,7 +21,10 @@ let analyse_module (ast_root:roc_module) : s_module =
     take a ast node `roc_expr` and current scope's symbol table, 
     do the semantic analysis on it. return the analysed sast node `s_expr`.
   *)
-  let rec analyse_expr (raw_expr: roc_expr) (symbol_table: s_symbol_table) : s_expr =
+  let rec analyse_expr 
+    (raw_expr: roc_expr) 
+    (symbol_table: s_symbol_table) 
+    : s_expr =
     match raw_expr with
     (* empty expression *)
     | EXPR_null -> { se_type = ST_unit; se_expr = S_EXPR_null }
@@ -79,10 +82,19 @@ let analyse_module (ast_root:roc_module) : s_module =
         se_expr = S_comparison_expr (op, analysed_e1, analysed_e2) }
         
     | Roc_assignment_expr (e1, e2) ->
-      (* //TODO: more check for left hand side*)
+      let check_lval (expr: roc_expr) : unit =
+        match expr with
+        (* #TODO: are there some another possiblities? *)
+        | EXPR_path _ -> ()
+        | _ -> raise (SymbolTableError "left hand side of assignment is not a lvalue")
+      in
+      let () = check_lval e1 in
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
-      let analysed_type = if analysed_e1.se_type = analysed_e2.se_type then analysed_e1.se_type else ST_error
+      let analysed_type = 
+        if analysed_e1.se_type = analysed_e2.se_type 
+        then analysed_e1.se_type 
+        else bug "assignment type mismatch"
       in
       { se_type = analysed_type; 
         se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
@@ -116,14 +128,24 @@ let analyse_module (ast_root:roc_module) : s_module =
             sc_arguments = analysed_args; }) } )
     
     | Roc_grouped_expr e ->
-        let analysed_expr = analyse_expr e symbol_table in
-        { se_type = analysed_expr.se_type; 
-          se_expr = S_grouped_expr analysed_expr}
+      let analysed_expr = analyse_expr e symbol_table in
+      { se_type = analysed_expr.se_type; 
+        se_expr = S_grouped_expr analysed_expr}
 
     | EXPR_field_access (struct_name, field_name) ->
       let () = todo "field access expr" in 
       { se_type = ST_unit; (* #TODO: struct type *)
         se_expr = S_EXPR_field_access (struct_name, field_name); }
+
+    | EXPR_path (var_name) ->
+      match lookup_symbol var_name symbol_table with
+      | None -> raise (SymbolTableError "variable not found")
+      | Some (VarEntry v) -> 
+        let analysed_type = v.sv_type in
+        { se_type = analysed_type; 
+          se_expr = S_EXPR_path var_name; }
+      | _ -> bug "not a variable"
+
     
   (**
     #TODO: add docstring
@@ -256,12 +278,12 @@ let analyse_module (ast_root:roc_module) : s_module =
   (symbol_table: s_symbol_table) 
   : s_struct_sig =
     let analysed_name = raw_struct.rs_name in
-    (* #TODO: should also register related type, I guess *)
+    (* Not register type here, because needs inner analysis. *)
     { sss_name = analysed_name;}
 
   in
 
-  let register_items (ast_root: roc_module) (symbol_table: s_symbol_table) : unit =
+  let register_items (the_module: roc_module) (symbol_table: s_symbol_table) : unit =
     List.iter (fun item ->
       (match item with
       | FunctionItem the_function -> 
@@ -270,11 +292,10 @@ let analyse_module (ast_root:roc_module) : s_module =
       | StructItem the_struct ->
         let struct_sig = register_struct the_struct symbol_table in
         insert_symbol symbol_table struct_sig.sss_name (StructSigEntry struct_sig)
-
         
       | _ -> 
         todo "not yet supported item.")
-    ) ast_root.rm_items
+    ) the_module.rm_items
   in
 
   let analyse_function (raw_func: roc_function) (symbol_table: s_symbol_table) : s_function =
@@ -313,15 +334,30 @@ let analyse_module (ast_root:roc_module) : s_module =
       sf_body = analysed_body; }
   in
 
-  let analyse_items (ast_root:roc_module) (symbol_table: s_symbol_table) : unit =
+  let analyse_struct 
+    (raw_struct: r_struct) 
+    (symbol_table: s_symbol_table) 
+    : s_struct =
+    let analysed_name = raw_struct.rs_name in
+    (* register type here. *)
+
+    todo "analyse struct"
+  in
+
+  let analyse_items (the_module:roc_module) (symbol_table: s_symbol_table) : unit =
     List.iter (fun item ->
       (match item with
       | FunctionItem func -> 
         let analysed_func = analyse_function func symbol_table in
         update_symbol_table symbol_table analysed_func.sf_name (FuncEntry analysed_func)
+
+      | StructItem the_struct ->
+        let analysed_struct = analyse_struct the_struct symbol_table in
+        update_symbol_table symbol_table analysed_struct.ss_name (StructEntry analysed_struct)
+
       | _ -> 
         todo "not yet supported item.")
-    ) ast_root.rm_items
+    ) the_module.rm_items
   in
 
   let the_namespace = init_symbol_table () in
@@ -333,17 +369,17 @@ let analyse_module (ast_root:roc_module) : s_module =
     insert_symbol the_namespace name entry) builtins_semant;
 
   (* register items *)
-  register_items ast_root the_namespace;
+  register_items the_module the_namespace;
 
+  (* special check for main *)
   (match lookup_symbol "main" the_namespace with
   | None -> raise (SymbolTableError "main function not found")
   | Some (FuncSigEntry f) -> ()
   | _ -> raise (SymbolTableError "main is not a function"));
 
-  (* special check for main *)
   
   (* analyse items *)
-  analyse_items ast_root the_namespace;
+  analyse_items the_module the_namespace;
 
   { sm_namespace = the_namespace}
 

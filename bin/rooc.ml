@@ -30,7 +30,7 @@ let () =
       let sast = Semant.analyse_module ast in
       match !action with
         Ast     -> print_string (Ast.string_of_module ast)
-      | Sast    -> print_string (Sast.string_of_smodule sast)
+      | Sast    -> print_string (Sast.string_of_s_module sast)
       | LLVM_IR -> 
         let the_context= Llirwrapper.the_global_context in
         let translated_module = Lltrans.trans_module sast the_context in

@@ -11,7 +11,7 @@ open Util
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
 %token VAR LET FUN STRUCT IMPL TRAIT CONST
-%token INT BOOL FLOAT STR
+%token INT BOOL FLOAT STR BOX MUTREF
 // %token LIST
 %token RETURN IF ELSE FOR WHILE BREAK CONTINUE SELF
 %token <int> ILIT
@@ -37,6 +37,7 @@ open Util
 %nonassoc CALL
 %nonassoc FIELD
 %nonassoc METHOD_CALL
+%nonassoc PATH
 %nonassoc HIGHEST_PRECEDENCE
 
 %%
@@ -169,6 +170,7 @@ expr_nonempty:
   | roc_literal_expr {$1}
   | roc_grouped_expr {$1}
   | expr_field_access %prec FIELD {$1}
+  | expr_path {$1}
 
 roc_expr:
   | expr_empty %prec LOWEST_PRECEDENCE { $1 }
@@ -238,6 +240,9 @@ expr_field_access:
     // #TODO: it's a simplified version, but the complele version has some unsolvable problems now.
     ID DOT ID { EXPR_field_access ($1, $3) } 
 
+expr_path:
+    ID { EXPR_path ($1) }
+
 roc_continue_stmt:
     CONTINUE SEMI { Roc_continue_stmt }
 
@@ -275,21 +280,15 @@ roc_while_stmt:
 
 
 r_type:
-    INT   { T_int    }
+  | INT   { T_int    }
   | FLOAT { T_float  }
   | BOOL  { T_bool   }
   | STR   { T_string }
   | LPAREN RPAREN { T_unit } // () serves as void in Rooc
+  | BOX LT r_type_expr GT    { T_box ($3) } 
+  | MUTREF r_type_expr       { T_mutref ($2) }
 
-// primitive_typ:
-//     INT   { Int    }
-//   | BOOL  { Bool   }
-//   | FLOAT { Float  }
-//   | STR   { String }
+r_type_expr:
+  | r_type                  { R_type_expr ($1) }
+  | ID                      { R_user_defined_type ($1) }
 
-// generic_typ:
-//     LIST LPAREN typ RPAREN { List($3) }
-
-// typ:
-//     primitive_typ { Primitive($1)}
-//   | generic_typ     { Generic($1) }

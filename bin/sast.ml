@@ -15,6 +15,7 @@ type s_type =
 
   | ST_error
 
+
 and s_sequence_type = 
   | T_list of s_type
 
@@ -30,6 +31,8 @@ and s_function_type = {
   (* sft_generics: string list;  *)
   (* Future use: Names of generic type parameters *)
 }
+
+type type_env = (string, s_type) Hashtbl.t
 
 type s_expr = {
     se_type: s_type;
@@ -53,6 +56,7 @@ and s_structual_expr =
   | S_EXPR_call of sexpr_call
   | S_grouped_expr of s_expr
   | S_EXPR_field_access of string * string
+  | S_EXPR_path of string
 
 
 
@@ -209,15 +213,27 @@ let update_symbol_table symbol_table identifier new_entry =
 (* Pretty-printing functions *)
 (* ************************************************************ *)
 
-let string_of_smodule = function
+let string_of_s_module = function
   _ -> "TODO"
 
-let string_of_stype = function
+let rec string_of_s_type = function
   | ST_unit -> "unit"
   | ST_int -> "int"
   | ST_float -> "float"
   | ST_string -> "string"
   | ST_bool -> "bool"
-  | ST_function _ -> todo "function type"
+  | ST_function ft -> string_of_s_function_type ft
+  | ST_struct st -> string_of_s_struct_type st
+  | ST_sequence st -> string_of_s_sequence_type st
   | ST_error -> "type error"
+
+and string_of_s_function_type ft =
+  todo "string_of_s_function_type"
+
+and string_of_s_struct_type st =
+  todo "string_of_s_struct_type"
+
+and string_of_s_sequence_type st =
+  todo "string_of_s_sequence_type"
+
 

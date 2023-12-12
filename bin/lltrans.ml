@@ -137,7 +137,19 @@ let trans_module
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
 
-    | S_assignment_expr (e1, e2) -> todo "assignment"
+    | S_assignment_expr (e1, e2) -> 
+      let the_value = trans_expr e2 the_builder the_scope in
+      let the_assignee_name = 
+        match e1.se_expr with
+        | S_EXPR_path var_name -> var_name
+        | _ -> todo "not supported assignee category"
+      in 
+      let the_assignee = 
+        match lookup the_assignee_name (IRLocalScope the_scope) with
+        | Some (IRVarEntry v) -> v
+        | _ -> bug "variable not found"
+      in 
+      L.build_store the_value the_assignee.iv_value_addr the_builder 
 
     | S_EXPR_call call_e -> 
       let the_callee_name = call_e.sc_callee in 
@@ -161,6 +173,14 @@ let trans_module
     | S_grouped_expr e -> trans_expr e the_builder the_scope
 
     | S_EXPR_field_access (e, field_name) -> todo "field access"
+
+    | S_EXPR_path (var_name) ->
+      let the_var = 
+        match lookup var_name (IRLocalScope the_scope) with
+        | Some (IRVarEntry v) -> v
+        | _ -> bug "variable not found"
+      in
+      L.build_load the_var.iv_value_addr var_name the_builder
 
     | _ -> todo "trans_expr")
   in
@@ -307,11 +327,13 @@ let trans_module
     the_builder 
     (match search_result.irf_return_type with
     | ST_int -> 
-      (* let () = print_string "2" in #DEBUG  *)
       L.build_ret (L.const_int i32_t 0)
     | ST_unit -> 
-      (* let () = print_string "1" in  #DEBUG  *)
       L.build_ret_void
+    | ST_float ->
+      L.build_ret (L.const_float float_t 0.0)
+    | ST_bool ->
+      L.build_ret (L.const_int i1_t 0)
     | _ -> todo "other return type"
     );
 

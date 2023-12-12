@@ -63,7 +63,7 @@ let trans_print_int
     | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
     | None | _ -> bug "printf is not declared"
   in
-  let format_str = L.build_global_stringptr "%d\n" "fmt" the_builder in  
+  let format_str = L.build_global_stringptr "%d" "fmt" the_builder in  
   let the_param =
     let search_result=lookup "i" (IRLocalScope the_scope) in
     match search_result with

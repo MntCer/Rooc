@@ -1,0 +1,19 @@
+fun main()->int{
+    print_int(test1(test2(test3(test4()))));
+}
+
+fun test1( x:int ) -> int{
+    return x;
+}
+
+fun test2( x:int ) -> int{
+    return x;
+}
+
+fun test3( x:int ) -> int{
+    return x;
+}
+
+fun test4( ) -> int{
+    return 4;
+}
