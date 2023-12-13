@@ -21,7 +21,7 @@ let analyse_module
 
 
   (**
-    #TODO: add docstring
+    map each raw type to its corresponding semantic type
       *)
   let analyse_type 
   (raw_type: r_type)
@@ -68,7 +68,7 @@ let analyse_module
       { se_type = analysed_type; 
         se_expr = S_unary_expr (op, analysed_expr) }
 
-    (* Binary Expression *)
+    (* Binary Arithmetic Expression *)
     | Roc_arith_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 the_cxt in
         let analysed_e2 = analyse_expr e2 the_cxt in
@@ -77,10 +77,12 @@ let analyse_module
           | (ST_float, ST_float) -> ST_float
           | _ -> raise (type_err_failure "Arithmetic expression type mismatch")
             (* ST_error   *)
+            (*TODO: string concatenation as a built-in function?*)
         in
         { se_type = analysed_type; 
           se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
 
+    (* Binary Logical Expression *)
     | Roc_logical_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 the_cxt in
         let analysed_e2 = analyse_expr e2 the_cxt in
@@ -92,11 +94,12 @@ let analyse_module
         { se_type = analysed_type; 
           se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
 
+    (* Binary Comparison Expression *)
     | Roc_comparison_expr (op, e1, e2) ->
       let analysed_e1 = analyse_expr e1 the_cxt in
       let analysed_e2 = analyse_expr e2 the_cxt in
       let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
-        | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool
+        | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool (*handle string?*)
         | _ -> raise (type_err_failure "Comparison expression type mismatch")
           (* ST_error *)
       in
@@ -116,7 +119,7 @@ let analyse_module
       let analysed_type = 
         if analysed_e1.se_type = analysed_e2.se_type 
         then analysed_e1.se_type 
-        else bug "assignment type mismatch"
+        else raise (type_err_failure "Assignment type mismatch")
       in
       { se_type = analysed_type; 
         se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
@@ -133,8 +136,18 @@ let analyse_module
       (match search_result with
       | None -> raise (SymbolTableError "callee not found")
       | Some(VarEntry v) -> raise (SymbolTableError "callee is a variable")
-      (* #TODO: need to do arguments type checking. *)
       | Some(FuncEntry f) -> 
+        (* function arguments type checking *)
+        let expected_param_types = f.sf_type.sft_params_type in
+        (* if the number of arguments matches the number of parameters *)
+          if List.length expected_param_types <> List.length analysed_args then
+            raise (type_err_failure "Incorrect number of arguments in function call")
+          else (* if each argument type matches the expected parameter type *)
+            List.iter2 (fun expected_type expr ->
+              if expected_type <> expr.se_type then
+                raise (type_err_failure "Argument type mismatch in function call")
+                ) expected_param_types analysed_args;
+        (* extract return type*)
         let analysed_type = f.sf_type.sft_return_type in
         let analysed_callee = callee in
         { se_type = analysed_type; 
@@ -161,12 +174,12 @@ let analyse_module
 
     | EXPR_path (var_name) ->
       match lookup_symbol var_name the_symbol_table with
-      | None -> raise (SymbolTableError "variable not found")
+      | None -> raise (SymbolTableError "variable not found in symbol table")
       | Some (VarEntry v) -> 
         let analysed_type = v.sv_type in
         { se_type = analysed_type; 
           se_expr = S_EXPR_path var_name; }
-      | _ -> bug "not a variable"
+      | _ -> raise (SymbolTableError "Not a variable in symbol table")
 
     
   (**
