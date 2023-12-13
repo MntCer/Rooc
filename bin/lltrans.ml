@@ -256,9 +256,9 @@ let trans_module
           the_builder the_stmts
       in the_builder
 
-    | S_STMT_while (cond, body) -> todo "238 in codegen"
+    | S_STMT_while s -> todo "238 in codegen"
 
-    | S_STMT_if (cond, tb, eb) -> todo "210 in codegen"
+    | S_STMT_if s -> todo "210 in codegen"
     
     | _ -> todo "trans_stmt"
     )

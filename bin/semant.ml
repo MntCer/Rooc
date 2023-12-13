@@ -248,10 +248,10 @@ let analyse_module
       in
       let analysed_then = analyse_block then_branch the_cxt true in
       let analysed_else = analyse_block else_branch the_cxt true in
-      S_STMT_if {{
+      S_STMT_if ({
         sie_condition = analysed_cond;
         sie_true_branch = analysed_then;
-        sie_false_branch = analysed_else;}}
+        sie_false_branch = analysed_else;})
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
