@@ -256,9 +256,33 @@ let trans_module
           the_builder the_stmts
       in the_builder
 
-    | S_STMT_while s -> todo "238 in codegen"
-
+    | S_STMT_while s -> 
+      let the_function = todo "move function in front of trans_stmt?"
+      (* destination of a loop*)
+      (* append_block c name f creates a new basic block named name at the end of function f in the context c *)
+      let pred_bb = L.append_block the_context "while" the_function in
+      (* execute the condition*)
+      let _ = L.build_br pred_bb the_builder in
+      (* build while body*)
+      let body_bb = L.append_block the_context "while_body" the_function in
+      (* generate ll code for body*)
+      let while_builder = trans_stmt s.sws_body (L.builder_at_end the_context body_bb) the_scope in
+      (* set loop back to cond*)
+      let () = add_terminator while_builder (L.build_br pred_bb) in
+      (* generate ll code for cond*)
+      let pred_builder = L.builder_at_end the_context pred_bb in
+      (* evaluate cond*)
+      let bool_val = trans_expr s.sws_condition pred_builder the_scope in
+      (*create merge block*)
+      let merge_bb = L.append_block the_context "merge" the_function in
+      (* depends on bool_val, branches to body_bb or merge_bb*)
+      let _ = L.build_cond_br bool_val body_bb merge_bb pred_builder in
+      L.builder_at_end the_context merge_bb
+    
     | S_STMT_if s -> todo "210 in codegen"
+    (* s.sie_condition
+    s.sie_true_branch
+    s.sie_false_branch *)
     
     | _ -> todo "trans_stmt"
     )
