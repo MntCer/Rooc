@@ -219,11 +219,19 @@ let analyse_module
         let analysed_block = analyse_block b the_cxt true in
         S_STMT_block analysed_block
 
-    | Roc_for_stmt (init, cond, update, body) ->
-      todo "for stmt"
-
     | Roc_while_stmt (cond, body) ->
-      todo "while stmt"
+      let analysed_cond = analyse_expr cond the_cxt in
+      let cond_type = analysed_cond.se_type in
+      let () = 
+        match cond_type with
+        | ST_bool -> ()
+        | _ -> raise (type_err_failure "while condition type mismatch")
+      in
+      let analysed_block = analyse_block body the_cxt true in
+      S_STMT_while ({
+        sws_condition = analysed_cond;
+        sws_body = analysed_block; })
+
 
     | Roc_break_stmt ->
       S_STMT_break

@@ -67,16 +67,9 @@ and sexpr_call= {
   sc_arguments: s_expr list;
 }
 
-and s_for_stmt = {
-  sfe_init : s_expr;
-  sfe_condition : s_expr;
-  sfe_update : s_expr;
-  sfe_body : s_block;
-}
-
 and s_while_stmt = {
-  swe_condition : s_expr;
-  swe_body : s_expr;
+  sws_condition : s_expr;
+  sws_body : s_block;
 }
 
 and s_if_stmt = {
@@ -101,7 +94,6 @@ and s_stmt =
   | S_STMT_continue
 
   | S_STMT_block of s_block
-  | S_STMT_for of s_for_stmt
   | S_STMT_while of s_while_stmt
   | S_STMT_if of s_if_stmt
 

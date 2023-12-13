@@ -273,11 +273,8 @@ roc_if_stmt:
     IF LPAREN expr_nonempty roc_block ELSE roc_block { Roc_if_stmt($3, $4, $6) }
 
 roc_loop_stmt:
-  | roc_for_stmt  { $1 }
   | roc_while_stmt { $1 }
 
-roc_for_stmt:
-    FOR LPAREN roc_expr SEMI expr_nonempty SEMI roc_expr RPAREN roc_block { Roc_for_stmt($3, $5, $7, $9) }
 
 roc_while_stmt:
     WHILE LPAREN expr_nonempty RPAREN roc_block { Roc_while_stmt($3, $5) }
