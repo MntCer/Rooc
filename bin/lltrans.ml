@@ -9,6 +9,10 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
+type lltrans_cxt ={
+  cur_function: L.llvalue;
+}
+
 (**
   translate the whole module from sast node `s_module` to corresponding LLVM module.
   Should organize helper functions in the order of `from bottom to top`.
@@ -229,7 +233,9 @@ let trans_module
     (s: s_stmt) 
     the_builder 
     (the_scope:ir_local_scope) 
+    (the_cxt:lltrans_cxt)
     : L.llbuilder =
+    let the_function = the_cxt.cur_function in
     (match s with
     | S_expr_stmt e -> 
       let _ = trans_expr e the_builder the_scope in the_builder
@@ -252,27 +258,25 @@ let trans_module
       let the_builder = 
         List.fold_left (
           fun the_builder stmt ->
-            trans_stmt stmt the_builder new_scope)
+            trans_stmt stmt the_builder new_scope the_cxt)
           the_builder the_stmts
       in the_builder
 
-    | S_STMT_while s -> 
-      let the_function = todo "move function in front of trans_stmt?"
-      (* destination of a loop*)
+    | S_STMT_while w -> 
       (* append_block c name f creates a new basic block named name at the end of function f in the context c *)
-      let pred_bb = L.append_block the_context "while" the_function in
-      (* execute the condition*)
-      let _ = L.build_br pred_bb the_builder in
+      (* create a bb for predicate and branch to it. *)
+      let predicate_bb = L.append_block the_context "while" the_function in
+      let _ = L.build_br predicate_bb the_builder in
       (* build while body*)
       let body_bb = L.append_block the_context "while_body" the_function in
-      (* generate ll code for body*)
-      let while_builder = trans_stmt s.sws_body (L.builder_at_end the_context body_bb) the_scope in
-      (* set loop back to cond*)
-      let () = add_terminator while_builder (L.build_br pred_bb) in
-      (* generate ll code for cond*)
-      let pred_builder = L.builder_at_end the_context pred_bb in
-      (* evaluate cond*)
-      let bool_val = trans_expr s.sws_condition pred_builder the_scope in
+      let while_builder = 
+        trans_stmt (S_STMT_block w.sws_body) (L.builder_at_end the_context body_bb) the_scope the_cxt in
+      (* set loop back to predicate_bb*)
+      let () = add_terminator while_builder (L.build_br predicate_bb) in
+      (* generate ll code for predicate_bb*)
+      let pred_builder = L.builder_at_end the_context predicate_bb in
+      (* evaluate predicate*)
+      let bool_val = trans_expr w.sws_condition pred_builder the_scope in
       (*create merge block*)
       let merge_bb = L.append_block the_context "merge" the_function in
       (* depends on bool_val, branches to body_bb or merge_bb*)
@@ -303,6 +307,9 @@ let trans_module
     let the_function = search_result.irf_function in
     let the_scope = search_result.irf_scope in
     let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
+    let the_cxt={
+      cur_function=the_function;
+    } in
 
     (* Process formals: Set names and allocate space *)
     let add_formal (param: s_variable) llvm_param =
@@ -332,7 +339,7 @@ let trans_module
           let stmts=body.sb_stmts in
           List.fold_left  (* #TODO: this line is a little ugly *)
           (fun the_builder stmt -> 
-            trans_stmt stmt the_builder the_scope) 
+            trans_stmt stmt the_builder the_scope the_cxt) 
             the_builder stmts)
       | BuiltIn -> (
         let translate_builtin_func 

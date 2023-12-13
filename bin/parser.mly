@@ -249,13 +249,13 @@ expr_path:
     ID { EXPR_path ($1) }
 
 expr_struct:
-    expr_path LBRACE expr_struct_fields RBRACE { EXPR_struct ($1, List.rev $3) }
+    expr_path LBRACE struct_field_exprs RBRACE { EXPR_struct ($1, List.rev $3) }
 
-expr_struct_fields:
-    expr_struct_field { [$1] }
-  | expr_struct_fields expr_struct_field { $2 :: $1 }
+struct_field_exprs:
+    struct_field_expr { [$1] }
+  | struct_field_exprs struct_field_expr { $2 :: $1 }
 
-expr_struct_field:
+struct_field_expr:
     ID COLON expr_nonempty SEMI 
     { {esf_name =$1; 
        esf_expr =$3;} }

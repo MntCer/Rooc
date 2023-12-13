@@ -51,9 +51,9 @@ type roc_expr =
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
   | EXPR_field_access of string * string
   | EXPR_path of string
-  | EXPR_struct of roc_expr * (expr_struct_field list)
+  | EXPR_struct of roc_expr * (struct_field_expr list)
 
-and expr_struct_field = 
+and struct_field_expr = 
   {
     esf_name : string;
     esf_expr : roc_expr; }

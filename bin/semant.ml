@@ -206,12 +206,14 @@ let analyse_module
           se_expr = S_EXPR_path var_name; }
       | _ -> raise (SemanticError "Not a variable in symbol table"))
 
-    | EXPR_struct (e1, expr_struct_fields) ->
+    | EXPR_struct (e1, field_exprs) ->
       (* #NOTE: in fact, this situation is prevented by parser. *)
       let () = match e1 with 
         | EXPR_path _ -> ()
         | _ -> raise (SemanticError "struct expression's first part is not a path")
       in
+
+      (* Try to get the struct's def info. *)
       let analysed_e1 = analyse_expr e1 the_cxt in
       let the_struct_name = 
         (match analysed_e1.se_type with
@@ -224,38 +226,75 @@ let analyse_module
         | Some (StructEntry s) -> s
         | _ -> raise (SemanticError (the_struct_name ^ " is not a struct")))
       in
-      let the_fields = the_struct.ss_fields in
-      let the_sorted_expr_fields =
-      (* sort the list by the name, check field one by one. *)
-      List.sort (fun f1 f2 -> compare f1.esf_name f2.esf_name) expr_struct_fields in
-      (* #TODO: put things here out, so many checks needs to do.*)
-      let the_field_vars = 
-        if List.length the_fields <> List.length the_sorted_expr_fields then
-          raise (SemanticError "struct expression's fields number mismatch")
-        else
-          List.map2 
-          (fun field expr_field ->
-            if field.ssf_name <> expr_field.esf_name then
-              raise (SemanticError "struct expression's fields name mismatch")
-            else
-              let field_type = field.ssf_type in
-              let analysed_expr_field = 
-                analyse_expr expr_field.esf_expr the_cxt in
-              let expr_field_type = 
-                analysed_expr_field.se_type in
-              if field_type <> expr_field_type then
-                raise (SemanticError "struct expression's fields type mismatch")
-              else 
-                { sv_name = field.ssf_name;
-                  sv_type = field.ssf_type;
-                  sv_mutable = true;
-                  sv_initial_value = 
-                    Some (analysed_expr_field); }) 
-          the_fields the_sorted_expr_fields
+      
+      (* ensure no duplicate field name in expr_field *)
+      let sorted_field_exprs = 
+        List.sort 
+          (fun a b -> 
+            let name1=a.esf_name in
+            let name2=b.esf_name in
+            compare name1 name2) 
+          field_exprs in
+      let rec has_duplicate
+        (the_list: struct_field_expr list)
+        (last_name: string)
+        : bool =
+        match the_list with
+        | [] -> false
+        | hd::tl -> 
+          let the_name = hd.esf_name in
+          if the_name = last_name then true
+          else has_duplicate tl the_name
       in
+      let name_checked_expr_fields = 
+        if has_duplicate sorted_field_exprs "" then
+          raise (SemanticError "duplicate field name in struct expression")
+        else sorted_field_exprs
+      in
+        
+      (* to match each expr and field *)
+      let the_fields = the_struct.ss_fields in
+      let sorted_the_fields = 
+        List.sort 
+          (fun a b -> 
+            let name1=a.ssf_name in
+            let name2=b.ssf_name in
+            compare name1 name2) 
+          the_fields in
+      let () = List.iter2 
+        (fun field expr_field ->
+          let field_name = field.ssf_name in
+          let expr_field_name = expr_field.esf_name in
+          (* ensure all field has its expr *)
+          if field_name <> expr_field_name then
+            raise (SemanticError "field name mismatch in struct expression")
+          else 
+          (* ensure all types are correct *)
+            let field_type = field.ssf_type in
+            let expr_field_expr = expr_field.esf_expr in
+            let analysed_expr_field_expr = analyse_expr expr_field_expr the_cxt in
+            if field_type <> analysed_expr_field_expr.se_type then
+              raise (type_err_failure "field type mismatch in struct expression")
+            else ()
+        ) sorted_the_fields name_checked_expr_fields
+      in
+
+      (* Sure about the field expr's correctness. *)
+      (* Now, analyse each field's expr in original order. *)
+      let analysed_fields = List.map (fun expr_field -> 
+        let expr_field_expr = expr_field.esf_expr in
+        let analysed_expr_field_expr = analyse_expr expr_field_expr the_cxt in
+        { sv_name = expr_field.esf_name;
+          sv_type = analysed_expr_field_expr.se_type;
+          sv_mutable = true;
+          sv_initial_value = Some analysed_expr_field_expr; }
+        ) name_checked_expr_fields in
+
+      (* Now, analyse each field's expr in original order. *)
       let analysed_type = ST_struct the_struct_name in
       { se_type = analysed_type;
-        se_expr = S_EXPR_struct (the_struct_name, the_field_vars); }
+        se_expr = S_EXPR_struct 
+        (the_struct_name, analysed_fields); }
 
     
   (**
@@ -451,9 +490,10 @@ let analyse_module
       List.map 
       (fun field -> analyse_field field the_cxt) 
       raw_fields 
-    in
-    let analysed_fields = 
-      List.sort (fun f1 f2 -> compare f1.ssf_name f2.ssf_name) analysed_fields
+    (* #NOTE: I think this sort is bad. 
+       maybe we will support the alignment in the future.*)
+    (* let analysed_fields = 
+      List.sort (fun f1 f2 -> compare f1.ssf_name f2.ssf_name) analysed_fields *)
     in
     let analysed_struct =
       { ss_name = analysed_name;
