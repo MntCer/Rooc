@@ -308,7 +308,6 @@ let analyse_module
         sws_condition = analysed_cond;
         sws_body = analysed_block; })
 
-
     | Roc_break_stmt ->
       S_STMT_break
     
@@ -316,7 +315,19 @@ let analyse_module
       S_STMT_continue
 
     | Roc_if_stmt (cond, then_branch, else_branch) ->
-      todo "if stmt"
+      let analysed_cond = analyse_expr cond the_cxt in
+      let cond_type = analysed_cond.se_type in
+      let () = 
+        match cond_type with
+        | ST_bool -> ()
+        | _ -> raise (type_err_failure "if condition type mismatch")
+      in
+      let analysed_then = analyse_block then_branch the_cxt true in
+      let analysed_else = analyse_block else_branch the_cxt true in
+      S_STMT_if ({
+        sie_condition = analysed_cond;
+        sie_true_branch = analysed_then;
+        sie_false_branch = analysed_else;})
     
     (* //TODO: redesign how to deal with this one.
     | Roc_null_expr ->
