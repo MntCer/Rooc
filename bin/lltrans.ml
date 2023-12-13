@@ -248,6 +248,7 @@ let trans_module
 
     | S_STMT_return e ->
       let the_return_value = trans_expr e the_builder the_scope in
+      (* #TODO: null expr not right. *)
       let _ = L.build_ret the_return_value the_builder in 
       the_builder
 
