@@ -122,11 +122,11 @@ let analyse_module (the_module:roc_module) : s_module =
         (* if the number of arguments matches the number of parameters *)
           if List.length expected_param_types <> List.length analysed_args then
             raise (type_err_failure "Incorrect number of arguments in function call")
-        (* if each argument type matches the expected parameter type *)
-          List.iter2 (fun expected_type expr ->
-            if expected_type <> expr.se_type then
-              raise (type_err_failure "Argument type mismatch in function call")
-              ) expected_param_types analysed_args;
+          else (* if each argument type matches the expected parameter type *)
+            List.iter2 (fun expected_type expr ->
+              if expected_type <> expr.se_type then
+                raise (type_err_failure "Argument type mismatch in function call")
+                ) expected_param_types analysed_args;
         (* extract return type*)
         let analysed_type = f.sf_type.sft_return_type in
         let analysed_callee = callee in
