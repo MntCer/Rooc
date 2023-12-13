@@ -112,7 +112,7 @@ let trans_module
       let operand1 = trans_expr e1 the_builder the_scope in
       let operand2 = trans_expr e2 the_builder the_scope in
       let op_instr = 
-        match e_type with
+        match e1.se_type with
         | ST_int -> 
           (match op with
           | A.Equal   -> L.build_icmp L.Icmp.Eq

@@ -1,12 +1,19 @@
 // Test integer arithmetic and call print_int
 fun main() -> int {
     print_int(test1());
+    print_newline();
     print_int(test2());
+    print_newline();
     print_int(test3());
+    print_newline();
     print_int(test4());
+    print_newline();
     print_int(test5());
+    print_newline();
     print_int(test6());
+    print_newline();
     print_int(test7());
+    print_newline();
     return 0;
 }
 

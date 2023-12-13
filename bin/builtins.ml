@@ -21,9 +21,20 @@ let print_int = {
   sf_body = BuiltIn;
 }
 
+let print_newline = {
+  sf_name = "print_newline";
+  sf_params = None;
+  sf_type = {
+    sft_params_type = [];
+    sft_return_type = ST_int;
+  };
+  sf_body = BuiltIn;
+}
+
 
 let builtins_semant = [
   print_int;
+  print_newline;
 ]
 
 
@@ -75,7 +86,23 @@ let trans_print_int
   let _ = L.build_call the_printf [| format_str; i |] "" the_builder in
   the_builder
 
+let trans_print_newline
+  (the_builder:L.llbuilder)
+  (the_scope:ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+
+  let the_printf = 
+    match lookup "printf" (IRGlobalScope the_namespace) with
+    | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
+    | None | _ -> bug "printf is not declared"
+  in
+  let format_str = L.build_global_stringptr "\n" "fmt" the_builder in  
+  let _ = L.build_call the_printf [| format_str |] "" the_builder in
+  the_builder
+
 
 let builtins_map:(string, builtin_translator) Hashtbl.t = Hashtbl.create 10
 let () = Hashtbl.add builtins_map "print_int" trans_print_int
+let () = Hashtbl.add builtins_map "print_newline" trans_print_newline
 

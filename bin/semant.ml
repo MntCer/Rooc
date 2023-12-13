@@ -60,6 +60,7 @@ let analyse_module (the_module:roc_module) : s_module =
         in
         { se_type = analysed_type; 
           se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
+
     | Roc_logical_expr (op, e1, e2) ->
         let analysed_e1 = analyse_expr e1 symbol_table in
         let analysed_e2 = analyse_expr e2 symbol_table in
@@ -70,6 +71,7 @@ let analyse_module (the_module:roc_module) : s_module =
         in
         { se_type = analysed_type; 
           se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
+
     | Roc_comparison_expr (op, e1, e2) ->
       let analysed_e1 = analyse_expr e1 symbol_table in
       let analysed_e2 = analyse_expr e2 symbol_table in
@@ -374,7 +376,11 @@ let analyse_module (the_module:roc_module) : s_module =
   (* special check for main *)
   (match lookup_symbol "main" the_namespace with
   | None -> raise (SymbolTableError "main function not found")
-  | Some (FuncSigEntry f) -> ()
+  | Some (FuncSigEntry f) -> 
+    let the_return_type = f.sfs_type.sft_return_type in
+    (match the_return_type with
+    | ST_int -> ()
+    | _ -> bug "main function's return type is not int")
   | _ -> raise (SymbolTableError "main is not a function"));
 
   
