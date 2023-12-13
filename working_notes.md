@@ -26,12 +26,12 @@ Today, we aim to successfully run our project end2end.
 * [x] int arith -> expression codegen.
 * [x] builtin functions -> codegen and sement.
 * [x] call_expr -> codegen.
-* [ ] call_expr -> sement
+* [x] call_expr -> sement
 * [ ] check the test's standard output.
 
 ## Dec 11
 
-* [ ] expr -> id
+* [x] expr -> id
 * [ ] check no return if 'void'
 * [ ] "return;"
 

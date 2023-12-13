@@ -2,6 +2,12 @@
 
 # TODO:  
 
+# Save the current value of OCAMLRUNPARAM
+old_ocamlrunparam=$OCAMLRUNPARAM
+
+# Unset OCAMLRUNPARAM
+unset OCAMLRUNPARAM
+
 # Path to the Rooc compiler. 
 # Try "_build/install/default/bin/Rooc" if ocamlbuild was unable to create a symbolic link.
 Rooc="Rooc"
@@ -155,19 +161,22 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="tests/test-*.rooc"
+    files="tests/test-success-*.rooc tests/test-fail-*.rooc"
 fi
 
 # echo $files
+
+
+
 
 for file in $files
 do
     # echo $file
     case $file in
-	*test-*)
+	*test-success*)
 	    Check $file 2>> $globallog
 	    ;;
-	*fail-*)
+	*test-fail*)
 	    CheckFail $file 2>> $globallog
 	    ;;
 	*)
@@ -178,3 +187,6 @@ do
 done
 
 exit $globalerror
+
+# Reset OCAMLRUNPARAM to its original value
+export OCAMLRUNPARAM=$old_ocamlrunparam

@@ -160,12 +160,14 @@ let analyse_module (the_module:roc_module) : s_module =
     | Roc_expr_stmt expr -> 
       let analysed_expr = analyse_expr expr the_table in
       S_expr_stmt analysed_expr
+
     | Roc_var_decl_stmt var_decl -> 
       let var_name = var_decl.rv_name in
       let analysed_var = analyse_variable var_decl true the_table in
       (* Add to symbol table *)
       let () = insert_symbol the_table var_name (VarEntry analysed_var) in
       S_var_decl_stmt analysed_var
+
     | Roc_let_decl_stmt let_decl ->
       let let_name = let_decl.rv_name in
       let analysed_let = analyse_variable let_decl false the_table in
@@ -229,7 +231,17 @@ let analyse_module (the_module:roc_module) : s_module =
     let analysed_name = raw_variable.rv_name in
     let analysed_type = analyse_type raw_variable.rv_type in
     let analysed_initial_value = 
-      Option.map (fun expr -> analyse_expr expr symbol_table) raw_variable.rv_initial_expr in
+      match raw_variable.rv_initial_expr with
+      | None -> None
+      | Some expr -> Some (analyse_expr expr symbol_table)
+    in
+    let () = 
+      match analysed_initial_value with
+      | None -> ()
+      | Some expr -> 
+        if expr.se_type <> analysed_type then
+          raise (type_err_failure "variable initial value type mismatch")
+    in
     { sv_name = analysed_name; 
       sv_type = analysed_type; 
       sv_mutable = is_mutable;

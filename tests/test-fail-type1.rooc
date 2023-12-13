@@ -3,4 +3,4 @@ fun main() -> int {
     print_int(a);
 
     return 0;
-};
+}
