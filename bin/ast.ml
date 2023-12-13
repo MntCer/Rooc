@@ -19,14 +19,10 @@ type r_type =
   | T_float
   | T_string
   | T_bool
-
-  | T_mutref of r_type_expr   (* Mutable reference*)
-  | T_mutptr of r_type_expr   (* Mutable pointer*)
-  (* | T_box of r_type_expr *)
+  | T_typex of r_type_expr
 
 
 and r_type_expr =
-  | R_type_expr of r_type
   | R_user_defined_type of string
 
 
@@ -55,13 +51,17 @@ type roc_expr =
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
   | EXPR_field_access of string * string
   | EXPR_path of string
-  (* | EXPR_box_init of roc_expr *)
+  | EXPR_struct of roc_expr * (expr_struct_field list)
 
+and expr_struct_field = 
+  {
+    esf_name : string;
+    esf_expr : roc_expr; }
 
 and roc_variable =
-    { rv_name : string;
-      rv_type : r_type;
-      rv_initial_expr : roc_expr option; }
+  { rv_name : string;
+    rv_type : r_type;
+    rv_initial_expr : roc_expr option; }
 
 and roc_stmt =
   | Roc_expr_stmt of roc_expr

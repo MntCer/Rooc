@@ -11,7 +11,7 @@ open Util
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
 %token VAR LET FUN STRUCT IMPL TRAIT CONST NEW
-%token INT BOOL FLOAT STR MUTREF MUTPTR
+%token INT BOOL FLOAT STR
 // %token LIST
 %token RETURN IF ELSE FOR WHILE BREAK CONTINUE SELF
 %token <int> ILIT
@@ -170,7 +170,8 @@ expr_nonempty:
   | roc_literal_expr {$1}
   | roc_grouped_expr {$1}
   | expr_field_access %prec FIELD {$1}
-  | expr_path {$1}
+  | expr_path %prec PATH {$1}
+  | expr_struct {$1}
   // | expr_box_init {$1}
 
 roc_expr:
@@ -247,6 +248,18 @@ expr_field_access:
 expr_path:
     ID { EXPR_path ($1) }
 
+expr_struct:
+    expr_path LBRACE expr_struct_fields RBRACE { EXPR_struct ($1, List.rev $3) }
+
+expr_struct_fields:
+    expr_struct_field { [$1] }
+  | expr_struct_fields expr_struct_field { $2 :: $1 }
+
+expr_struct_field:
+    ID COLON expr_nonempty SEMI 
+    { {esf_name =$1; 
+       esf_expr =$3;} }
+
 roc_continue_stmt:
     CONTINUE SEMI { Roc_continue_stmt }
 
@@ -270,7 +283,7 @@ roc_statements:
   | roc_statements roc_statement { $2 :: $1 }
 
 roc_if_stmt:
-    IF LPAREN expr_nonempty roc_block ELSE roc_block { Roc_if_stmt($3, $4, $6) }
+    IF LPAREN expr_nonempty RPAREN roc_block ELSE roc_block { Roc_if_stmt($3, $5, $7) }
 
 roc_loop_stmt:
   | roc_while_stmt { $1 }
@@ -286,11 +299,8 @@ r_type:
   | BOOL  { T_bool   }
   | STR   { T_string }
   | LPAREN RPAREN { T_unit } // () serves as void in Rooc
-  | MUTREF r_type_expr       { T_mutref ($2) }
-  | MUTPTR r_type_expr       { T_mutptr ($2) }
-  // | BOX LT r_type_expr GT    { T_box ($3) } 
+  | r_type_expr { T_typex ($1) }
 
 r_type_expr:
-  | r_type                  { R_type_expr ($1) }
   | ID                      { R_user_defined_type ($1) }
 

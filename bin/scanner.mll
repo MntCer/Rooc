@@ -1,24 +1,9 @@
 (* Ocamllex scanner for Rooc *)
 
-{ open Parser 
+{ 
+  open Parser 
 }
-(* { 
-  (* for test *)
-type token = 
-  ID of string
-| SEMI 
-| ASSIGN | PLUS | MINUS | TIMES | DIVIDE | LPAREN | RPAREN
-| EQ | NEQ | LT | LEQ | GT | GEQ | AND | OR | NOT
-| LBRACE | RBRACE | COMMA | COLON | RARROW | DOT
-| BLIT of bool
-| VAR | LET | FUN | STRUCT | IMPL | TRAIT
-| INT | BOOL | FLOAT | STR
-| RETURN | IF | ELSE | FOR | WHILE 
-| ILIT of int
-| FLIT of string
-| SLIT of string
-| EOF
-} *)
+
 
 let digit  = ['0' - '9']
 let letter = ['a'-'z' 'A'-'Z']
@@ -65,17 +50,14 @@ rule token = parse
 | "impl"   { IMPL }
 | "trait"  { TRAIT }
 | "self"   { SELF }
-(* | "new"    { NEW }  *) (* #NOTE: ad hoc solution, as no lifetime analysis *)
 
 (* type *)
 | "int"    { INT }
 | "float"  { FLOAT }
 | "bool"   { BOOL }
 | "str"    { STR}
-(* | "Box"    { BOX } *)
-| "&mut"   { MUTREF }
-| "*mut"   { MUTPTR }
 (* | "list"   { LIST } *)
+
 (* *)
 | "return" { RETURN }
 | "if"     { IF }

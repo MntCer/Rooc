@@ -65,6 +65,8 @@ a.b = &mut b as *mut StructB; // need 'as', not seemed as same type
 b.a = &mut a as *mut StructA;
 ```
 
+> Result: don't do any ref and ptr, it's too many problem in semantic phase.
+
 ### For anonymous struct
 
 We requires that all types, including structs, be defined explicitly with a name before they can be instantiated and used.

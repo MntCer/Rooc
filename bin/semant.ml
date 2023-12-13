@@ -6,7 +6,7 @@ open Builtins
 
 type semant_cxt ={
   sc_namespace: s_symbol_table;
-  sc_type_env: (string, s_type) Hashtbl.t;
+  sc_type_env: (string, s_type_env_entry) Hashtbl.t;
   sc_current_sb: s_symbol_table;
 }
 
@@ -19,20 +19,36 @@ let analyse_module
      Some helper functions.
   **************************************************************)
 
+  let rec analyse_type_expr
+  (raw_type_expr: r_type_expr)
+  (the_cxt: semant_cxt)
+  : s_type =
+  match raw_type_expr with
+  | R_user_defined_type type_name ->
+    let search_result = lookup_type the_cxt.sc_type_env type_name in
+    (match search_result with
+    | None -> raise (SemanticError ("type not registered:" ^ type_name))
+    | Some (S_unresolved name ) -> 
+      ST_struct name (* #NOTE: ad hoc solution, just work for struct. *)
+    | Some (S_resolved the_type) -> the_type)
+
 
   (**
     map each raw type to its corresponding semantic type
       *)
-  let analyse_type 
+  and analyse_type 
   (raw_type: r_type)
   (the_cxt: semant_cxt)
   : s_type =
     match raw_type with
+    (* if primitive type, easy. *)
     | T_unit -> ST_unit
     | T_int -> ST_int
     | T_float -> ST_float
     | T_bool -> ST_bool
     | T_string -> ST_string
+    | T_typex typex -> analyse_type_expr typex the_cxt
+
   in
 
   (** 
@@ -45,6 +61,7 @@ let analyse_module
     : s_expr =
     let the_symbol_table = the_cxt.sc_current_sb in
     let the_type_env = the_cxt.sc_type_env in
+    let the_namespace = the_cxt.sc_namespace in
     match raw_expr with
     (* empty expression *)
     | EXPR_null -> { se_type = ST_unit; se_expr = S_EXPR_null }
@@ -111,7 +128,7 @@ let analyse_module
         match expr with
         (* #TODO: are there some another possiblities? *)
         | EXPR_path _ -> ()
-        | _ -> raise (SymbolTableError "left hand side of assignment is not a lvalue")
+        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
       in
       let () = check_lval e1 in
       let analysed_e1 = analyse_expr e1 the_cxt in
@@ -134,8 +151,8 @@ let analyse_module
       in
       let search_result = lookup_symbol callee the_symbol_table in
       (match search_result with
-      | None -> raise (SymbolTableError "callee not found")
-      | Some(VarEntry v) -> raise (SymbolTableError "callee is a variable")
+      | None -> raise (SemanticError "callee not found")
+      | Some(VarEntry v) -> raise (SemanticError "callee is a variable")
       | Some(FuncEntry f) -> 
         (* function arguments type checking *)
         let expected_param_types = f.sf_type.sft_params_type in
@@ -173,13 +190,72 @@ let analyse_module
         se_expr = S_EXPR_field_access (struct_name, field_name); }
 
     | EXPR_path (var_name) ->
-      match lookup_symbol var_name the_symbol_table with
-      | None -> raise (SymbolTableError "variable not found in symbol table")
+      (match lookup_symbol var_name the_symbol_table with
+      | None -> raise (SemanticError "variable not found in symbol table")
       | Some (VarEntry v) -> 
         let analysed_type = v.sv_type in
         { se_type = analysed_type; 
           se_expr = S_EXPR_path var_name; }
-      | _ -> raise (SymbolTableError "Not a variable in symbol table")
+      | Some (StructEntry s) ->
+        let analysed_type = 
+          (match lookup_type the_type_env s.ss_name with
+          | None -> raise (SemanticError "struct type not defined in type env")
+          | Some (S_resolved t) -> t) 
+        in
+        { se_type = analysed_type; 
+          se_expr = S_EXPR_path var_name; }
+      | _ -> raise (SemanticError "Not a variable in symbol table"))
+
+    | EXPR_struct (e1, expr_struct_fields) ->
+      (* #NOTE: in fact, this situation is prevented by parser. *)
+      let () = match e1 with 
+        | EXPR_path _ -> ()
+        | _ -> raise (SemanticError "struct expression's first part is not a path")
+      in
+      let analysed_e1 = analyse_expr e1 the_cxt in
+      let the_struct_name = 
+        (match analysed_e1.se_type with
+        | ST_struct name -> name
+        | _ -> raise (SemanticError "struct expression's first part is not a struct type"))
+      in
+      let the_struct = 
+        (match lookup_symbol the_struct_name the_namespace with
+        | None -> raise (SemanticError "struct not found in namespace")
+        | Some (StructEntry s) -> s
+        | _ -> raise (SemanticError (the_struct_name ^ " is not a struct")))
+      in
+      let the_fields = the_struct.ss_fields in
+      let the_sorted_expr_fields =
+      (* sort the list by the name, check field one by one. *)
+      List.sort (fun f1 f2 -> compare f1.esf_name f2.esf_name) expr_struct_fields in
+      (* #TODO: put things here out, so many checks needs to do.*)
+      let the_field_vars = 
+        if List.length the_fields <> List.length the_sorted_expr_fields then
+          raise (SemanticError "struct expression's fields number mismatch")
+        else
+          List.map2 
+          (fun field expr_field ->
+            if field.ssf_name <> expr_field.esf_name then
+              raise (SemanticError "struct expression's fields name mismatch")
+            else
+              let field_type = field.ssf_type in
+              let analysed_expr_field = 
+                analyse_expr expr_field.esf_expr the_cxt in
+              let expr_field_type = 
+                analysed_expr_field.se_type in
+              if field_type <> expr_field_type then
+                raise (SemanticError "struct expression's fields type mismatch")
+              else 
+                { sv_name = field.ssf_name;
+                  sv_type = field.ssf_type;
+                  sv_mutable = true;
+                  sv_initial_value = 
+                    Some (analysed_expr_field); }) 
+          the_fields the_sorted_expr_fields
+      in
+      let analysed_type = ST_struct the_struct_name in
+      { se_type = analysed_type;
+        se_expr = S_EXPR_struct (the_struct_name, the_field_vars); }
 
     
   (**
@@ -324,6 +400,87 @@ let analyse_module
   in
 
   (**
+    only needs to create type by struct name.
+    #NOTE: no deeper type analysis, it's an ad hoc solution.
+  *)
+  let register_struct 
+  (raw_struct: r_struct) 
+  (the_cxt: semant_cxt)
+  : unit =
+    let the_symbol_table = the_cxt.sc_current_sb in
+    let the_type_env = the_cxt.sc_type_env in
+    let name_for_register = raw_struct.rs_name in
+    let type_for_register = ST_struct name_for_register in
+    insert_type the_type_env name_for_register (S_resolved type_for_register)
+  in
+
+  (**
+    ensure a field's name and it's type.
+  *)
+  let analyse_field 
+    (raw_field: r_struct_field) 
+    (the_cxt: semant_cxt)
+    : s_struct_field =
+    let analysed_name = raw_field.rsf_name in
+    let analysed_type = analyse_type raw_field.rsf_type the_cxt in
+    { ssf_name = analysed_name;
+      ssf_type = analysed_type; }
+  in
+
+  (**
+    insert the struct into symbol table, update the type_env.
+  *)
+  let analyse_struct 
+    (raw_struct: r_struct) 
+    (the_cxt: semant_cxt)
+    : s_struct =
+    let analysed_name = raw_struct.rs_name in
+    let raw_fields = raw_struct.rs_fields in
+    let analysed_fields = 
+      List.map 
+      (fun field -> analyse_field field the_cxt) 
+      raw_fields 
+    in
+    let analysed_fields = 
+      List.sort (fun f1 f2 -> compare f1.ssf_name f2.ssf_name) analysed_fields
+    in
+    let analysed_struct =
+      { ss_name = analysed_name;
+        ss_fields = analysed_fields; }
+    in
+    analysed_struct
+
+  in
+
+  let process_structs
+    (the_module: roc_module)
+    (the_cxt: semant_cxt)
+    : unit =
+    let the_namesapce = the_cxt.sc_namespace in
+    let the_type_env = the_cxt.sc_type_env in
+    (* need to register and analyse struct first. *)
+    let () = 
+      List.iter 
+      (fun item ->
+        (match item with
+        | StructItem the_struct ->
+          register_struct the_struct the_cxt
+        | _ -> ()))
+      the_module.rm_items in
+    let () =
+      List.iter
+        (fun item ->
+          (match item with
+          | StructItem the_struct ->
+            let analysed_struct = analyse_struct the_struct the_cxt in
+            (* #TODO: not finished. *)
+            insert_symbol the_namesapce analysed_struct.ss_name (StructEntry analysed_struct)
+          | _ -> ())) 
+      the_module.rm_items in
+    ()
+  in
+
+  (**
     Analyse a function's name, params and return type and construct them into a `s_function_signature` type. 
     Register this signature into symbol table for the following semantic analysis.
   *)
@@ -357,39 +514,6 @@ let analyse_module
         sfs_type = analysed_type; }
     in
     insert_symbol the_symbol_table analysed_name (FuncSigEntry analysed_func_sig)
-  in
-
-  let register_struct 
-  (raw_struct: r_struct) 
-  (the_cxt: semant_cxt)
-  : unit =
-    let the_symbol_table = the_cxt.sc_current_sb in
-    let the_type_env = the_cxt.sc_type_env in
-    let analysed_name = raw_struct.rs_name in
-    (* Not register type here, because needs inner analysis. *)
-    let analysed_struct_sig = 
-      { sss_name = analysed_name; }
-    in
-    insert_symbol the_symbol_table analysed_struct_sig.sss_name (StructSigEntry analysed_struct_sig)
-
-
-  in
-
-  let register_items 
-    (the_module: roc_module) 
-    (the_cxt: semant_cxt)
-    : unit =
-    let the_symbol_table = the_cxt.sc_current_sb in
-    let the_type_env = the_cxt.sc_type_env in
-    List.iter (fun item ->
-      (match item with
-      | FunctionItem the_function -> 
-        register_function the_function the_cxt
-      | StructItem the_struct ->
-        register_struct the_struct the_cxt
-      | _ -> 
-        todo "not yet supported item.")
-    ) the_module.rm_items
   in
 
   let analyse_function 
@@ -439,52 +563,30 @@ let analyse_module
       sf_body = analysed_body; }
   in
 
-  let analyse_field 
-    (raw_field: r_struct_field) 
-    (the_cxt: semant_cxt)
-    : s_struct_field =
-    let analysed_name = raw_field.rsf_name in
-    let analysed_type = analyse_type raw_field.rsf_type the_cxt in
-    { ssf_name = analysed_name;
-      ssf_type = analysed_type; }
-  in
-
-  let analyse_struct 
-    (raw_struct: r_struct) 
-    (the_cxt: semant_cxt)
-    : s_struct =
-    let analysed_name = raw_struct.rs_name in
-    let raw_fields = raw_struct.rs_fields in
-    let analysed_fields = 
-      List.map 
-      (fun field -> analyse_field field the_cxt) 
-      raw_fields 
-    in
-    { ss_name = analysed_name;
-      ss_fields = analysed_fields; }
-
-    (* register type here. *)
-
-  in
-
-  let analyse_items 
+  let process_functions 
     (the_module:roc_module) 
     (the_cxt: semant_cxt)
     : unit =
     let the_namesapce = the_cxt.sc_namespace in
-    List.iter (fun item ->
-      (match item with
-      | FunctionItem func -> 
-        let analysed_func = analyse_function func the_cxt in
-        update_symbol_table the_namesapce analysed_func.sf_name (FuncEntry analysed_func)
-
-      | StructItem the_struct ->
-        let analysed_struct = analyse_struct the_struct the_cxt in
-        update_symbol_table the_namesapce analysed_struct.ss_name (StructEntry analysed_struct)
-
-      | _ -> 
-        todo "not yet supported item.")
-    ) the_module.rm_items
+    (* to register functions*)
+    let () = 
+      List.iter 
+      (fun item ->
+        (match item with
+        | FunctionItem the_function -> 
+          register_function the_function the_cxt
+        | _ -> ()))
+      the_module.rm_items in
+    (* to analyse functions *)
+    let () = 
+      List.iter (fun item ->
+        (match item with
+        | FunctionItem func -> 
+          let analysed_func = analyse_function func the_cxt in
+          update_symbol_table the_namesapce analysed_func.sf_name (FuncEntry analysed_func)
+        (* #TODO: *)
+        | _ -> ())) the_module.rm_items in 
+    ()
   in
 
   (**************************************************************
@@ -500,27 +602,30 @@ let analyse_module
     sc_current_sb = the_namespace;
   } in
 
+  (* process struct *)
+  let () = process_structs the_module the_cxt in
+
   (* Insert builtins *)
-  List.iter (fun builtin -> 
+  let () = List.iter (fun builtin -> 
     let name = builtin.sf_name in
     let entry = FuncEntry builtin in
-    insert_symbol the_namespace name entry) builtins_semant;
+    insert_symbol the_namespace name entry) builtins_semant; 
+  in
 
-  (* register items *)
-  register_items the_module the_cxt;
+  (* process items *)
+  let () = process_functions the_module the_cxt in
 
   (* special check for main *)
-  (match lookup_symbol "main" the_namespace with
-  | None -> raise (SymbolTableError "main function not found")
-  | Some (FuncSigEntry f) -> 
-    let the_return_type = f.sfs_type.sft_return_type in
-    (match the_return_type with
-    | ST_int -> ()
-    | _ -> bug "main function's return type is not int")
-  | _ -> raise (SymbolTableError "main is not a function"));
-
-  (* analyse items *)
-  analyse_items the_module the_cxt;
+  let () =
+    (match lookup_symbol "main" the_namespace with
+    | None -> raise (SemanticError "main function not found")
+    | Some (FuncEntry f) -> 
+      let the_return_type = f.sf_type.sft_return_type in
+      (match the_return_type with
+      | ST_int -> ()
+      | _ -> bug "main function's return type is not int")
+    | _ -> raise (SemanticError "main is not a function"))
+  in
 
   { sm_namespace = the_cxt.sc_namespace;
     sm_type_env = the_cxt.sc_type_env; }

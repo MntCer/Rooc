@@ -1,0 +1,25 @@
+struct A {
+    b: B; // Assuming B can be null
+    x: int;
+}
+
+struct B {
+    a: A; // Assuming A can be null
+    x: int;
+}
+
+fun main() -> int {
+    var a: A = A { b: null, x: 1 }; // Initialize with null
+    var b: B = B { a: null, x: 2 };
+
+    // Set up mutual references
+    a.b = b;
+    b.a = a;
+
+    // Check for null before dereferencing
+    if (a.b != null) {
+        print_int(a.b.x); // Should print 2
+    }
+
+    return 0;
+}

@@ -1,15 +1,17 @@
 struct Point {
     x: int;
     y: int;
-};
+}
 
 fun create_point(x:int, y:int) -> Point {
-    return Point {x = x, y = y};
-};
+    return Point {x : x, y : y};
+}
 
 fun main() -> int {
-    var p = create_point(3, 4);
-    print_int(p::x);
-    print_int(p::y);
+    var p1:Point = create_point(3, 4);
+    var p2:Point = p1;
+    print_int(p1.x); // expect 3
+    p2.x=1+p1.x;      
+    print_int(p1.x); // expect 4
     return 0;
-};
+}

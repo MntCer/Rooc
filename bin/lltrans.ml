@@ -377,6 +377,7 @@ let trans_module
         irf_scope=llvm_function_scope;
       }
       in insert_global_function f.sf_name (IRRoocFunction the_function) the_namespace
+    | StructEntry s -> ()
     | _ -> bug "Unallowed thing is in the highest-level." 
   in 
     declare_printf the_context the_module the_namespace;

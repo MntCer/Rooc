@@ -1,1 +1,1 @@
-Fatal error: exception Dune__exe__Sast.SymbolTableError("variable not found in symbol table")
+Fatal error: exception Dune__exe__Sast.SemanticError("variable not found in symbol table")

@@ -9,24 +9,16 @@ type s_type =
   | ST_string
   | ST_bool
 
-  | ST_function of s_function_type
-  | ST_struct of s_struct_type
+  | ST_struct of string
   | ST_sequence of s_sequence_type
 
-  | ST_mutref of s_type
-  | ST_mutptr of s_type
+  | ST_function of s_function_type
 
   | ST_error
-
 
 and s_sequence_type = 
   | T_list of s_type
 
-
-and s_struct_type = {
-  st_name : string;
-  st_field_type_list : s_type list;
-}
 
 and s_function_type = {
   sft_params_type: s_type list;
@@ -34,6 +26,11 @@ and s_function_type = {
   (* sft_generics: string list;  *)
   (* Future use: Names of generic type parameters *)
 }
+
+and s_type_env_entry =
+  | S_resolved of s_type
+  | S_unresolved of string
+
 
 type s_expr = {
     se_type: s_type;
@@ -58,8 +55,8 @@ and s_structual_expr =
   | S_grouped_expr of s_expr
   | S_EXPR_field_access of string * string
   | S_EXPR_path of string
+  | S_EXPR_struct of string * s_variable list
   (* | S_EXPR_box_init of s_expr *)
-
 
 
 and sexpr_call= {
@@ -165,23 +162,24 @@ and s_symbol_table = {
 
 type s_module = {
   sm_namespace: s_symbol_table;
-  sm_type_env: (string, s_type) Hashtbl.t;
+  sm_type_env: (string, s_type_env_entry) Hashtbl.t;
 }
 
-(* ************************************************************ *)
-(* Some helper functions *)
-(* ************************************************************ *)
+  (**************************************************************
+     Some helper functions.
+  **************************************************************)
 
-exception SymbolTableError of string
+(* helper function for symbol table *)
+
+exception SemanticError of string
 
 let init_symbol_table ?parent () : s_symbol_table =
   let symbol_table = Hashtbl.create 10 in  (* Arbitrary initial size *)
   { sst_parent = parent; sst_symbols = symbol_table }
 
 (**
-  * Lookup a symbol in the symbol table. If not found, lookup in the parent table.
-  * If not found in the parent table, return None.
-
+  Lookup a symbol in the symbol table. If not found, lookup in the parent table.
+  If not found in the parent table, return None.
 *)
 let rec lookup_symbol identifier symbol_table =
   match Hashtbl.find_opt symbol_table.sst_symbols identifier with
@@ -195,7 +193,7 @@ let rec lookup_symbol identifier symbol_table =
 let insert_symbol symbol_table identifier entry =
   (* Check for existence in the current scope only *)
   if Hashtbl.mem symbol_table.sst_symbols identifier then
-    raise (SymbolTableError ("Symbol already exists in the same scope: " ^ identifier))
+    raise (SemanticError ("Symbol already exists in the same scope: " ^ identifier))
   else
     Hashtbl.add symbol_table.sst_symbols identifier entry
 
@@ -203,15 +201,31 @@ let update_symbol_table symbol_table identifier new_entry =
   if Hashtbl.mem symbol_table.sst_symbols identifier then
     Hashtbl.replace symbol_table.sst_symbols identifier new_entry
   else
-    raise (SymbolTableError ("Symbol not found for update: " ^ identifier))
+    raise (SemanticError ("Symbol not found for update: " ^ identifier))
 
 
+(* helper functions for type env. *)
+
+let insert_type 
+  type_env 
+  identifier
+  entry
+  : unit =
+  (* Check for existence in the current scope only *)
+  if Hashtbl.mem type_env identifier then
+    raise (SemanticError ("Type already exists in the same scope: " ^ identifier))
+  else
+    Hashtbl.add type_env identifier entry
+
+(**
+  Should not report bug here.    
+*)
 let lookup_type 
   type_env 
   identifier = 
   match Hashtbl.find_opt type_env identifier with
-  | Some entry -> entry
-  | None -> bug "Type not found in this type environment"
+  | Some entry -> Some(entry)
+  | None -> None
 
 let update_type_env 
   type_env 
@@ -220,11 +234,11 @@ let update_type_env
   if Hashtbl.mem type_env identifier then
     Hashtbl.replace type_env identifier new_entry
   else
-    raise (SymbolTableError ("Type not found for update: " ^ identifier))
+    raise (SemanticError ("Type not found for update: " ^ identifier))
 
-(* ************************************************************ *)
-(* Pretty-printing functions *)
-(* ************************************************************ *)
+  (**************************************************************
+     pretty print functions
+  **************************************************************)
 
 let string_of_s_module = function
   _ -> "TODO"
