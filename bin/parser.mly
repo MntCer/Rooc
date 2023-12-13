@@ -10,8 +10,8 @@ open Util
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
-%token VAR LET FUN STRUCT IMPL TRAIT CONST
-%token INT BOOL FLOAT STR BOX MUTREF
+%token VAR LET FUN STRUCT IMPL TRAIT CONST NEW
+%token INT BOOL FLOAT STR MUTREF MUTPTR
 // %token LIST
 %token RETURN IF ELSE FOR WHILE BREAK CONTINUE SELF
 %token <int> ILIT
@@ -171,6 +171,7 @@ expr_nonempty:
   | roc_grouped_expr {$1}
   | expr_field_access %prec FIELD {$1}
   | expr_path {$1}
+  // | expr_box_init {$1}
 
 roc_expr:
   | expr_empty %prec LOWEST_PRECEDENCE { $1 }
@@ -214,7 +215,6 @@ roc_comparison_expr:
   | expr_nonempty GT expr_nonempty { Roc_comparison_expr(Greater, $1, $3) }
   | expr_nonempty GEQ expr_nonempty { Roc_comparison_expr(Geq, $1, $3) }
 
-//#TODO: Should just allow the lvalue be in the left side.
 roc_assignment_expr:
     expr_nonempty ASSIGN expr_nonempty { Roc_assignment_expr($1, $3) }
 
@@ -239,6 +239,10 @@ optional_comma:
 expr_field_access:
     // #TODO: it's a simplified version, but the complele version has some unsolvable problems now.
     ID DOT ID { EXPR_field_access ($1, $3) } 
+
+// expr_box_init:
+//     BOX COLON COLON NEW LPAREN expr_nonempty RPAREN 
+//       { EXPR_box_init ($6) }
 
 expr_path:
     ID { EXPR_path ($1) }
@@ -285,8 +289,9 @@ r_type:
   | BOOL  { T_bool   }
   | STR   { T_string }
   | LPAREN RPAREN { T_unit } // () serves as void in Rooc
-  | BOX LT r_type_expr GT    { T_box ($3) } 
   | MUTREF r_type_expr       { T_mutref ($2) }
+  | MUTPTR r_type_expr       { T_mutptr ($2) }
+  // | BOX LT r_type_expr GT    { T_box ($3) } 
 
 r_type_expr:
   | r_type                  { R_type_expr ($1) }

@@ -19,15 +19,15 @@ type r_type =
   | T_float
   | T_string
   | T_bool
-  | T_box of r_type_expr
-  | T_mutref of r_type_expr   (* Mutable reference *)
-  (*%TODO:*)
+
+  | T_mutref of r_type_expr   (* Mutable reference*)
+  | T_mutptr of r_type_expr   (* Mutable pointer*)
+  (* | T_box of r_type_expr *)
 
 
 and r_type_expr =
   | R_type_expr of r_type
   | R_user_defined_type of string
-
 
 
 (* type typ = Primitive of primitive_typ | Generic of generic_typ
@@ -55,6 +55,7 @@ type roc_expr =
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
   | EXPR_field_access of string * string
   | EXPR_path of string
+  (* | EXPR_box_init of roc_expr *)
 
 
 and roc_variable =

@@ -13,6 +13,9 @@ type s_type =
   | ST_struct of s_struct_type
   | ST_sequence of s_sequence_type
 
+  | ST_mutref of s_type
+  | ST_mutptr of s_type
+
   | ST_error
 
 
@@ -22,7 +25,7 @@ and s_sequence_type =
 
 and s_struct_type = {
   st_name : string;
-  st_type_list : s_type list;
+  st_field_type_list : s_type list;
 }
 
 and s_function_type = {
@@ -31,8 +34,6 @@ and s_function_type = {
   (* sft_generics: string list;  *)
   (* Future use: Names of generic type parameters *)
 }
-
-type type_env = (string, s_type) Hashtbl.t
 
 type s_expr = {
     se_type: s_type;
@@ -57,6 +58,7 @@ and s_structual_expr =
   | S_grouped_expr of s_expr
   | S_EXPR_field_access of string * string
   | S_EXPR_path of string
+  (* | S_EXPR_box_init of s_expr *)
 
 
 
@@ -171,6 +173,7 @@ and s_symbol_table = {
 
 type s_module = {
   sm_namespace: s_symbol_table;
+  sm_type_env: (string, s_type) Hashtbl.t;
 }
 
 (* ************************************************************ *)
@@ -196,6 +199,7 @@ let rec lookup_symbol identifier symbol_table =
       | Some parent_table -> lookup_symbol identifier parent_table  
       | None -> None  )
 
+
 let insert_symbol symbol_table identifier entry =
   (* Check for existence in the current scope only *)
   if Hashtbl.mem symbol_table.sst_symbols identifier then
@@ -208,6 +212,23 @@ let update_symbol_table symbol_table identifier new_entry =
     Hashtbl.replace symbol_table.sst_symbols identifier new_entry
   else
     raise (SymbolTableError ("Symbol not found for update: " ^ identifier))
+
+
+let lookup_type 
+  type_env 
+  identifier = 
+  match Hashtbl.find_opt type_env identifier with
+  | Some entry -> entry
+  | None -> bug "Type not found in this type environment"
+
+let update_type_env 
+  type_env 
+  identifier 
+  new_entry =
+  if Hashtbl.mem type_env identifier then
+    Hashtbl.replace type_env identifier new_entry
+  else
+    raise (SymbolTableError ("Type not found for update: " ^ identifier))
 
 (* ************************************************************ *)
 (* Pretty-printing functions *)

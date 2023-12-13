@@ -37,7 +37,7 @@ Today, we aim to successfully run our project end2end.
 
 # Dec 12
 
-## For box and reference type
+## For `Box`
 
 Semantic Analysis:
 
@@ -48,6 +48,27 @@ Box cannot take a reference.
 Code Generation:
 
 In Rust, Box<T> is a smart pointer that allocates T on the heap and owns it. need to decide how Box manages the lifecycle of the object it owns, especially regarding allocation and deallocation.
+
+> Result: Box need complex ownership system, We don't do that, so just unsafe raw pointer.
+
+## For struct
+
+"struct in struct" can only be done by "include raw pointer".
+
+## mut ref and mut ptr
+
+```rust
+let mut a = StructA { b: std::ptr::null_mut() };
+let mut b = StructB { a: std::ptr::null_mut() };
+
+a.b = &mut b as *mut StructB; // need 'as', not seemed as same type
+b.a = &mut a as *mut StructA;
+```
+
+### For anonymous struct
+
+We requires that all types, including structs, be defined explicitly with a name before they can be instantiated and used.
+
 
 ## Target List
 

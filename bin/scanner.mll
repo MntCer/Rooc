@@ -65,13 +65,16 @@ rule token = parse
 | "impl"   { IMPL }
 | "trait"  { TRAIT }
 | "self"   { SELF }
+(* | "new"    { NEW }  *) (* #NOTE: ad hoc solution, as no lifetime analysis *)
+
 (* type *)
 | "int"    { INT }
 | "float"  { FLOAT }
 | "bool"   { BOOL }
 | "str"    { STR}
-| "Box"    { BOX }
+(* | "Box"    { BOX } *)
 | "&mut"   { MUTREF }
+| "*mut"   { MUTPTR }
 (* | "list"   { LIST } *)
 (* *)
 | "return" { RETURN }
