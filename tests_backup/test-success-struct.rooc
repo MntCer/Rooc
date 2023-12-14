@@ -1,8 +1,0 @@
-struct Circle {
-    var x:int;
-    var y:int;
-    var radius:int;
-    var area:float;
-    var hasColor:bool;
-    var text:string;
-};

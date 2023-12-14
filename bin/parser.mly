@@ -107,7 +107,7 @@ roc_param:
 //     rp_params=List.rev $3}) }
 
 r_struct:
-    STRUCT ID LPAREN struct_fields RPAREN 
+    STRUCT ID LBRACE struct_fields RBRACE 
     { {
       rs_name = $2 ;
       rs_fields = List.rev $4; } }

@@ -54,7 +54,7 @@ let declare_printf
     ief_function_type = printf_type;
     ief_function = the_printf;
   } in
-  insert_global_function "printf" (IRExternFunction wrapped_printf) the_scope;
+  insert_function "printf" (IRExternFunction wrapped_printf) the_scope;
 
 
 type builtin_translator =  L.llbuilder -> ir_local_scope -> ir_global_scope -> L.llbuilder

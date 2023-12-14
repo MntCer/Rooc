@@ -139,9 +139,6 @@ and s_struct_field = {
   ssf_type : s_type;
 }
 
-and s_struct_sig = {
-  sss_name : string;
-}
 
 and s_struct = {
   ss_name : string;
@@ -151,7 +148,6 @@ and s_struct = {
 and s_symbol_table_entry =
   | FuncSigEntry of s_function_signature
   | FuncEntry of s_function
-  | StructSigEntry of s_struct_sig
   | StructEntry of s_struct
   | VarEntry of s_variable
 

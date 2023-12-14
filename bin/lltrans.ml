@@ -9,9 +9,6 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
-type lltrans_cxt ={
-  cur_function: L.llvalue;
-}
 
 (**
   translate the whole module from sast node `s_module` to corresponding LLVM module.
@@ -24,7 +21,8 @@ let trans_module
 
   let the_module = L.create_module the_context "theRoocProgram" in
 
-  let the_namespace = init_global_scope () in 
+  let the_global_scope = init_global_scope () in 
+  let the_type_env:llir_type_env = Hashtbl.create 10 in
 
   (* decl corresponding LL types *)
   (* #TODO: these part should be refactored out, be independent. *)
@@ -44,6 +42,10 @@ let trans_module
     | ST_float -> float_t
     (* | ST_string -> char pointer *)
     | ST_unit -> void_t (* #TODO: ad hoc solution, need re reclear it *)
+    | ST_struct s -> 
+      (match lookup_type s the_type_env with
+      | Some t -> t (* #NOTE: return it's pointer? Not here. *)
+      | None -> raise (LLIRError "struct type used before defined"))
     | _ -> todo "other type: ST_function & ST_error"
   in
   
@@ -158,7 +160,7 @@ let trans_module
     | S_EXPR_call call_e -> 
       let the_callee_name = call_e.sc_callee in 
       let the_wrapped_callee = 
-        match lookup the_callee_name (IRGlobalScope the_namespace) with
+        match lookup the_callee_name (IRGlobalScope the_global_scope) with
         | Some (IRFuncEntry (IRRoocFunction f)) -> f
         | _ -> bug "callee not found"
       in
@@ -211,7 +213,7 @@ let trans_module
       iv_type = local_type;
       iv_value_addr = alloca;
     } in
-    let () = insert_local_variable local_name local_var the_scope in 
+    let () = insert_variable_local local_name local_var the_scope in 
     the_builder
   in
 
@@ -233,7 +235,7 @@ let trans_module
     (s: s_stmt) 
     the_builder 
     (the_scope:ir_local_scope) 
-    (the_cxt:lltrans_cxt)
+    (the_cxt:llir_cxt)
     : L.llbuilder =
     let the_function = the_cxt.cur_function in
     (match s with
@@ -300,7 +302,7 @@ let trans_module
     let the_name=f.sf_name in
     (* let () = print_string the_name in *)
     let search_result =
-      let the_entry = lookup the_name (IRGlobalScope the_namespace) in
+      let the_entry = lookup the_name (IRGlobalScope the_global_scope) in
       match the_entry with
       | Some(IRFuncEntry (IRRoocFunction (f))) -> f
       | _ -> bug "Want irf_function but get others."
@@ -324,7 +326,7 @@ let trans_module
         iv_type = local_type;
         iv_value_addr = alloca;
       } in
-      insert_local_variable local_name local_var the_scope;
+      insert_variable_local local_name local_var the_scope;
     in
     (* get the params of `the_function` and apply `add_formal` on them. *)
     (match f.sf_params with
@@ -347,14 +349,14 @@ let trans_module
           the_name 
           the_builder 
           the_scope
-          the_namespace =
+          the_global_scope =
           try
             let trans_func = Hashtbl.find builtins_map the_name in
-            trans_func the_builder the_scope the_namespace
+            trans_func the_builder the_scope the_global_scope
           with
           | Not_found -> bug "not supported built-in function" 
         in 
-        translate_builtin_func the_name the_builder the_scope the_namespace;
+        translate_builtin_func the_name the_builder the_scope the_global_scope;
       )
     in
 
@@ -372,11 +374,60 @@ let trans_module
       L.build_ret (L.const_int i1_t 0)
     | _ -> todo "other return type"
     );
-
   in
 
   (**
-    #TODO: add docstring     
+    from s_struct_fields to array of lltype;
+    construct the mapping from field name to the type in struct body
+    construcrt all the info in our ir type: llir_struct.
+  *)
+  let trans_struct
+    (sast_struct: s_struct)
+    :unit =
+    let the_struct_name = sast_struct.ss_name in
+    let the_struct_type = 
+      match lookup_type the_struct_name the_type_env with
+      | Some t -> t
+      | None -> raise (LLIRError "struct type not found")
+    in
+    let the_field_list = sast_struct.ss_fields in
+    (* get the field_type *)
+    let get_struct_body_types
+      (field_list: s_struct_field list)
+      : L.lltype list =
+      List.map 
+      (fun field -> 
+        let the_ty=field.ssf_type in
+        match the_ty with
+        | ST_struct sty -> L.pointer_type (trans_type the_ty) (* treat the *)
+        | _ -> trans_type the_ty
+        ) field_list
+    in 
+    let the_struct_body_types = get_struct_body_types the_field_list in
+    (* construct the field to index map. *)
+    let create_fields_index_map 
+      (field_list: s_struct_field list) 
+      : (string,int) Hashtbl.t =
+      let map : (string, int) Hashtbl.t = Hashtbl.create 10 in
+      let () = List.iteri (fun index field ->
+        Hashtbl.add map field.ssf_name index
+      ) field_list
+      in map
+    in 
+    let the_fields_index_map = create_fields_index_map the_field_list in
+    (* define struct body in LLVM IR *)
+    let the_struct_body = Array.of_list the_struct_body_types in
+    let () = L.struct_set_body the_struct_type the_struct_body false in
+    (* create the llir_struct type *)
+    let the_llir_struct = {
+      ls_name = the_struct_name;
+      ls_fields_index_map = the_fields_index_map;}
+    in
+    insert_struct the_struct_name the_llir_struct the_global_scope
+  in
+
+  (**
+    translate all items from our sast IR to LLVM IR.
   *)
   let trans_item 
   (key: string) 
@@ -384,13 +435,28 @@ let trans_module
   : unit =
     match item with
     | FuncEntry f -> trans_function f
+    | StructEntry s -> trans_struct s
     | _ -> todo "not supported. in translate_item"
+  in
+
+  (**
+    register struct    
+  *)
+  let register_struct
+    (key: string)
+    (to_register: s_symbol_table_entry)
+    : unit =
+    match to_register with
+    | StructEntry s -> 
+      let the_struct_type = L.named_struct_type the_context s.ss_name in
+      register_type s.ss_name the_struct_type the_type_env
+    | _ -> ()
   in
 
   (**
     pre-fill `the namespace` for following code generation.
   *)
-  let register_item 
+  let register_function 
     (key: string) 
     (to_register:s_symbol_table_entry)
     : unit =
@@ -404,7 +470,7 @@ let trans_module
       let llvm_param_types = Array.of_list (List.map trans_type f.sf_type.sft_params_type) in
       let llvm_function_type = L.function_type llvm_return_type llvm_param_types in
       let llvm_function = L.define_function f.sf_name llvm_function_type the_module in
-      let llvm_function_scope = init_local_scope (IRGlobalScope the_namespace) in
+      let llvm_function_scope = init_local_scope (IRGlobalScope the_global_scope) in
       let the_function = {
         irf_return_type=f.sf_type.sft_return_type;
         irf_param_types=f.sf_type.sft_params_type;
@@ -412,11 +478,12 @@ let trans_module
         irf_function=llvm_function;  
         irf_scope=llvm_function_scope;
       }
-      in insert_global_function f.sf_name (IRRoocFunction the_function) the_namespace
-    | StructEntry s -> ()
-    | _ -> bug "Unallowed thing is in the highest-level." 
+      in insert_function f.sf_name (IRRoocFunction the_function) the_global_scope
+    | _ -> () 
   in 
-    declare_printf the_context the_module the_namespace;
-    Hashtbl.iter register_item to_trans.sm_namespace.sst_symbols;
+    declare_printf the_context the_module the_global_scope;
+    (* need to register struct first. *)
+    Hashtbl.iter register_struct to_trans.sm_namespace.sst_symbols;
+    Hashtbl.iter register_function to_trans.sm_namespace.sst_symbols;
     Hashtbl.iter trans_item to_trans.sm_namespace.sst_symbols;
     the_module
