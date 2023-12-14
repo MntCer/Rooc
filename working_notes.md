@@ -16,8 +16,8 @@ And also for other "uncommon" expr.
 
 Today, we aim to successfully run our project end2end.
 
-* [ ] function's code generation part.
-* [ ] builtin functions' codegen
+* [x] function's code generation part.
+* [x] builtin functions' codegen
 * [ ] more about expression codegen.
 
 ## Dec 10
@@ -35,9 +35,9 @@ Today, we aim to successfully run our project end2end.
 * [ ] check no return if 'void'
 * [ ] "return;"
 
-# Dec 12
+## Dec 12
 
-## For `Box`
+### For `Box`
 
 Semantic Analysis:
 
@@ -51,11 +51,11 @@ In Rust, Box<T> is a smart pointer that allocates T on the heap and owns it. nee
 
 > Result: Box need complex ownership system, We don't do that, so just unsafe raw pointer.
 
-## For struct
+### For struct
 
 "struct in struct" can only be done by "include raw pointer".
 
-## mut ref and mut ptr
+### mut ref and mut ptr
 
 ```rust
 let mut a = StructA { b: std::ptr::null_mut() };
