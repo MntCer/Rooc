@@ -1,9 +1,9 @@
 struct Circle {
-    x:int;
-    y:int;
-    radius:int;
-    area:float;
-    hasColor:bool;
+    x:int,
+    y:int,
+    radius:int,
+    area:float,
+    hasColor:bool,
 }
 
 fun main() -> int {

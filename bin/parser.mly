@@ -113,11 +113,14 @@ r_struct:
       rs_fields = List.rev $4; } }
 
 struct_fields:
+    struct_fields_no_comma optional_comma { List.rev $1 }
+
+struct_fields_no_comma:
     struct_field { [$1] }
-  | struct_fields struct_field { $2 :: $1 }
+  | struct_fields_no_comma COMMA struct_field { $3:: $1 }
 
 struct_field:
-    ID COLON r_type SEMI 
+    ID COLON r_type  
     { {
       rsf_name = $1;
       rsf_type = $3; } }
