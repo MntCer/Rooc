@@ -53,7 +53,7 @@ $$
 $$
 
 <!-- %TODO: polish this paragraph -->
-A colon indicates a lexical token's definition. The symbols in textwriter font represent operators in ERE regular expression. Strings in bold font refer to named lexical tokens. Symbol in $\texttt{'}$ denotes a single character in Rooc's alphabet.
+A colon indicates a lexical token's definition. The symbols in textwriter font represent operators in ERE regular expression. Strings in bold font refer to named lexical tokens. Symbol enclosed within single quotes $\texttt{''}$ denotes a single character in Rooc's alphabet.
 
 Worth noting, standard ERE will match space character in input expression. But in this manual, all space characters are just used for formatting and readability. Rooc will use $\backslash \texttt{s}$ to denote a space character in token's definition.
 
@@ -242,6 +242,7 @@ A module that contains a main function in its root scope can be compiled to an e
 ```rust
 fn main() -> int {};
 ```
+The return type of every main function has to be int. We preferred a numeric value that indicates the outcome or status of the program execution.
 
 ## Item
 
@@ -505,7 +506,7 @@ ForStmt   =
     "for" "(" Expr ";" Expr ";" Expr ")" Block .
 ```
 
-### While expression
+### While Statement
 
 ```ebnf
 WhileStmt = 
@@ -577,7 +578,7 @@ Expr =
     LiteralExpr
   | OperatorExpr
   | GroupedExpr
-  | StructExpr        #TODO
+  | StructExpr        
   | CallExpr
   | MethodCallExpr    #TODO
   | FieldAccessExpr . 
