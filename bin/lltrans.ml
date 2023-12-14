@@ -415,11 +415,22 @@ let trans_module
       let _ = L.build_cond_br bool_val body_bb merge_bb pred_builder in
       L.builder_at_end the_context merge_bb
     
-    | S_STMT_if s -> todo "210 in codegen"
-    (* s.sie_condition
-    s.sie_true_branch
-    s.sie_false_branch *)
-    
+    | S_STMT_if s -> 
+      let pred_e = s.sie_condition in
+      let true_block =s.sie_true_branch in
+      let false_block = s.sie_false_branch in
+      let pred_val = trans_expr pred_e the_builder the_scope in
+      let merge_bb = L.append_block the_context "merge" the_function in
+      let branch_instr = L.build_cond_br pred_val in
+      let true_bb = L.append_block the_context "true" the_function in
+      let true_builder = trans_stmt (S_STMT_block true_block) (L.builder_at_end the_context true_bb) the_scope the_cxt in
+      let () = add_terminator true_builder (L.build_br merge_bb) in
+      let false_bb = L.append_block the_context "false" the_function in
+      let false_builder = trans_stmt (S_STMT_block false_block) (L.builder_at_end the_context false_bb) the_scope the_cxt in
+      let () = add_terminator false_builder (L.build_br merge_bb) in
+      let _ = L.build_cond_br pred_val true_bb false_bb the_builder in
+      L.builder_at_end the_context merge_bb
+
     | _ -> todo "trans_stmt"
     )
   in

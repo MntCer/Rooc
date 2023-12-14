@@ -1,14 +1,10 @@
 struct Point {
-    x: int;
-    y: int;
-}
-
-fun create_point(x:int, y:int) -> Point {
-    return Point {x : x, y : y};
+    x: int,
+    y: int,
 }
 
 fun main() -> int {
-    var p1:Point = create_point(3, 4);
+    var p1:Point = Point {x:3,y:4};
     var p2:Point = p1;
     print_int(p1.x); // expect 3
     p2.x=1+p1.x;      
