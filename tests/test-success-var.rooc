@@ -1,0 +1,6 @@
+fun main() -> int {
+    const x:int = 1;
+    var y:int = 1;
+    let z:int = 1;
+    return 0;
+}
