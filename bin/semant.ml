@@ -126,8 +126,16 @@ let analyse_module
     | Roc_assignment_expr (e1, e2) ->
       let check_lval (expr: roc_expr) : unit =
         match expr with
-        (* #TODO: are there some another possiblities? *)
-        | EXPR_path _ -> ()
+        | EXPR_path s -> 
+          (* not immutable. *)
+          (match lookup_symbol s the_symbol_table with
+          | None -> raise (SemanticError "variable not found in symbol table")
+          | Some (VarEntry v) -> 
+            if not v.sv_mutable then
+              raise (SemanticError "variable is immutable")
+            else ())
+          | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
+        | EXPR_field_access _ -> ()
         | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
       in
       let () = check_lval e1 in

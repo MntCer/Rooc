@@ -50,6 +50,8 @@ let trans_module
       | None -> raise (LLIRError "struct type used before defined"))
     | _ -> todo "other type: ST_function & ST_error"
   in
+
+
   
   (**
     #TODO: add docstring
@@ -61,6 +63,40 @@ let trans_module
     : L.llvalue = 
     let e_type = e.se_type in
     let structual_e = e.se_expr in
+
+    let rec get_field_pointer 
+    (the_var_name:string)
+    (field_name:string)
+    : L.llvalue =
+      let the_struct_var =
+        match lookup the_var_name (IRLocalScope the_scope) with
+        | Some (IRVarEntry v) -> v
+        | _ -> raise (LLIRError "struct variable not found")
+      in
+      let the_struct_name = 
+        match the_struct_var.iv_stype with
+        | ST_struct s -> s
+        | _ -> raise (LLIRError "struct type not found")
+      in
+      let the_struct = 
+        match lookup_struct the_struct_name the_global_scope with
+        | Some s -> s
+        | None -> 
+          let () = print_string the_struct_name in
+          raise (LLIRError "struct def info not found")
+      in
+      let the_struct_ptrptr = the_struct_var.iv_value_addr in
+      let the_struct_ptr = L.build_load the_struct_ptrptr the_var_name the_builder in
+      let the_field_index = 
+        match get_field_index field_name the_struct.ls_fields_index_map with
+        | Some i -> i
+        | None -> raise (LLIRError "field corresponding index not found")
+      in
+      let the_instr_name_prefix = the_var_name^"."^field_name in
+      let the_field_ptr = L.build_struct_gep the_struct_ptr the_field_index (the_instr_name_prefix^"_ptr") the_builder in
+      the_field_ptr
+    in
+
     (match structual_e with
     | S_int_literal i -> 
         L.const_int i32_t i
@@ -145,19 +181,24 @@ let trans_module
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
 
-    | S_assignment_expr (e1, e2) -> 
+    | S_assignment_expr (e1, e2) -> (
       let the_value = trans_expr e2 the_builder the_scope in
-      let the_assignee_name = 
-        match e1.se_expr with
-        | S_EXPR_path var_name -> var_name
-        | _ -> todo "not supported assignee category"
-      in 
-      let the_assignee = 
-        match lookup the_assignee_name (IRLocalScope the_scope) with
-        | Some (IRVarEntry v) -> v
-        | _ -> bug "variable not found"
-      in 
-      L.build_store the_value the_assignee.iv_value_addr the_builder 
+      match e1.se_expr with
+      | S_EXPR_path _ ->
+        let the_assignee_name = 
+          match e1.se_expr with
+          | S_EXPR_path var_name -> var_name
+          | _ -> todo "not supported assignee category"
+        in 
+        let the_assignee = 
+          match lookup the_assignee_name (IRLocalScope the_scope) with
+          | Some (IRVarEntry v) -> v
+          | _ -> bug "variable not found"
+        in 
+        L.build_store the_value the_assignee.iv_value_addr the_builder 
+      | S_EXPR_field_access (the_var_name, the_field_name) -> 
+        let the_ptr=get_field_pointer the_var_name the_field_name in
+        L.build_store the_value the_ptr the_builder)
 
     | S_EXPR_call call_e -> 
       let the_callee_name = call_e.sc_callee in 
@@ -181,33 +222,10 @@ let trans_module
     | S_grouped_expr e -> trans_expr e the_builder the_scope
 
     | S_EXPR_field_access (the_var_name, field_name) -> 
-      let the_struct_var =
-        match lookup the_var_name (IRLocalScope the_scope) with
-        | Some (IRVarEntry v) -> v
-        | _ -> raise (LLIRError "struct variable not found")
+      let the_ptr = get_field_pointer the_var_name field_name
       in
-      let the_struct_name = 
-        match the_struct_var.iv_stype with
-        | ST_struct s -> s
-        | _ -> raise (LLIRError "struct type not found")
-      in
-      let the_struct = 
-        match lookup_struct the_struct_name the_global_scope with
-        | Some s -> s
-        | None -> 
-          let () = print_string the_struct_name in
-          raise (LLIRError "struct def info not found")
-      in
-      let the_struct_ptrptr = the_struct_var.iv_value_addr in
-      let the_struct_ptr = L.build_load the_struct_ptrptr the_var_name the_builder in
-      let the_field_index = 
-        match get_field_index field_name the_struct.ls_fields_index_map with
-        | Some i -> i
-        | None -> raise (LLIRError "field corresponding index not found")
-      in
-      let the_instr_name_prefix = the_var_name^"."^field_name in
-      let the_field_ptr = L.build_struct_gep the_struct_ptr the_field_index (the_instr_name_prefix^"_ptr") the_builder in
-      L.build_load the_field_ptr the_instr_name_prefix the_builder
+      L.build_load the_ptr "tmp" the_builder
+
 
       (* field_list are all
       let the_struct_var =
@@ -357,7 +375,7 @@ let trans_module
       trans_var_decl v the_builder the_scope
 
     | S_let_decl_stmt v ->
-      todo "let decl"
+      trans_var_decl v the_builder the_scope
 
     | S_STMT_return e ->
       let the_return_value = trans_expr e the_builder the_scope in

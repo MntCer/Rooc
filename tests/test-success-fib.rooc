@@ -9,7 +9,7 @@ fun fibonacci(n: int) -> int {
         var b:int = 1;
         var i:int = 2;
 
-        while i <= n {
+        while (i <= n) {
             var temp:int = a + b;
             a = b;
             b = temp;
