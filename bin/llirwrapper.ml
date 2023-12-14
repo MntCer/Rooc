@@ -12,6 +12,7 @@ type ir_variable = {
   iv_name : string;
   iv_value_addr : llvalue;
   iv_type : lltype;
+  iv_stype : s_type;
 }
 
 type llir_cxt ={
@@ -49,6 +50,7 @@ and ir_local_scope = {
 and llir_struct = {
   ls_name : string;
   ls_fields_index_map : (string, int) Hashtbl.t;
+  
 }
 
 and ir_scope_entry =
@@ -72,7 +74,10 @@ let rec lookup (identifier: string) (scope: ir_scope) : ir_scope_entry option =
   | IRGlobalScope gs ->
     Hashtbl.find_opt gs.igs_items identifier
 
-let insert_variable_local (identifier: string) (variable: ir_variable) (local_scope: ir_local_scope) : unit =
+let insert_variable_local 
+  (identifier: string) 
+  (variable: ir_variable) 
+  (local_scope: ir_local_scope) : unit =
   Hashtbl.add local_scope.ils_variables identifier (IRVarEntry variable)
 
 let insert_function 

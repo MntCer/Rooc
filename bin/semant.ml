@@ -184,10 +184,111 @@ let analyse_module
       { se_type = analysed_expr.se_type; 
         se_expr = S_grouped_expr analysed_expr}
 
-    | EXPR_field_access (struct_name, field_name) ->
-      let () = todo "field access expr" in 
-      { se_type = ST_unit; (* #TODO: struct type *)
-        se_expr = S_EXPR_field_access (struct_name, field_name); }
+    | EXPR_field_access (var_name, expr) -> (
+      match expr with
+      | EXPR_path field_name -> 
+        (* check if there is the var *)
+        (match lookup_symbol var_name the_symbol_table with
+        | None -> raise (SemanticError "variable not found in symbol table")
+        | Some (VarEntry v) -> 
+          let v_type = v.sv_type in
+          let the_struct_name = 
+            match v.sv_type with
+            | ST_struct s -> s
+            | _ -> raise (SemanticError "want to access a non-struct type's field.") 
+          in
+          (* let () = print_string(the_struct_name) in *)
+          let the_struct = 
+            (match lookup_symbol the_struct_name the_namespace with
+            | None -> raise (SemanticError "struct not found in namespace")
+            | Some (StructEntry s) -> s
+            | _ -> raise (SemanticError (the_struct_name ^ " is not a struct")))
+          in 
+          let the_field = 
+            (match List.find_opt (fun field -> 
+              field.ssf_name = field_name) 
+              the_struct.ss_fields with
+            | None -> raise (SemanticError "field not found in struct")
+            | Some f -> f)
+          in
+          let the_field_type = the_field.ssf_type in
+          { se_type = the_field_type; 
+            se_expr = S_EXPR_field_access (var_name, field_name); })
+      | EXPR_field_access (s2,e2) -> 
+        raise (SemanticError "field access not supported yet")
+    )
+
+        (* let field_list = 
+          let rec get_field_list 
+            acc 
+            (x:roc_expr) 
+            : string list = (
+          match x with
+          | EXPR_path s -> s::acc
+          | EXPR_field_access (s2,e2) -> 
+            let new_acc = s2::acc in
+            get_field_list new_acc e2) 
+          in
+          get_field_list [] expr
+        in
+        (* check if there is the var *)
+        match lookup_symbol var_name the_symbol_table with
+        | None -> 
+          let () = print_string(var_name) in
+          raise (SemanticError "struct not found in namespace")
+        | Some (VarEntry v) -> 
+          let v_type = v.sv_type in
+          let the_struct_name = 
+            match v.sv_type with
+            | ST_struct s -> s
+            | _ -> raise (SemanticError "want to access a non-struct type's field.") 
+          in
+          (* let () = print_string(the_struct_name) in *)
+          let the_struct = 
+            (match lookup_symbol the_struct_name the_namespace with
+            | None -> raise (SemanticError "struct not found in namespace")
+            | Some (StructEntry s) -> s
+            | _ -> raise (SemanticError (the_struct_name ^ " is not a struct")))
+          in 
+          let rec analyse_field_list 
+            (the_list:string list) 
+            (the_struct: s_struct)
+            : s_type =
+            match the_list with
+            | [field_name] -> 
+              let the_field = 
+                (match List.find_opt (fun field -> 
+                  field.ssf_name = field_name) 
+                  the_struct.ss_fields with
+                | None -> raise (SemanticError "field not found in struct")
+                | Some f -> f)
+              in
+              the_field.ssf_type
+            | hd::tl -> 
+              let field_name = hd in
+              let the_field = 
+                (match List.find_opt (fun field -> 
+                  field.ssf_name = field_name) 
+                  the_struct.ss_fields with
+                | None -> raise (SemanticError "field not found in struct")
+                | Some f -> f)
+              in
+              let the_field_type = the_field.ssf_type in
+              (* need the field type to be a struct. *)
+              let the_field_type_name = match the_field_type with
+                | ST_struct s -> s
+                | _ -> raise (SemanticError "want to access a non-struct type's field.")
+              in 
+              let the_next_struct = match lookup_symbol the_field_type_name the_namespace with
+                | None -> raise (SemanticError "struct not found in namespace")
+                | Some (StructEntry s) -> s
+                | _ -> raise (SemanticError (the_field_type_name ^ " is not a struct"))
+              in
+              analyse_field_list tl the_next_struct
+          in
+          let analysed_type = analyse_field_list field_list the_struct in
+          { se_type = analysed_type; 
+            se_expr = S_EXPR_field_access (var_name, field_list); } *)
 
     | EXPR_path (var_name) ->
       (match lookup_symbol var_name the_symbol_table with
@@ -295,7 +396,6 @@ let analyse_module
       { se_type = analysed_type;
         se_expr = S_EXPR_struct 
         (the_struct_name, analysed_fields); }
-
     
   (**
     #TODO: add docstring

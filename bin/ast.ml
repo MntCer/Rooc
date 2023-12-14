@@ -49,7 +49,7 @@ type roc_expr =
   | Roc_grouped_expr of roc_expr
 
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
-  | EXPR_field_access of string * string
+  | EXPR_field_access of string * roc_expr
   | EXPR_path of string
   | EXPR_struct of roc_expr * (struct_field_expr list)
 
@@ -149,20 +149,24 @@ type impl_decl = {
 (* Pretty-printing functions *)
 (* ************************************************************ *)
 
-let string_of_module = function
-    _ -> "TODO"
+let rec string_of_module 
+  roc_module = 
+  let items = roc_module.rm_items in
+  let items_str = List.map string_of_item items in
+  String.concat "\n" items_str
 
-let string_of_arith_op = function
+
+and string_of_arith_op = function
     Add -> "+"
   | Sub -> "-"
   | Mult -> "*"
   | Div -> "/"
 
-let string_of_logical_op = function
+and string_of_logical_op = function
     And -> "&&"
   | Or -> "||"
 
-let string_of_comparison_op = function
+and string_of_comparison_op = function
   | Equal -> "=="
   | Neq -> "!="
   | Less -> "<"
@@ -170,13 +174,47 @@ let string_of_comparison_op = function
   | Greater -> ">"
   | Geq -> ">="
 
-let string_of_unary_op = function
+and string_of_unary_op = function
     Neg -> "-"
   | Not -> "!"
 
-let string_of_r_type = function
+and string_of_r_type = function
   T_int -> "int"
 | T_bool -> "bool"
 | T_float -> "float"
 | T_string -> "string"
 | T_unit -> "unit"
+| T_typex t -> "typex" ^ (string_of_r_type_expr t)
+
+and string_of_r_type_expr = function
+  R_user_defined_type t -> t
+
+and string_of_item = function
+  FunctionItem f -> string_of_function f
+| StructItem s -> string_of_struct s
+
+and string_of_function f = 
+  let name = f.rf_name in
+  let params = f.rf_params in
+  let return_type = f.rf_return_type in
+  let body = f.rf_body in
+  let params_str = match params with
+    | None -> ""
+    | Some p -> string_of_params p in
+  let return_type_str = string_of_r_type return_type in
+  let body_str = string_of_block body in
+  "fn " ^ name ^ params_str ^ " -> " ^ return_type_str ^ " {\n" ^ body_str ^ "\n}"
+
+and string_of_params p = 
+  "TODO: params"
+
+and string_of_block b = 
+  let stmts = b.rb_stmts in
+  let stmts_str = List.map string_of_stmt stmts in
+  String.concat "\n" stmts_str
+
+and string_of_stmt s = 
+  "TODO: stmt"
+
+and string_of_struct s = 
+  "TODO: struct str"

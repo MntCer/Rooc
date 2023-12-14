@@ -175,7 +175,6 @@ expr_nonempty:
   | expr_field_access %prec FIELD {$1}
   | expr_path %prec PATH {$1}
   | expr_struct {$1}
-  // | expr_box_init {$1}
 
 roc_expr:
   | expr_empty %prec LOWEST_PRECEDENCE { $1 }
@@ -241,12 +240,9 @@ optional_comma:
   | COMMA { () }
 
 expr_field_access:
-    // #TODO: it's a simplified version, but the complele version has some unsolvable problems now.
-    ID DOT ID { EXPR_field_access ($1, $3) } 
-
-// expr_box_init:
-//     BOX COLON COLON NEW LPAREN expr_nonempty RPAREN 
-//       { EXPR_box_init ($6) }
+    ID DOT expr_path { EXPR_field_access ($1, $3) } 
+    // this is not a good design, because it will effect the expr_path's semantic analysis
+  | ID DOT expr_field_access { EXPR_field_access ($1, $3) }
 
 expr_path:
     ID { EXPR_path ($1) }

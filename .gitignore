@@ -7,6 +7,7 @@
 *.opam
 
 *.out
+*.exe
 _build
 *.log
 *.ll

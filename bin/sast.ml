@@ -56,7 +56,6 @@ and s_structual_expr =
   | S_EXPR_field_access of string * string
   | S_EXPR_path of string
   | S_EXPR_struct of string * s_variable list
-  (* | S_EXPR_box_init of s_expr *)
 
 
 and sexpr_call= {

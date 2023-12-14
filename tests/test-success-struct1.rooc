@@ -8,5 +8,7 @@ fun main() -> int {
     var test2:Test = Test {field2 : 1.0, field1 : 1,};
     var test3:Test = Test {field2 : 1.0, field1 : 1};
     
+    print_int(test1.field1);
+
     return 0;
 }

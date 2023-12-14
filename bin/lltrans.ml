@@ -180,7 +180,85 @@ let trans_module
 
     | S_grouped_expr e -> trans_expr e the_builder the_scope
 
-    | S_EXPR_field_access (e, field_name) -> todo "field access"
+    | S_EXPR_field_access (the_var_name, field_name) -> 
+      let the_struct_var =
+        match lookup the_var_name (IRLocalScope the_scope) with
+        | Some (IRVarEntry v) -> v
+        | _ -> raise (LLIRError "struct variable not found")
+      in
+      let the_struct_name = 
+        match the_struct_var.iv_stype with
+        | ST_struct s -> s
+        | _ -> raise (LLIRError "struct type not found")
+      in
+      let the_struct = 
+        match lookup_struct the_struct_name the_global_scope with
+        | Some s -> s
+        | None -> 
+          let () = print_string the_struct_name in
+          raise (LLIRError "struct def info not found")
+      in
+      let the_struct_ptrptr = the_struct_var.iv_value_addr in
+      let the_struct_ptr = L.build_load the_struct_ptrptr the_var_name the_builder in
+      let the_field_index = 
+        match get_field_index field_name the_struct.ls_fields_index_map with
+        | Some i -> i
+        | None -> raise (LLIRError "field corresponding index not found")
+      in
+      let the_instr_name_prefix = the_var_name^"."^field_name in
+      let the_field_ptr = L.build_struct_gep the_struct_ptr the_field_index (the_instr_name_prefix^"_ptr") the_builder in
+      L.build_load the_field_ptr the_instr_name_prefix the_builder
+
+      (* field_list are all
+      let the_struct_var =
+        match lookup the_var_name (IRLocalScope the_scope) with
+        | Some (IRVarEntry v) -> v
+        | _ -> raise (LLIRError "struct variable not found")
+      in
+      let the_struct_name = match the_struct_var.iv_stype with
+        | ST_struct s -> s
+        | _ -> raise (LLIRError "struct type not found")
+      in
+      let the_struct = match lookup_struct the_struct_name the_global_scope with
+        | Some s -> s
+        | None -> 
+          let () = print_string the_struct_name in
+          raise (LLIRError "struct def info not found")
+      in
+      let the_struct_ptrptr = the_struct_var.iv_value_addr in
+      let rec get_the_target 
+        (the_struct: llir_struct)
+        (the_struct_ptrptr: llvalue)
+        (the_field_list: string list)
+        : llvalue =
+        match the_field_list with
+        | [field] ->
+          let the_index_map = the_struct.ls_fields_index_map in
+          let the_struct_ptr = L.build_load the_struct_ptrptr the_var_name the_builder in
+        | hd:tl ->
+          let the_index_map = the_struct.ls_fields_index_map in
+          let the_field_index = match get_field_index hd the_index_map with
+          | Some i -> i
+          | None -> raise (LLIRError "field corresponding index not found")
+          in
+
+      in
+      
+
+      let the_value = 
+        (match s_e.se_expr with
+        | S_EXPR_path field_name -> 
+          let the_field_index = match get_field_index field_name the_struct.ls_fields_index_map with
+          | Some i -> i
+          | None -> raise (LLIRError "field corresponding index not found")
+          in
+          let the_instr_name_prefix = the_var_name^"."^field_name in
+          let the_field_ptr = L.build_struct_gep the_struct_ptr the_field_index (the_instr_name_prefix^"_ptr") the_builder in
+          L.build_load the_field_ptr the_instr_name_prefix the_builder 
+
+        | S_EXPR_field_access (struct_name_2, s_e_2) ->
+          todo "field access")
+      in the_value *)
 
     | S_EXPR_path (var_name) ->
       let the_var = 
@@ -214,11 +292,13 @@ let trans_module
         in
         let the_field_ptr = L.build_struct_gep alloca the_field_index var.sv_name the_builder in
         let _ = L.build_store the_init_val the_field_ptr the_builder in
-        ()) var_list
-      in
-      alloca
+        ()) 
+        var_list
+      (* insert symbol in outside call. *)
+      in alloca
 
-    | _ -> todo "trans_expr")
+    | _ -> todo "trans_expr"
+    )
   in
 
   (**
@@ -242,6 +322,7 @@ let trans_module
       iv_name = local_name;
       iv_type = local_type;
       iv_value_addr = alloca;
+      iv_stype=v.sv_type;
     } in
     let () = insert_variable_local local_name local_var the_scope in 
     the_builder
@@ -359,6 +440,7 @@ let trans_module
           iv_name = local_name;
           iv_type = local_type;
           iv_value_addr = alloca;
+          iv_stype=param.sv_type;
         } in
         insert_variable_local local_name local_var the_scope;
       in

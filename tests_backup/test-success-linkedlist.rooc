@@ -1,11 +1,24 @@
 struct int_list_node {
-	var val: int;
-	var next: list_node; //use null?
+	val: int,
+	next: list_node,
 }
 
-impl int_list_node {
-	fun append(self, val:int) {
-		var new_node = int_list_node(val);
-		self.next = new_node;
+fun main() ->int{
+	var i:int =0;
+	var head:int_list_node = int_list_node{
+		val:0,
+		next:null, };
+	var cur:int_list_node = head;
+
+	while(i<5)	{
+		i=i+1;
+		var new_node:int_list_node = int_list_node{
+			val:i,
+			next:null, };
+		cur.next=new_node;
+		cur=new_node;
 	}
+	
+	print_int(cur.i); // supposed to be 5.
+	return 0;
 }
