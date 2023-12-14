@@ -44,7 +44,9 @@ let trans_module
     | ST_unit -> void_t (* #TODO: ad hoc solution, need re reclear it *)
     | ST_struct s -> 
       (match lookup_type s the_type_env with
-      | Some t -> t (* #NOTE: return it's pointer? Not here. *)
+      | Some t -> L.pointer_type t 
+      (* #NOTE: return it's pointer here? 
+         must be here, cannot change call function. *)
       | None -> raise (LLIRError "struct type used before defined"))
     | _ -> todo "other type: ST_function & ST_error"
   in
@@ -188,6 +190,34 @@ let trans_module
       in
       L.build_load the_var.iv_value_addr var_name the_builder
 
+    | S_EXPR_struct (the_struct_name, var_list) -> (* #TODO: after refactor the 2nd term, rename here. *)
+      let the_struct_type = 
+        match lookup_type the_struct_name the_type_env with
+        | Some t -> t
+        | None -> raise (LLIRError "struct type not found")
+      in
+      let the_fields_index_map = 
+        match lookup_struct the_struct_name the_global_scope with
+        | Some s -> s.ls_fields_index_map
+        | None -> raise (LLIRError "struct not found")
+      in
+      let alloca = L.build_alloca the_struct_type (the_struct_name^"_instance") the_builder in
+      let ()=List.iter (fun var -> 
+        let the_init_val=
+          match var.sv_initial_value with
+          | Some (e) -> trans_expr e the_builder the_scope
+          | None -> raise (LLIRError "instantiate field without initial value")
+        in
+        let the_field_index = match get_field_index var.sv_name the_fields_index_map with
+        | Some i -> i
+        | None -> raise (LLIRError "field corresponding index not found")
+        in
+        let the_field_ptr = L.build_struct_gep alloca the_field_index var.sv_name the_builder in
+        let _ = L.build_store the_init_val the_field_ptr the_builder in
+        ()) var_list
+      in
+      alloca
+
     | _ -> todo "trans_expr")
   in
 
@@ -298,82 +328,87 @@ let trans_module
   (**
     take a s_function in and get a LLVM function in llvalue type
   *)
-  let trans_function (f: s_function) =
-    let the_name=f.sf_name in
-    (* let () = print_string the_name in *)
-    let search_result =
-      let the_entry = lookup the_name (IRGlobalScope the_global_scope) in
-      match the_entry with
-      | Some(IRFuncEntry (IRRoocFunction (f))) -> f
-      | _ -> bug "Want irf_function but get others."
-    in
-    let the_function = search_result.irf_function in
-    let the_scope = search_result.irf_scope in
-    let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
-    let the_cxt={
-      cur_function=the_function;
-    } in
-
-    (* Process formals: Set names and allocate space *)
-    let add_formal (param: s_variable) llvm_param =
-      let local_name = param.sv_name in
-      let local_type = trans_type param.sv_type in
-      let () = L.set_value_name local_name llvm_param in
-      let alloca = L.build_alloca local_type local_name the_builder in
-      let _ = L.build_store llvm_param alloca the_builder in
-      let local_var = {
-        iv_name = local_name;
-        iv_type = local_type;
-        iv_value_addr = alloca;
+  let trans_function 
+    (key: string)
+    (the_entry: s_symbol_table_entry) =
+    match the_entry with
+    | FuncEntry f ->
+      let the_name=f.sf_name in
+      (* let () = print_string the_name in *)
+      let search_result =
+        let the_entry = lookup the_name (IRGlobalScope the_global_scope) in
+        match the_entry with
+        | Some(IRFuncEntry (IRRoocFunction (f))) -> f
+        | _ -> bug "Want irf_function but get others."
+      in
+      let the_function = search_result.irf_function in
+      let the_scope = search_result.irf_scope in
+      let the_builder = L.builder_at_end the_context (L.entry_block the_function) in
+      let the_cxt={
+        cur_function=the_function;
       } in
-      insert_variable_local local_name local_var the_scope;
-    in
-    (* get the params of `the_function` and apply `add_formal` on them. *)
-    (match f.sf_params with
-    | Some params -> 
-      List.iter2 add_formal params.sp_params
-                        (Array.to_list (L.params the_function))
-    | None -> ());
 
-    (* translate the function body *)
-    let the_builder = 
-      match f.sf_body with
-      | UserDefined body -> (
-          let stmts=body.sb_stmts in
-          List.fold_left  (* #TODO: this line is a little ugly *)
-          (fun the_builder stmt -> 
-            trans_stmt stmt the_builder the_scope the_cxt) 
-            the_builder stmts)
-      | BuiltIn -> (
-        let translate_builtin_func 
-          the_name 
-          the_builder 
-          the_scope
-          the_global_scope =
-          try
-            let trans_func = Hashtbl.find builtins_map the_name in
-            trans_func the_builder the_scope the_global_scope
-          with
-          | Not_found -> bug "not supported built-in function" 
-        in 
-        translate_builtin_func the_name the_builder the_scope the_global_scope;
-      )
-    in
+      (* Process formals: Set names and allocate space *)
+      let add_formal (param: s_variable) llvm_param =
+        let local_name = param.sv_name in
+        let local_type = trans_type param.sv_type in
+        let () = L.set_value_name local_name llvm_param in
+        let alloca = L.build_alloca local_type local_name the_builder in
+        let _ = L.build_store llvm_param alloca the_builder in
+        let local_var = {
+          iv_name = local_name;
+          iv_type = local_type;
+          iv_value_addr = alloca;
+        } in
+        insert_variable_local local_name local_var the_scope;
+      in
+      (* get the params of `the_function` and apply `add_formal` on them. *)
+      (match f.sf_params with
+      | Some params -> 
+        List.iter2 add_formal params.sp_params
+                          (Array.to_list (L.params the_function))
+      | None -> ());
 
-    (* add the final terminator *)
-    add_terminator 
-    the_builder 
-    (match search_result.irf_return_type with
-    | ST_int -> 
-      L.build_ret (L.const_int i32_t 0)
-    | ST_unit -> 
-      L.build_ret_void
-    | ST_float ->
-      L.build_ret (L.const_float float_t 0.0)
-    | ST_bool ->
-      L.build_ret (L.const_int i1_t 0)
-    | _ -> todo "other return type"
-    );
+      (* translate the function body *)
+      let the_builder = 
+        match f.sf_body with
+        | UserDefined body -> (
+            let stmts=body.sb_stmts in
+            List.fold_left  (* #TODO: this line is a little ugly *)
+            (fun the_builder stmt -> 
+              trans_stmt stmt the_builder the_scope the_cxt) 
+              the_builder stmts)
+        | BuiltIn -> (
+          let translate_builtin_func 
+            the_name 
+            the_builder 
+            the_scope
+            the_global_scope =
+            try
+              let trans_func = Hashtbl.find builtins_map the_name in
+              trans_func the_builder the_scope the_global_scope
+            with
+            | Not_found -> bug "not supported built-in function" 
+          in 
+          translate_builtin_func the_name the_builder the_scope the_global_scope;
+        )
+      in
+
+      (* add the final terminator *)
+      add_terminator 
+      the_builder 
+      (match search_result.irf_return_type with
+      | ST_int -> 
+        L.build_ret (L.const_int i32_t 0)
+      | ST_unit -> 
+        L.build_ret_void
+      | ST_float ->
+        L.build_ret (L.const_float float_t 0.0)
+      | ST_bool ->
+        L.build_ret (L.const_int i1_t 0)
+      | _ -> todo "other return type")
+
+    | _ -> ()
   in
 
   (**
@@ -382,61 +417,49 @@ let trans_module
     construcrt all the info in our ir type: llir_struct.
   *)
   let trans_struct
-    (sast_struct: s_struct)
-    :unit =
-    let the_struct_name = sast_struct.ss_name in
-    let the_struct_type = 
-      match lookup_type the_struct_name the_type_env with
-      | Some t -> t
-      | None -> raise (LLIRError "struct type not found")
-    in
-    let the_field_list = sast_struct.ss_fields in
-    (* get the field_type *)
-    let get_struct_body_types
-      (field_list: s_struct_field list)
-      : L.lltype list =
-      List.map 
-      (fun field -> 
-        let the_ty=field.ssf_type in
-        match the_ty with
-        | ST_struct sty -> L.pointer_type (trans_type the_ty) (* treat the *)
-        | _ -> trans_type the_ty
+    (key: string)
+    (the_entry: s_symbol_table_entry)
+    : unit =
+    match the_entry with
+    | StructEntry sast_struct ->
+      let the_struct_name = sast_struct.ss_name in
+      let the_struct_type = 
+        match lookup_type the_struct_name the_type_env with
+        | Some t -> t
+        | None -> raise (LLIRError "struct type not found")
+      in
+      let the_field_list = sast_struct.ss_fields in
+      (* get the field_type *)
+      let get_struct_body_types
+        (field_list: s_struct_field list)
+        : L.lltype list =
+        List.map (fun field -> 
+          let the_ty=field.ssf_type in
+          trans_type the_ty) 
+          field_list
+      in 
+      let the_struct_body_types = get_struct_body_types the_field_list in
+      (* construct the field to index map. *)
+      let create_fields_index_map 
+        (field_list: s_struct_field list) 
+        : (string,int) Hashtbl.t =
+        let map : (string, int) Hashtbl.t = Hashtbl.create 10 in
+        let () = List.iteri (fun index field ->
+          Hashtbl.add map field.ssf_name index
         ) field_list
-    in 
-    let the_struct_body_types = get_struct_body_types the_field_list in
-    (* construct the field to index map. *)
-    let create_fields_index_map 
-      (field_list: s_struct_field list) 
-      : (string,int) Hashtbl.t =
-      let map : (string, int) Hashtbl.t = Hashtbl.create 10 in
-      let () = List.iteri (fun index field ->
-        Hashtbl.add map field.ssf_name index
-      ) field_list
-      in map
-    in 
-    let the_fields_index_map = create_fields_index_map the_field_list in
-    (* define struct body in LLVM IR *)
-    let the_struct_body = Array.of_list the_struct_body_types in
-    let () = L.struct_set_body the_struct_type the_struct_body false in
-    (* create the llir_struct type *)
-    let the_llir_struct = {
-      ls_name = the_struct_name;
-      ls_fields_index_map = the_fields_index_map;}
-    in
-    insert_struct the_struct_name the_llir_struct the_global_scope
-  in
-
-  (**
-    translate all items from our sast IR to LLVM IR.
-  *)
-  let trans_item 
-  (key: string) 
-  (item: s_symbol_table_entry) 
-  : unit =
-    match item with
-    | FuncEntry f -> trans_function f
-    | StructEntry s -> trans_struct s
-    | _ -> todo "not supported. in translate_item"
+        in map
+      in 
+      let the_fields_index_map = create_fields_index_map the_field_list in
+      (* define struct body in LLVM IR *)
+      let the_struct_body = Array.of_list the_struct_body_types in
+      let () = L.struct_set_body the_struct_type the_struct_body false in
+      (* create the llir_struct type *)
+      let the_llir_struct = {
+        ls_name = the_struct_name;
+        ls_fields_index_map = the_fields_index_map;}
+      in
+      insert_struct the_struct_name the_llir_struct the_global_scope
+    | _ -> ()
   in
 
   (**
@@ -485,5 +508,7 @@ let trans_module
     (* need to register struct first. *)
     Hashtbl.iter register_struct to_trans.sm_namespace.sst_symbols;
     Hashtbl.iter register_function to_trans.sm_namespace.sst_symbols;
-    Hashtbl.iter trans_item to_trans.sm_namespace.sst_symbols;
+
+    Hashtbl.iter trans_struct to_trans.sm_namespace.sst_symbols;
+    Hashtbl.iter trans_function to_trans.sm_namespace.sst_symbols;
     the_module

@@ -255,11 +255,14 @@ expr_struct:
     expr_path LBRACE struct_field_exprs RBRACE { EXPR_struct ($1, List.rev $3) }
 
 struct_field_exprs:
+    struct_field_exprs_no_comma optional_comma { List.rev $1 }
+
+struct_field_exprs_no_comma:
     struct_field_expr { [$1] }
-  | struct_field_exprs struct_field_expr { $2 :: $1 }
+  | struct_field_exprs_no_comma COMMA struct_field_expr { $3 :: $1 }
 
 struct_field_expr:
-    ID COLON expr_nonempty SEMI 
+    ID COLON expr_nonempty 
     { {esf_name =$1; 
        esf_expr =$3;} }
 

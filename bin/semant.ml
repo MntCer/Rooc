@@ -486,6 +486,26 @@ let analyse_module
     : s_struct =
     let analysed_name = raw_struct.rs_name in
     let raw_fields = raw_struct.rs_fields in
+    (* don't allow two fields with same name. *)
+    let sorted_r_fields = 
+      List.sort (fun f1 f2 -> compare f1.rsf_name f2.rsf_name) raw_fields in
+    let rec has_duplicate
+      (the_list: r_struct_field list)
+      (last_name: string)
+      : bool =
+      match the_list with
+      | [] -> false
+      | hd::tl -> 
+        let the_name = hd.rsf_name in
+        if the_name = last_name then true
+        else has_duplicate tl the_name
+    in
+    let () = 
+      if has_duplicate sorted_r_fields "" then
+        raise (SemanticError "duplicate field name in struct")
+      else ()
+    in
+    (* analyse fields *)
     let analysed_fields = 
       List.map 
       (fun field -> analyse_field field the_cxt) 

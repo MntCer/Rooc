@@ -1,0 +1,9 @@
+fun main() -> int {
+    return 0;
+}
+
+struct Test {
+    x:int,
+    x:float,
+}
+

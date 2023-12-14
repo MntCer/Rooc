@@ -89,6 +89,17 @@ let insert_struct
   : unit =
   Hashtbl.add global_scope.igs_structs identifier s
 
+let lookup_struct 
+  (identifier: string) 
+  (global_scope: ir_global_scope) 
+  : llir_struct option =
+  Hashtbl.find_opt global_scope.igs_structs identifier
+
+let get_field_index 
+  (field_name: string) 
+  (map: (string, int) Hashtbl.t) 
+  : int option =
+    Hashtbl.find_opt map field_name
 
 let init_global_scope () : ir_global_scope =
   {
