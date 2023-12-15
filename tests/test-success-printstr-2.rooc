@@ -1,0 +1,6 @@
+// Test print_str with special characters
+fun main() -> int {
+    print_str("1 2 3 4 5 Hello World () \n \s '' ! + - * / ");
+    return 0;
+}
+

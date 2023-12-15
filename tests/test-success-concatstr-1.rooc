@@ -1,0 +1,6 @@
+// Test concat_str with 2 simple strings
+fun main() -> int {
+    concat_str("hello ", "world");
+    return 0;
+}
+
