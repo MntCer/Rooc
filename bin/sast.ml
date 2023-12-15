@@ -10,6 +10,8 @@ type s_type =
   | ST_bool
 
   | ST_struct of string
+  | ST_trait of string
+
   | ST_sequence of s_sequence_type
 
   | ST_function of s_function_type
@@ -144,11 +146,17 @@ and s_struct = {
   ss_fields : s_struct_field list;
 }
 
+and s_trait = {
+  st_name : string;
+  st_method_signatures : s_method_signature list;
+}
+
 and s_symbol_table_entry =
   | FuncSigEntry of s_function_signature
   | FuncEntry of s_function
   | StructEntry of s_struct
   | VarEntry of s_variable
+  | TraitEntry of s_trait
 
 and s_symbol_table = {
   sst_parent : s_symbol_table option;
@@ -246,6 +254,7 @@ let rec string_of_s_type = function
   | ST_bool -> "bool"
   | ST_function ft -> string_of_s_function_type ft
   | ST_struct st -> string_of_s_struct_type st
+  | ST_trait tt -> string_of_s_trait_type tt
   | ST_sequence st -> string_of_s_sequence_type st
   | ST_error -> "type error"
 
@@ -258,4 +267,5 @@ and string_of_s_struct_type st =
 and string_of_s_sequence_type st =
   todo "string_of_s_sequence_type"
 
-
+and string_of_s_trait_type tt =
+  todo "string_of_s_trait_type"

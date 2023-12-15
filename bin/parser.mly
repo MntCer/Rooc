@@ -54,6 +54,7 @@ roc_items:
 roc_item:
     roc_function { FunctionItem($1) }
   | r_struct { StructItem($1) }
+  | roc_trait { TraitItem($1) }
   // | %TODO
 
 roc_function:
@@ -85,13 +86,17 @@ roc_param:
       rv_name = $1;
       rv_type = $3;
       rv_initial_expr = None } }
-    
-// roc_method_signature:
-//     FUN ID LPAREN roc_method_params RPAREN RARROW r_type SEMI
-//     { {
-//       rms_name = $2;
-//       rms_params = $4;
-//       rms_return_type = $7 } }
+
+roc_method_signatures:
+    roc_method_signature { [$1] }
+  | roc_method_signatures roc_method_signature { $2 :: $1 }
+
+roc_method_signature:
+    FUN ID LPAREN roc_method_params RPAREN RARROW r_type SEMI
+    { {
+      rms_name = $2;
+      rms_params = $4;
+      rms_return_type = $7; } }
 
 // roc_method:
 //     FUN ID LPAREN roc_method_params RPAREN RARROW r_type roc_block
@@ -101,16 +106,22 @@ roc_param:
 //       rm_return_type = $7;
 //       rm_body = $8 } }
     
-// roc_method_params:
-//     SELF { None }
-//   | SELF COMMA roc_params  { Some ({
-//     rp_params=List.rev $3}) }
+roc_method_params:
+    SELF { None }
+  | SELF COMMA roc_params  { Some ({
+     rp_params=List.rev $3}) }
 
 r_struct:
     STRUCT ID LBRACE struct_fields RBRACE 
     { {
       rs_name = $2 ;
       rs_fields = List.rev $4; } }
+
+roc_trait:
+    TRAIT ID LBRACE roc_method_signatures RBRACE
+    { {
+      rt_name = $2;
+      rt_methods = $4; } }
 
 struct_fields:
     struct_fields_no_comma optional_comma { List.rev $1 }
