@@ -1,4 +1,4 @@
-// Test with a small positive integer
+// Test print_str with simple str
 fun main() -> int {
     print_str("hello");
     return 0;

@@ -30,18 +30,23 @@ let trans_module
   let i8_t      = L.i8_type     the_context in
   let i1_t       = L.i1_type     the_context in
   let float_t    = L.double_type the_context in
-  let void_t     = L.void_type   the_context
-  (* let str_t     = L.pointer_type (L.i8_type the_context) in *)
+  let void_t     = L.void_type   the_context in
+  let str_t     = L.pointer_type (L.i8_type the_context)
   in
 
   (** 
-    Convert SAST types to LLVM types 
+    Convert SAST types to LLVM types.
+    the principle to decide which lltype to use is:
+    - if want to create a value in this type, which llvalue you will get, what is its type?
+    - for immidiate value, we will get its high lvl type, like `int` for `int`, so just i32_type;
+    - for string, we will use build_global_stringptr to get a pointer to i8 array, and that's the type here.
+    - for struct, we will use build_alloca to get a struct*, so we also need to use `pointer_type` here.
   *)
   let trans_type = function
     | ST_int -> i32_t
     | ST_bool -> i1_t
     | ST_float -> float_t
-    (* | ST_string -> str_t *)
+    | ST_string -> str_t
     | ST_unit -> void_t (* #TODO: ad hoc solution, need re reclear it *)
     | ST_struct s -> 
       (match lookup_type s the_type_env with
@@ -52,8 +57,6 @@ let trans_module
     | _ -> todo "other type: ST_function & ST_error"
   in
 
-
-  
   (**
     #TODO: add docstring
   *)
@@ -99,18 +102,19 @@ let trans_module
     in
 
     (match structual_e with
+    (* generate a immediate number. *)
     | S_int_literal i -> 
         L.const_int i32_t i
-
+    (* generate a immediate number. *)
     | S_float_literal f ->
         L.const_float float_t f
-
+    (* generate a immediate number. *)
     | S_bool_literal b ->
         L.const_int i1_t (if b then 1 else 0)
-
+    (* will generate a stringptr *)
     | S_string_literal s -> 
       L.build_global_stringptr s "str" the_builder
-
+    (* #TODO: need to test, i8_t isn't right. *)
     | S_EXPR_null ->
       L.const_null i8_t
 
@@ -184,6 +188,11 @@ let trans_module
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
 
+    (** 
+      lhs needs a mutable ptr, rhs needs a llvalue, type matched. 
+      lvalue: a mutable variable, a field; 
+       
+    *)
     | S_assignment_expr (e1, e2) -> (
       let the_value = trans_expr e2 the_builder the_scope in
       match e1.se_expr with
@@ -199,9 +208,11 @@ let trans_module
           | _ -> bug "variable not found"
         in 
         L.build_store the_value the_assignee.iv_value_addr the_builder 
-      | S_EXPR_field_access (the_var_name, the_field_name) -> 
-        let the_ptr=get_field_pointer the_var_name the_field_name in
-        L.build_store the_value the_ptr the_builder)
+      | S_EXPR_field_access (var_name, field_name_list) -> 
+        todo "need to rewrite."
+        (* let the_ptr=get_field_pointer the_var_name the_field_name in *)
+        (* L.build_store the_value the_ptr the_builder) *)
+      )
 
     | S_EXPR_call call_e -> 
       let the_callee_name = call_e.sc_callee in 
@@ -224,10 +235,11 @@ let trans_module
 
     | S_grouped_expr e -> trans_expr e the_builder the_scope
 
-    | S_EXPR_field_access (the_var_name, field_name) -> 
-      let the_ptr = get_field_pointer the_var_name field_name
+    | S_EXPR_field_access (var_name, field_name_list) -> 
+      todo "need to rewrite."
+      (* let the_ptr = get_field_pointer var_name field_name_list
       in
-      L.build_load the_ptr "tmp" the_builder
+      L.build_load the_ptr "tmp" the_builder *)
 
 
       (* field_list are all
@@ -281,6 +293,7 @@ let trans_module
           todo "field access")
       in the_value *)
 
+    (* for a var, return its value. *)
     | S_EXPR_path (var_name) ->
       let the_var = 
         match lookup var_name (IRLocalScope the_scope) with
@@ -289,7 +302,9 @@ let trans_module
       in
       L.build_load the_var.iv_value_addr var_name the_builder
 
-    | S_EXPR_struct (the_struct_name, var_list) -> (* #TODO: after refactor the 2nd term, rename here. *)
+    (*  *)
+    (* #TODO: after refactor the 2nd term, rename here. *)
+    | S_EXPR_struct (the_struct_name, var_list) -> 
       let the_struct_type = 
         match lookup_type the_struct_name the_type_env with
         | Some t -> t
@@ -316,7 +331,7 @@ let trans_module
         ()) 
         var_list
       (* insert symbol in outside call. *)
-      in alloca
+      in alloca (**)
 
     | _ -> todo "trans_expr"
     )
@@ -332,6 +347,7 @@ let trans_module
     : L.llbuilder =
     let local_name = v.sv_name in
     let local_type = trans_type v.sv_type in
+    (**)
     let alloca = L.build_alloca local_type local_name the_builder in
     let initial_value =
       match v.sv_initial_value with
