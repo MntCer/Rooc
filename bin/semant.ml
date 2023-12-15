@@ -664,6 +664,76 @@ let analyse_module
   in
 
   (**
+    register traits 
+  *)
+  let analyse_method_sig
+  (raw_method_sig: roc_method_signature)
+  (the_cxt: semant_cxt)
+  : s_method_signature = 
+    let the_symbol_table = the_cxt.sc_current_sb in
+    let the_type_env = the_cxt.sc_type_env in
+    let analysed_name = raw_method_sig.rms_name in
+    let raw_params =  raw_method_sig.rms_params in
+    let raw_return_type = raw_method_sig.rms_return_type in
+    let analysed_params =
+        (match raw_params with
+        | None -> None
+        | Some params -> Some (analyse_params params the_cxt))
+    in
+    let analysed_type =
+      (match raw_params with
+      | None ->
+        { sft_params_type = [];
+          sft_return_type = analyse_type raw_return_type  the_cxt; }
+      | Some params ->
+        let analysed_params_type = analyse_params_type params the_cxt in
+        { sft_params_type = analysed_params_type;
+          sft_return_type = analyse_type raw_return_type the_cxt; } )
+    in   
+    { sms_name = analysed_name;
+      sms_params = analysed_params;
+      sms_type = analysed_type; } 
+  in
+
+  let register_trait
+  (raw_trait: roc_trait)
+  (the_cxt: semant_cxt)
+  : unit = 
+    let the_namespace = the_cxt.sc_namespace in
+    let the_symbol_table = the_cxt.sc_current_sb in
+    let the_type_env = the_cxt.sc_type_env in
+    let analysed_name = raw_trait.rt_name in
+    let analyse_method_sig_cur_cxt methods = 
+      analyse_method_sig methods the_cxt
+    in
+    let analysed_method_sigs = 
+      List.map analyse_method_sig_cur_cxt raw_trait.rt_methods
+    in 
+    let analysed_trait = 
+      { st_name = analysed_name;
+        st_method_signatures = analysed_method_sigs; }
+    in
+    insert_symbol the_namespace analysed_trait.st_name (TraitEntry analysed_trait)
+  in
+
+  let process_traits
+    (the_module: roc_module)
+    (the_cxt: semant_cxt)
+    : unit = 
+    let the_namespace = the_cxt.sc_namespace in
+    let the_type_env = the_cxt.sc_type_env in
+    let () =
+      List.iter
+      (fun item ->
+        (match item with
+        | TraitItem the_trait ->
+          register_trait the_trait the_cxt
+        | _ -> ()))
+      the_module.rm_items in
+  ()
+  in
+
+  (**
     Analyse a function's name, params and return type and construct them into a `s_function_signature` type. 
     Register this signature into symbol table for the following semantic analysis.
   *)
@@ -787,6 +857,9 @@ let analyse_module
 
   (* process struct *)
   let () = process_structs the_module the_cxt in
+
+  (* process trait *)
+  let () = process_traits the_module the_cxt in
 
   (* Insert builtins *)
   let () = List.iter (fun builtin -> 
