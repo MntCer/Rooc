@@ -57,7 +57,7 @@ let trans_module
       | Some t -> L.pointer_type t 
       (* #NOTE: return it's pointer here? 
          must be here, cannot change call function. *)
-      | None -> raise (LLIRError "struct type used before defined"))
+      | None -> raise (LLIRError "struct type used before defined")) (* This seems to be convered by SemanticError("type not registered") already *)
     | _ -> todo "other type: ST_function & ST_error"
   in
 
