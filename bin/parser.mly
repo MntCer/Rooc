@@ -145,6 +145,7 @@ roc_statement:
   | roc_continue_stmt {$1}
   | roc_break_stmt {$1}
   | roc_return_stmt {$1}
+  | assignment_stmt {$1}
 
 roc_decl_stmt:
     VAR ID COLON r_type ASSIGN roc_expr SEMI
@@ -205,7 +206,6 @@ roc_operator_expr:
   | roc_arith_expr {$1}
   | roc_logical_expr {$1}
   | roc_comparison_expr {$1}
-  | roc_assignment_expr {$1}
 
 roc_unary_expr:
   | MINUS expr_nonempty { Roc_unary_expr(Neg, $2) }
@@ -229,8 +229,6 @@ roc_comparison_expr:
   | expr_nonempty GT expr_nonempty { Roc_comparison_expr(Greater, $1, $3) }
   | expr_nonempty GEQ expr_nonempty { Roc_comparison_expr(Geq, $1, $3) }
 
-roc_assignment_expr:
-    expr_nonempty ASSIGN expr_nonempty { Roc_assignment_expr($1, $3) }
 
 roc_grouped_expr:
     LPAREN expr_nonempty RPAREN { Roc_grouped_expr($2) }
@@ -304,6 +302,9 @@ roc_loop_stmt:
 
 roc_while_stmt:
     WHILE LPAREN expr_nonempty RPAREN roc_block { Roc_while_stmt($3, $5) }
+
+assignment_stmt:
+    expr_nonempty ASSIGN expr_nonempty SEMI { STMT_assignment($1, $3) }
 
 
 r_type:

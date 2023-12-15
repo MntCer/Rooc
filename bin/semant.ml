@@ -92,7 +92,7 @@ let analyse_module
         let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_int, ST_int) -> ST_int
           | (ST_float, ST_float) -> ST_float
-          | _ -> raise (type_err_failure "Arithmetic expression type mismatch")
+          | _ -> raise (type_err_failure "Arithmetic expression type mismatch and only supports int and float")
             (* ST_error   *)
             (*TODO: string concatenation as a built-in function?*)
         in
@@ -105,7 +105,7 @@ let analyse_module
         let analysed_e2 = analyse_expr e2 the_cxt in
         let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_bool, ST_bool) -> ST_bool
-          | _ -> raise (type_err_failure "Logical expression type mismatch")
+          | _ -> raise (type_err_failure "Logical expression only supports bool type")
             (* ST_error *)
         in
         { se_type = analysed_type; 
@@ -117,39 +117,13 @@ let analyse_module
       let analysed_e2 = analyse_expr e2 the_cxt in
       let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
         | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool (*handle string?*)
-        | _ -> raise (type_err_failure "Comparison expression type mismatch")
+        | _ -> raise (type_err_failure "Comparison expression type mismatch and only supports int, float, and bool")
           (* ST_error *)
       in
       { se_type = analysed_type; 
         se_expr = S_comparison_expr (op, analysed_e1, analysed_e2) }
         
-    | Roc_assignment_expr (e1, e2) ->
-      let check_lval (expr: roc_expr) : unit =
-        match expr with
-        | EXPR_path s -> 
-          (* not immutable. *)
-          (match lookup_symbol s the_symbol_table with
-          | None -> raise (SemanticError "variable not found in symbol table")
-          | Some (VarEntry v) -> 
-            if not v.sv_mutable then
-              raise (SemanticError "variable is immutable")
-            else ())
-          | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
-        | EXPR_field_access _ -> ()
-        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
-      in
-      let () = check_lval e1 in
-      let analysed_e1 = analyse_expr e1 the_cxt in
-      let analysed_e2 = analyse_expr e2 the_cxt in
-      let analysed_type = 
-        if analysed_e1.se_type = analysed_e2.se_type 
-        then analysed_e1.se_type 
-        else raise (type_err_failure "Assignment type mismatch")
-      in
-      { se_type = analysed_type; 
-        se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
-
-    (**
+    (*
       Analyse the params, and ensure the callee is a existing function. 
       Use the function's return type as the type of this call expression.     
     *)
@@ -192,6 +166,9 @@ let analyse_module
       { se_type = analysed_expr.se_type; 
         se_expr = S_grouped_expr analysed_expr}
 
+    (*
+      the type for field_access is the final field's type.    
+    *)
     | EXPR_field_access (var_name, expr) -> (
       (* flatten the recursive call tree first. *)
       let field_name_list = 
@@ -200,7 +177,8 @@ let analyse_module
           (x:roc_expr) 
           : string list = (
           match x with
-          | EXPR_path s -> s::acc
+          | EXPR_path s -> 
+            List.rev (s::acc)
           | EXPR_field_access (s2,e2) -> 
             let new_acc = s2::acc in
             get_field_name_list new_acc e2) 
@@ -217,7 +195,7 @@ let analyse_module
         let the_struct_name = 
           match v.sv_type with
           | ST_struct s -> s
-          | _ -> raise (SemanticError "want to access a non-struct type's field.") 
+          | _ -> raise (SemanticError "want to access a non-struct field.") 
         in
         (* let () = print_string(the_struct_name) in *)
         let the_struct = 
@@ -227,7 +205,7 @@ let analyse_module
           | _ -> raise (SemanticError (the_struct_name ^ " is not a struct")))
         in 
         let rec analyse_field_name_list 
-          (the_struct: s_struct)
+          (cur_struct: s_struct)
           (the_field_name_list:string list) 
           : s_type =
           match the_field_name_list with
@@ -235,20 +213,21 @@ let analyse_module
             (* check if the struct has field with this name. *)
             let the_field = 
               (match List.find_opt 
-                    (fun field -> field.ssf_name = field_name) the_struct.ss_fields with
+                    (fun field -> field.ssf_name = field_name) cur_struct.ss_fields with
               | None -> raise (SemanticError "field not found in struct")
               | Some f -> f)
             in
-            (* #TEST: what will happen if here is a struct type? *)
-            the_field.ssf_type 
-          | hd::tl -> 
-            let field_name = hd in
+              (* #TEST: what will happen if here is a struct type? *)
+              the_field.ssf_type 
+          | field_name::tl -> 
             (* has this field? *)
             let the_field = 
               (match List.find_opt (fun field -> 
                 field.ssf_name = field_name) 
-                the_struct.ss_fields with
-              | None -> raise (SemanticError "field not found in struct")
+                cur_struct.ss_fields with
+              | None -> 
+                let _ = Printf.printf "field %s not found in struct: %s\n" field_name cur_struct.ss_name in
+                raise (SemanticError "field not found in struct")
               | Some f -> f)
             in
             let the_field_type = the_field.ssf_type in
@@ -262,45 +241,13 @@ let analyse_module
               match lookup_symbol the_field_type_name the_namespace with
               | None -> raise (SemanticError "struct not found in namespace")
               | Some (StructEntry s) -> s
-              | _ -> raise (SemanticError (the_field_type_name ^ " is not a struct"))
-            in
+              | _ -> raise (SemanticError (the_field_type_name ^ " is not a struct")) in
+            (* let _ = Printf.printf "the next struct is: %s\n" the_next_struct.ss_name in #DEBUG *)
             analyse_field_name_list the_next_struct tl
         in
         let analysed_type = analyse_field_name_list the_struct field_name_list in
         { se_type = analysed_type; 
           se_expr = S_EXPR_field_access (var_name, field_name_list); })
-      (* match expr with
-      | EXPR_path field_name -> 
-        (* check if there is the var *)
-        (match lookup_symbol var_name the_symbol_table with
-        | None -> raise (SemanticError "variable not found in symbol table")
-        | Some (VarEntry v) -> 
-          let v_type = v.sv_type in
-          let the_struct_name = 
-            match v.sv_type with
-            | ST_struct s -> s
-            | _ -> raise (SemanticError "want to access a non-struct type's field.") 
-          in
-          (* let () = print_string(the_struct_name) in *)
-          let the_struct = 
-            (match lookup_symbol the_struct_name the_namespace with
-            | None -> raise (SemanticError "struct not found in namespace")
-            | Some (StructEntry s) -> s
-            | _ -> raise (SemanticError (the_struct_name ^ " is not a struct")))
-          in 
-          let the_field = 
-            (match List.find_opt (fun field -> 
-              field.ssf_name = field_name) 
-              the_struct.ss_fields with
-            | None -> raise (SemanticError "field not found in struct")
-            | Some f -> f)
-          in
-          let the_field_type = the_field.ssf_type in
-          { se_type = the_field_type; 
-            se_expr = S_EXPR_field_access (var_name, field_name); })
-      | EXPR_field_access (s2,e2) -> 
-        raise (SemanticError "field access not supported yet") *)
-
 
     | EXPR_path (var_name) ->
       (match lookup_symbol var_name the_symbol_table with
@@ -436,6 +383,35 @@ let analyse_module
       (* Add to symbol table *)
       let () = insert_symbol the_symbol_table let_name (VarEntry analysed_let) in
       S_let_decl_stmt analysed_let
+      
+    | STMT_assignment (e1, e2) ->
+      (**
+        check if the expr is a allowed mutable left value.
+      *)
+      let check_lval (expr: roc_expr) : unit =
+        match expr with
+        | EXPR_path s -> 
+          (* not immutable. *)
+          (match lookup_symbol s the_symbol_table with
+          | None -> raise (SemanticError "variable not found in symbol table")
+          | Some (VarEntry v) -> 
+            if not v.sv_mutable then
+              raise (SemanticError "variable is immutable")
+            else ()
+          | _ -> raise (SemanticError "left hand side of assignment is not a lvalue"))
+        (* every field is mutable*)
+        | EXPR_field_access _ -> ()
+        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
+      in
+      let () = check_lval e1 in
+      let analysed_e1 = analyse_expr e1 the_cxt in
+      let analysed_e2 = analyse_expr e2 the_cxt in
+      let analysed_type = 
+        if analysed_e1.se_type = analysed_e2.se_type 
+        then analysed_e1.se_type 
+        else raise (type_err_failure "Assignment type mismatch")
+      in
+        S_STMT_assignment (analysed_e1, analysed_e2)
 
     | Roc_return_stmt e ->
         let analysed_expr = analyse_expr e the_cxt in

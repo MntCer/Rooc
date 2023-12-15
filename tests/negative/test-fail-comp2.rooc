@@ -1,0 +1,4 @@
+fun main() -> int {    
+    "hello" == "world";
+    return 0;
+}
