@@ -18,7 +18,7 @@ Today, we aim to successfully run our project end2end.
 
 * [x] function's code generation part.
 * [x] builtin functions' codegen
-* [ ] more about expression codegen.
+* [x] more about expression codegen.
 
 ## Dec 10
 
@@ -78,6 +78,12 @@ We requires that all types, including structs, be defined explicitly with a name
 Implementing a flattened path approach for field access can simplify the process. 
 When encounter a field access expression like `a.b.c`, flatten it into a single path and resolve it in one go, rather than dealing with each field access individually. 
 This requires maintaining context about the base struct and its nested field types.
+
+
+## Dec 15
+
+* [x] recursively access field
+* [x] access and modify field
 
 
 ## Target List
