@@ -50,7 +50,15 @@ and ir_local_scope = {
 and llir_struct = {
   ls_name : string;
   ls_fields_index_map : (string, int) Hashtbl.t;
-  
+  ls_llfields : (string, llir_struct_field) Hashtbl.t;
+}
+
+and llir_struct_field = {
+    lsf_name : string;
+    lsf_type : lltype;
+    lsf_stype : s_type;
+    lsf_index : int;
+    (* ... other field properties ... *)
 }
 
 and ir_scope_entry =

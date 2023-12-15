@@ -188,10 +188,9 @@ let trans_module
         | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
       op_instr operand1 operand2 "tmp" the_builder
 
-    (** 
+    (* 
       lhs needs a mutable ptr, rhs needs a llvalue, type matched. 
       lvalue: a mutable variable, a field; 
-       
     *)
     | S_assignment_expr (e1, e2) -> (
       let the_value = trans_expr e2 the_builder the_scope in
@@ -235,9 +234,11 @@ let trans_module
 
     | S_grouped_expr e -> trans_expr e the_builder the_scope
 
-    | S_EXPR_field_access (var_name, field_name_list) -> 
+    | S_EXPR_field_access (var_name, field_name_list) ->
       todo "need to rewrite."
-      (* let the_ptr = get_field_pointer var_name field_name_list
+
+      (* 
+      let the_ptr = get_field_pointer var_name field_name_list
       in
       L.build_load the_ptr "tmp" the_builder *)
 
@@ -277,7 +278,6 @@ let trans_module
 
       in
       
-
       let the_value = 
         (match s_e.se_expr with
         | S_EXPR_path field_name -> 
@@ -302,8 +302,8 @@ let trans_module
       in
       L.build_load the_var.iv_value_addr var_name the_builder
 
-    (*  *)
-    (* #TODO: after refactor the 2nd term, rename here. *)
+    (* return alloca is always right, standard operation in our project. *)
+    (* #TODO: after refactor "var" in S_EXPR, rename here. *)
     | S_EXPR_struct (the_struct_name, var_list) -> 
       let the_struct_type = 
         match lookup_type the_struct_name the_type_env with
@@ -320,25 +320,24 @@ let trans_module
         let the_init_val=
           match var.sv_initial_value with
           | Some (e) -> trans_expr e the_builder the_scope
-          | None -> raise (LLIRError "instantiate field without initial value")
-        in
+          | None -> raise (LLIRError "instantiate field without initial value") in
         let the_field_index = match get_field_index var.sv_name the_fields_index_map with
         | Some i -> i
-        | None -> raise (LLIRError "field corresponding index not found")
-        in
+        | None -> raise (LLIRError "field corresponding index not found") in
         let the_field_ptr = L.build_struct_gep alloca the_field_index var.sv_name the_builder in
         let _ = L.build_store the_init_val the_field_ptr the_builder in
-        ()) 
+          ()) 
         var_list
-      (* insert symbol in outside call. *)
-      in alloca (**)
+      (* insertion of symbol will happens in outside call. *)
+      in alloca 
 
     | _ -> todo "trans_expr"
     )
   in
 
   (**
-    #TODO: add docstring
+    for any var's type `t`, generate a ptr in type `*t`, which is `alloca`
+    and store the llvalue of initial value in `&alloca`.
   *)
   let trans_var_decl 
     (v: s_variable) 
@@ -559,36 +558,47 @@ let trans_module
         | None -> raise (LLIRError "struct type not found")
       in
       let the_field_list = sast_struct.ss_fields in
+      (* construct the field to index map. *)
+      let create_fields_index_map 
+      (field_list: s_struct_field list) 
+      : (string,int) Hashtbl.t =
+        let map : (string, int) Hashtbl.t = Hashtbl.create 10 in
+        let () = List.iteri (fun index field ->
+                 Hashtbl.add map field.ssf_name index) field_list in 
+          map in 
+      let the_fields_index_map = create_fields_index_map the_field_list in
+      let trans_field 
+        ({ssf_name=name;
+          ssf_type=stype; }:s_struct_field)
+        : llir_struct_field =
+        let ltype=trans_type stype in
+        let ind = match Hashtbl.find_opt the_fields_index_map name with
+          | Some i -> i
+          | None -> raise (LLIRError "field corresponding index not found") in
+          { lsf_name=name;
+            lsf_type=ltype;
+            lsf_stype = stype;
+            lsf_index=ind; } in
+      let llfields = Hashtbl.create 10 in 
+      let () = List.iter (fun field -> Hashtbl.add llfields 
+               field.ssf_name (trans_field field))the_field_list in
       (* get the field_type *)
       let get_struct_body_types
         (field_list: s_struct_field list)
         : L.lltype list =
-        List.map (fun field -> 
-          let the_ty=field.ssf_type in
-          trans_type the_ty) 
-          field_list
-      in 
+        List.map 
+        (fun field -> let the_ty=field.ssf_type in trans_type the_ty) 
+        field_list in 
       let the_struct_body_types = get_struct_body_types the_field_list in
-      (* construct the field to index map. *)
-      let create_fields_index_map 
-        (field_list: s_struct_field list) 
-        : (string,int) Hashtbl.t =
-        let map : (string, int) Hashtbl.t = Hashtbl.create 10 in
-        let () = List.iteri (fun index field ->
-          Hashtbl.add map field.ssf_name index
-        ) field_list
-        in map
-      in 
-      let the_fields_index_map = create_fields_index_map the_field_list in
       (* define struct body in LLVM IR *)
       let the_struct_body = Array.of_list the_struct_body_types in
       let () = L.struct_set_body the_struct_type the_struct_body false in
       (* create the llir_struct type *)
       let the_llir_struct = {
         ls_name = the_struct_name;
-        ls_fields_index_map = the_fields_index_map;}
-      in
-      insert_struct the_struct_name the_llir_struct the_global_scope
+        ls_fields_index_map = the_fields_index_map;
+        ls_llfields = llfields; } in
+        insert_struct the_struct_name the_llir_struct the_global_scope
     | _ -> ()
   in
 
@@ -614,7 +624,7 @@ let trans_module
     (to_register:s_symbol_table_entry)
     : unit =
     match to_register with
-    (**
+    (*
       put the type, llvm function value and the scope into the wrapper.     
     *)
     | FuncEntry f ->         
