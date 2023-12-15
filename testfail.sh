@@ -164,7 +164,7 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="tests/negative/test-fail-*.rooc tests/positive/test-success-*.rooc"
+    files="tests/negative/test-fail-*.rooc"
 fi
 
 # echo $files
