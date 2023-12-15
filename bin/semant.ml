@@ -114,9 +114,20 @@ let analyse_module
     (* Binary Comparison Expression *)
     | Roc_comparison_expr (op, e1, e2) ->
       let analysed_e1 = analyse_expr e1 the_cxt in
-      let analysed_e2 = analyse_expr e2 the_cxt in
+      let analysed_e2 = 
+        match (analysed_e1.se_type,e2) with
+        | (ST_struct struct_name, EXPR_nullstruct) -> 
+          { se_type = ST_struct struct_name; 
+            se_expr = S_EXPR_nullstruct struct_name }
+        | _ -> 
+          analyse_expr e2 the_cxt in
       let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
-        | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool (*handle string?*)
+        | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool
+        | (ST_struct s1, ST_struct s2) -> 
+          ST_bool
+        (* #TODO: need more tests. *)
+        | (ST_string, ST_string ) -> 
+          ST_bool
         | _ -> raise (type_err_failure "Comparison expression type mismatch and only supports int, float, and bool")
           (* ST_error *)
       in
@@ -243,7 +254,7 @@ let analyse_module
               | Some (StructEntry s) -> s
               | _ -> raise (SemanticError (the_field_type_name ^ " is not a struct")) in
             (* let _ = Printf.printf "the next struct is: %s\n" the_next_struct.ss_name in #DEBUG *)
-            analyse_field_name_list the_next_struct tl
+              analyse_field_name_list the_next_struct tl
         in
         let analysed_type = analyse_field_name_list the_struct field_name_list in
         { se_type = analysed_type; 
@@ -332,29 +343,50 @@ let analyse_module
           (* ensure all types are correct *)
             let field_type = field.ssf_type in
             let expr_field_expr = expr_field.esf_expr in
-            let analysed_expr_field_expr = analyse_expr expr_field_expr the_cxt in
-            if field_type <> analysed_expr_field_expr.se_type then
-              raise (type_err_failure "field type mismatch in struct expression")
-            else ()
-        ) sorted_the_fields name_checked_expr_fields
-      in
+              match (field_type,expr_field_expr) with
+              | (ST_struct _, EXPR_nullstruct) -> ()
+              | _ -> 
+                let analysed_expr_field_expr = analyse_expr expr_field_expr the_cxt in
+                if field_type <> analysed_expr_field_expr.se_type then
+                  raise (type_err_failure "field type mismatch in struct expression")
+                else ()) 
+        sorted_the_fields name_checked_expr_fields in
 
       (* Sure about the field expr's correctness. *)
-      (* Now, analyse each field's expr in original order. *)
-      let analysed_fields = List.map (fun expr_field -> 
+      (* analyse nullstruct *)
+      let analysed_fields = List.map2 (fun field expr_field ->
         let expr_field_expr = expr_field.esf_expr in
-        let analysed_expr_field_expr = analyse_expr expr_field_expr the_cxt in
-        { sv_name = expr_field.esf_name;
-          sv_type = analysed_expr_field_expr.se_type;
-          sv_mutable = true;
-          sv_initial_value = Some analysed_expr_field_expr; }
-        ) name_checked_expr_fields in
+        match expr_field_expr with
+        | EXPR_nullstruct -> 
+          let the_struct_name = 
+            (match field.ssf_type with
+            | ST_struct name -> name
+            | _ -> raise (SemanticError "assign null to non-struct field")) in
+          let field_type = field.ssf_type in
+            { sv_name = expr_field.esf_name;
+              sv_type = field_type;
+              sv_mutable = true;
+              sv_initial_value = Some (
+                { se_type = field.ssf_type;
+                  se_expr = S_EXPR_nullstruct the_struct_name;}); }
+        | _ ->
+          let analysed_expr_field_expr = analyse_expr expr_field_expr the_cxt in
+          { sv_name = expr_field.esf_name;
+            sv_type = analysed_expr_field_expr.se_type;
+            sv_mutable = true;
+            sv_initial_value = Some analysed_expr_field_expr; })
+        (* analyse each field's expr in original order. *)
+        sorted_the_fields name_checked_expr_fields in
 
       (* Now, analyse each field's expr in original order. *)
       let analysed_type = ST_struct the_struct_name in
       { se_type = analysed_type;
         se_expr = S_EXPR_struct 
         (the_struct_name, analysed_fields); }
+
+    (* treat as type, but I think it's bad. *)
+    | EXPR_nullstruct ->
+      raise (SemanticError "`null` appears in a wrong place.")
     
   (**
     #TODO: add docstring
@@ -409,7 +441,8 @@ let analyse_module
       let analysed_type = 
         if analysed_e1.se_type = analysed_e2.se_type 
         then analysed_e1.se_type 
-        else raise (type_err_failure "Assignment type mismatch")
+        else 
+          raise (type_err_failure "Assignment type mismatch")
       in
         S_STMT_assignment (analysed_e1, analysed_e2)
 
@@ -506,14 +539,13 @@ let analyse_module
       match analysed_initial_value with
       | None -> ()
       | Some expr -> 
-        if expr.se_type <> analysed_type then
-          raise (type_err_failure "variable initial value type mismatch")
+          if expr.se_type <> analysed_type then
+            raise (type_err_failure "variable initial value type mismatch")
     in
     { sv_name = analysed_name; 
       sv_type = analysed_type; 
       sv_mutable = is_mutable;
-      sv_initial_value = analysed_initial_value }
-  in
+      sv_initial_value = analysed_initial_value } in
 
   let analyse_params 
     (raw_params: roc_params) 

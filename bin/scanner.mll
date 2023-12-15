@@ -50,6 +50,7 @@ rule token = parse
 | "impl"   { IMPL }
 | "trait"  { TRAIT }
 | "self"   { SELF }
+| "null"   { NULL }
 
 (* type *)
 | "int"    { INT }

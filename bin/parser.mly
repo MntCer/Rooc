@@ -10,7 +10,7 @@ open Util
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT
 %token LBRACE RBRACE COMMA COLON RARROW DOT
 %token <bool> BLIT
-%token VAR LET FUN STRUCT IMPL TRAIT CONST NEW
+%token VAR LET FUN STRUCT IMPL TRAIT CONST NEW NULL
 %token INT BOOL FLOAT STR
 // %token LIST
 %token RETURN IF ELSE FOR WHILE BREAK CONTINUE SELF
@@ -222,12 +222,22 @@ roc_logical_expr:
   | expr_nonempty OR expr_nonempty { Roc_logical_expr(Or, $1, $3) }
 
 roc_comparison_expr:
-    expr_nonempty EQ expr_nonempty { Roc_comparison_expr(Equal, $1, $3) }
-  | expr_nonempty NEQ expr_nonempty { Roc_comparison_expr(Neq, $1, $3) }
-  | expr_nonempty LT expr_nonempty { Roc_comparison_expr(Less, $1, $3) }
-  | expr_nonempty LEQ expr_nonempty { Roc_comparison_expr(Leq, $1, $3) }
-  | expr_nonempty GT expr_nonempty { Roc_comparison_expr(Greater, $1, $3) }
-  | expr_nonempty GEQ expr_nonempty { Roc_comparison_expr(Geq, $1, $3) }
+  | expr_nonempty EQ expr_nonempty 
+    { Roc_comparison_expr(Equal, $1, $3) }
+  | expr_nonempty EQ NULL 
+    { Roc_comparison_expr(Equal, $1, EXPR_nullstruct)}
+  | expr_nonempty NEQ expr_nonempty 
+    { Roc_comparison_expr(Neq, $1, $3) }
+  | expr_nonempty NEQ NULL 
+    { Roc_comparison_expr(Neq, $1, EXPR_nullstruct)}
+  | expr_nonempty LT expr_nonempty 
+    { Roc_comparison_expr(Less, $1, $3) }
+  | expr_nonempty LEQ expr_nonempty 
+    { Roc_comparison_expr(Leq, $1, $3) }
+  | expr_nonempty GT expr_nonempty 
+    { Roc_comparison_expr(Greater, $1, $3) }
+  | expr_nonempty GEQ expr_nonempty 
+    { Roc_comparison_expr(Geq, $1, $3) }
 
 
 roc_grouped_expr:
@@ -268,8 +278,11 @@ struct_field_exprs_no_comma:
 
 struct_field_expr:
     ID COLON expr_nonempty 
-    { {esf_name =$1; 
-       esf_expr =$3;} }
+      { {esf_name =$1; 
+        esf_expr =$3;} }
+  | ID COLON NULL
+      { {esf_name =$1; 
+        esf_expr = EXPR_nullstruct;} }
 
 roc_continue_stmt:
     CONTINUE SEMI { Roc_continue_stmt }
@@ -317,4 +330,3 @@ r_type:
 
 r_type_expr:
   | ID                      { R_user_defined_type ($1) }
-

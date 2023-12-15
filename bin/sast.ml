@@ -10,6 +10,7 @@ type s_type =
   | ST_bool
 
   | ST_struct of string
+
   | ST_trait of string
 
   | ST_sequence of s_sequence_type
@@ -57,6 +58,7 @@ and s_structual_expr =
   | S_EXPR_field_access of string * string list
   | S_EXPR_path of string
   | S_EXPR_struct of string * s_variable list
+  | S_EXPR_nullstruct of string
 
 
 and sexpr_call= {

@@ -195,6 +195,16 @@ let trans_module
             | A.Equal   -> L.build_icmp L.Icmp.Eq
             | A.Neq     -> L.build_icmp L.Icmp.Ne
             | _ -> raise (type_err_failure "Comparison expression not supported for other operations than eql and neq for bool"))
+          | ST_struct _ -> 
+            (match op with
+            | A.Equal   -> L.build_icmp L.Icmp.Eq
+            | A.Neq     -> L.build_icmp L.Icmp.Ne
+            | _ -> raise (type_err_failure "Comparison expression not supported for other operations than eql and neq for struct"))
+          | ST_string -> 
+            (match op with
+            | A.Equal   -> L.build_icmp L.Icmp.Eq
+            | A.Neq     -> L.build_icmp L.Icmp.Ne
+            | _ -> raise (type_err_failure "Comparison expression not supported for other operations than eql and neq for string"))
           | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
         op_instr operand1 operand2 "tmp" the_builder
 
@@ -249,7 +259,9 @@ let trans_module
         let the_var = 
           match lookup var_name (IRLocalScope the_scope) with
           | Some (IRVarEntry v) -> v
-          | _ -> bug "variable not found"
+          | _ -> 
+            Printf.printf "var name: %s\n" var_name;
+            bug "variable not found"
         in
         L.build_load the_var.iv_value_addr var_name the_builder
 
@@ -281,6 +293,14 @@ let trans_module
           var_list
         (* insertion of symbol will happens in outside call. *)
         in alloca 
+
+      | S_EXPR_nullstruct struct_name ->
+        let the_struct_type = 
+          match lookup_type struct_name the_type_env with
+          | Some t -> t
+          | None -> raise (LLIRError "struct type not found") in
+        let struct_ptr_type = L.pointer_type the_struct_type in 
+          L.const_null struct_ptr_type
 
       | _ -> todo "trans_expr"
       )
@@ -477,7 +497,8 @@ let trans_module
           iv_value_addr = alloca;
           iv_stype=param.sv_type;
         } in
-        insert_variable_local local_name local_var the_scope;
+        (* Printf.fprintf stdout "inserting %s in %s\n" local_name the_name; *)
+          insert_variable_local local_name local_var the_scope;
       in
       (* get the params of `the_function` and apply `add_formal` on them. *)
       (match f.sf_params with
@@ -523,6 +544,14 @@ let trans_module
         L.build_ret (L.const_float float_t 0.0)
       | ST_bool ->
         L.build_ret (L.const_int i1_t 0)
+      | ST_struct s_name ->
+        let the_struct_type = 
+          match lookup_type s_name the_type_env with
+          | Some t -> t
+          | None -> raise (LLIRError "struct type not found") in
+        L.build_ret (L.const_null the_struct_type)
+      | ST_string ->
+        L.build_ret (L.const_null str_t)
       | _ -> todo "other return type")
 
     | _ -> ()

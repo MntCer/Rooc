@@ -1,11 +1,11 @@
 struct A {
-    b: B; // Assuming B can be null
-    x: int;
+    b: B, 
+    x: int,
 }
 
 struct B {
-    a: A; // Assuming A can be null
-    x: int;
+    a: A,
+    x: int,
 }
 
 fun main() -> int {
@@ -19,7 +19,13 @@ fun main() -> int {
     // Check for null before dereferencing
     if (a.b != null) {
         print_int(a.b.x); // Should print 2
+        println();
     }
+    else
+    { }
+
+    b.a = A {b:b,x:3};
+    print_int(b.a.x);   // expect 3
 
     return 0;
 }

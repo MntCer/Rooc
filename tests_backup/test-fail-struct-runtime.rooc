@@ -1,0 +1,38 @@
+struct A {
+    i:int,
+    b:B,
+}
+
+struct B {
+    c:C,
+}
+
+struct C {
+    name:str,
+}
+
+fun getC(name:str) -> C {
+    return C {name:name};
+}
+
+fun getB(c:C) -> B {
+    return B {c:c};
+}
+
+fun getA(i:int,b:B) -> A{
+    return A {i:i,b:b};
+}
+
+fun main() -> int {
+    // runtime error
+    var c:C = getC("I'm c of b of a.");
+    var b:B = getB(c);
+    var a:A = getA(0,b);
+    
+    if(a != null){
+        print_str(a.b.c.name);
+    }
+    else {}
+    println();
+    return 0;
+}

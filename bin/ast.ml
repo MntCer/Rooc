@@ -49,6 +49,7 @@ type roc_expr =
   | EXPR_field_access of string * roc_expr
   | EXPR_path of string
   | EXPR_struct of roc_expr * (struct_field_expr list)
+  | EXPR_nullstruct
 
 and struct_field_expr = 
   {

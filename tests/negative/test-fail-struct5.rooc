@@ -1,0 +1,19 @@
+struct A {
+    i:int,
+    b:B,
+}
+
+struct B{
+    name:str,
+}
+
+fun main()->int{
+    var a:A = A{1,B{"I'm b of a."}};
+    testStructParam(a);
+    println();
+    return 0;
+}
+
+fun testStructParam(a:A) -> () {
+    print_str(a.b.name);
+}
