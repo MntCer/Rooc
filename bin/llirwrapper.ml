@@ -15,10 +15,6 @@ type ir_variable = {
   iv_stype : s_type;
 }
 
-type llir_cxt ={
-  cur_function: llvalue;
-}
-
 type llir_type_env = (string, lltype) Hashtbl.t
 
 and ir_extern_function = {

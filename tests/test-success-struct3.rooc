@@ -1,0 +1,16 @@
+struct Point {
+    x: int,
+    y: int,
+}
+
+struct Circle {
+    centre: Point,
+    radius: float,
+}
+
+fun main() -> int {
+    var p1:Point = Point {x:3,y:4};
+    var c1:Circle = Circle {centre: p1, radius: 1.0};
+    print_int(c1.centre.x); // expect 3
+    return 0;
+}
