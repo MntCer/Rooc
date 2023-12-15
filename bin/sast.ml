@@ -53,7 +53,7 @@ and s_structual_expr =
   | S_assignment_expr of s_expr * s_expr
   | S_EXPR_call of sexpr_call
   | S_grouped_expr of s_expr
-  | S_EXPR_field_access of string * string
+  | S_EXPR_field_access of string * string list
   | S_EXPR_path of string
   | S_EXPR_struct of string * s_variable list
 

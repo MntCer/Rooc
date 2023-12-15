@@ -71,6 +71,14 @@ b.a = &mut a as *mut StructA;
 
 We requires that all types, including structs, be defined explicitly with a name before they can be instantiated and used.
 
+## Dec 14
+
+### for access field expr
+
+Implementing a flattened path approach for field access can simplify the process. 
+When encounter a field access expression like `a.b.c`, flatten it into a single path and resolve it in one go, rather than dealing with each field access individually. 
+This requires maintaining context about the base struct and its nested field types.
+
 
 ## Target List
 
