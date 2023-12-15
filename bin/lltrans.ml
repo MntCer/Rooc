@@ -198,31 +198,6 @@ let trans_module
           | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
         op_instr operand1 operand2 "tmp" the_builder
 
-      (* 
-        lhs needs a mutable ptr, rhs needs a llvalue, type matched. 
-        lvalue: a mutable variable, a field;
-
-      *)
-      | S_assignment_expr (e1, e2) -> (
-        let the_value = trans_expr e2 the_builder the_scope the_cxt in
-        match e1.se_expr with
-        | S_EXPR_path _ ->
-          let the_assignee_name = 
-            match e1.se_expr with
-            | S_EXPR_path var_name -> var_name
-            | _ -> todo "not supported assignee category"
-          in 
-          let the_assignee = 
-            match lookup the_assignee_name (IRLocalScope the_scope) with
-            | Some (IRVarEntry v) -> v
-            | _ -> bug "variable not found"
-          in 
-          L.build_store the_value the_assignee.iv_value_addr the_builder 
-        | S_EXPR_field_access (var_name, field_name_list) -> 
-          todo "need to rewrite."
-          (* let the_ptr=get_field_pointer the_var_name the_field_name in *)
-          (* L.build_store the_value the_ptr the_builder) *)
-        )
 
       | S_EXPR_call call_e -> 
         let the_callee_name = call_e.sc_callee in 
@@ -371,6 +346,41 @@ let trans_module
 
     | S_let_decl_stmt v ->
       trans_var_decl v the_builder the_scope the_cxt
+
+    (* 
+      lhs needs a mutable ptr, rhs needs a llvalue, type matched. 
+      lvalue: a mutable variable, a field;
+    *)
+    | S_STMT_assignment (e1, e2) -> (
+      let the_value = trans_expr e2 the_builder the_scope the_cxt in
+      match e1.se_expr with
+      | S_EXPR_path the_assignee_name ->
+        let the_assignee = 
+          match lookup the_assignee_name (IRLocalScope the_scope) with
+          | Some (IRVarEntry v) -> v
+          | _ -> bug "variable not found" in 
+        let _ = L.build_store the_value the_assignee.iv_value_addr the_builder in
+          the_builder
+      | S_EXPR_field_access (var_name, field_name_list) -> 
+        let the_struct_var =
+          match lookup var_name (IRLocalScope the_scope) with
+          | Some (IRVarEntry v) -> v
+          | _ -> raise (LLIRError "struct variable not found") in
+        let the_struct_name = 
+          match the_struct_var.iv_stype with
+          | ST_struct s -> s
+          | _ -> raise (LLIRError "struct type not found") in
+        let the_struct = 
+          match lookup_struct the_struct_name the_global_scope with
+          | Some s -> s
+          | None -> 
+            let () = print_string the_struct_name in
+            raise (LLIRError "struct def info not found") in
+        let the_struct_ptrptr = the_struct_var.iv_value_addr in
+        let the_struct_ptr = L.build_load the_struct_ptrptr var_name the_builder in
+        let the_ptr = get_field_pointer the_struct the_struct_ptr field_name_list the_builder in
+        let _ = L.build_store the_value the_ptr the_builder in
+          the_builder)
 
     | S_STMT_return e ->
       let the_return_value = trans_expr e the_builder the_scope the_cxt in

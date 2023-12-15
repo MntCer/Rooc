@@ -123,33 +123,7 @@ let analyse_module
       { se_type = analysed_type; 
         se_expr = S_comparison_expr (op, analysed_e1, analysed_e2) }
         
-    | Roc_assignment_expr (e1, e2) ->
-      let check_lval (expr: roc_expr) : unit =
-        match expr with
-        | EXPR_path s -> 
-          (* not immutable. *)
-          (match lookup_symbol s the_symbol_table with
-          | None -> raise (SemanticError "variable not found in symbol table")
-          | Some (VarEntry v) -> 
-            if not v.sv_mutable then
-              raise (SemanticError "variable is immutable")
-            else ())
-          | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
-        | EXPR_field_access _ -> ()
-        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
-      in
-      let () = check_lval e1 in
-      let analysed_e1 = analyse_expr e1 the_cxt in
-      let analysed_e2 = analyse_expr e2 the_cxt in
-      let analysed_type = 
-        if analysed_e1.se_type = analysed_e2.se_type 
-        then analysed_e1.se_type 
-        else raise (type_err_failure "Assignment type mismatch")
-      in
-      { se_type = analysed_type; 
-        se_expr = S_assignment_expr (analysed_e1, analysed_e2) }
-
-    (**
+    (*
       Analyse the params, and ensure the callee is a existing function. 
       Use the function's return type as the type of this call expression.     
     *)
@@ -192,6 +166,9 @@ let analyse_module
       { se_type = analysed_expr.se_type; 
         se_expr = S_grouped_expr analysed_expr}
 
+    (*
+      the type for field_access is the final field's type.    
+    *)
     | EXPR_field_access (var_name, expr) -> (
       (* flatten the recursive call tree first. *)
       let field_name_list = 
@@ -406,6 +383,35 @@ let analyse_module
       (* Add to symbol table *)
       let () = insert_symbol the_symbol_table let_name (VarEntry analysed_let) in
       S_let_decl_stmt analysed_let
+      
+    | STMT_assignment (e1, e2) ->
+      (**
+        check if the expr is a allowed mutable left value.
+      *)
+      let check_lval (expr: roc_expr) : unit =
+        match expr with
+        | EXPR_path s -> 
+          (* not immutable. *)
+          (match lookup_symbol s the_symbol_table with
+          | None -> raise (SemanticError "variable not found in symbol table")
+          | Some (VarEntry v) -> 
+            if not v.sv_mutable then
+              raise (SemanticError "variable is immutable")
+            else ()
+          | _ -> raise (SemanticError "left hand side of assignment is not a lvalue"))
+        (* every field is mutable*)
+        | EXPR_field_access _ -> ()
+        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
+      in
+      let () = check_lval e1 in
+      let analysed_e1 = analyse_expr e1 the_cxt in
+      let analysed_e2 = analyse_expr e2 the_cxt in
+      let analysed_type = 
+        if analysed_e1.se_type = analysed_e2.se_type 
+        then analysed_e1.se_type 
+        else raise (type_err_failure "Assignment type mismatch")
+      in
+        S_STMT_assignment (analysed_e1, analysed_e2)
 
     | Roc_return_stmt e ->
         let analysed_expr = analyse_expr e the_cxt in

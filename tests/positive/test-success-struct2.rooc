@@ -7,7 +7,11 @@ fun main() -> int {
     var p1:Point = Point {x:3,y:4};
     var p2:Point = p1;
     print_int(p1.x); // expect 3
+    println();
     p2.x=1+p1.x;      
     print_int(p1.x); // expect 4
+    println();
+    p1.x=p1.x+p2.x;
+    print_int(p2.x); // expect 8
     return 0;
 }

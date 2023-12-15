@@ -52,7 +52,6 @@ and s_structual_expr =
   | S_arith_expr of arith_op * s_expr * s_expr
   | S_logical_expr of logical_op * s_expr * s_expr
   | S_comparison_expr of comparison_op * s_expr * s_expr
-  | S_assignment_expr of s_expr * s_expr
   | S_EXPR_call of sexpr_call
   | S_grouped_expr of s_expr
   | S_EXPR_field_access of string * string list
@@ -87,10 +86,11 @@ and s_stmt =
   | S_expr_stmt of s_expr
   | S_var_decl_stmt of s_variable
   | S_let_decl_stmt of s_variable
+  | S_STMT_assignment of s_expr * s_expr
   | S_STMT_return of s_expr
   | S_STMT_break
   | S_STMT_continue
-
+  (* with block*)
   | S_STMT_block of s_block
   | S_STMT_while of s_while_stmt
   | S_STMT_if of s_if_stmt

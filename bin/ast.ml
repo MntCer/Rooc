@@ -44,10 +44,7 @@ type roc_expr =
   | Roc_arith_expr of  arith_op * roc_expr * roc_expr
   | Roc_logical_expr of logical_op * roc_expr * roc_expr
   | Roc_comparison_expr of  comparison_op * roc_expr * roc_expr
-  | Roc_assignment_expr of roc_expr * roc_expr
-
   | Roc_grouped_expr of roc_expr
-
   | Roc_call_expr of string * ( roc_expr list ) (* expr, callParams*)
   | EXPR_field_access of string * roc_expr
   | EXPR_path of string
@@ -67,6 +64,7 @@ and roc_stmt =
   | Roc_expr_stmt of roc_expr
   | Roc_var_decl_stmt of roc_variable
   | Roc_let_decl_stmt of roc_variable
+  | STMT_assignment of roc_expr * roc_expr
   | STMT_block of roc_block
   | Roc_while_stmt of roc_expr * roc_block
   | Roc_if_stmt of roc_expr * roc_block * roc_block
