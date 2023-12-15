@@ -31,6 +31,7 @@ let trans_module
   let i1_t       = L.i1_type     the_context in
   let float_t    = L.double_type the_context in
   let void_t     = L.void_type   the_context
+  (* let str_t     = L.pointer_type (L.i8_type the_context) in *)
   in
 
   (** 
@@ -40,7 +41,7 @@ let trans_module
     | ST_int -> i32_t
     | ST_bool -> i1_t
     | ST_float -> float_t
-    (* | ST_string -> char pointer *)
+    (* | ST_string -> str_t *)
     | ST_unit -> void_t (* #TODO: ad hoc solution, need re reclear it *)
     | ST_struct s -> 
       (match lookup_type s the_type_env with
@@ -106,7 +107,9 @@ let trans_module
 
     | S_bool_literal b ->
         L.const_int i1_t (if b then 1 else 0)
-    (* TODO: | S_string_literal s -> L.const_string or L.const_stringz (null terminated)*)
+
+    | S_string_literal s -> 
+      L.build_global_stringptr s "str" the_builder
 
     | S_EXPR_null ->
       L.const_null i8_t

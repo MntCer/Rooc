@@ -31,10 +31,50 @@ let println = {
   sf_body = BuiltIn;
 }
 
+let print_str = {
+  sf_name = "print_str";
+  sf_params = Some ({
+    sp_params=[{
+    sv_name = "s";
+    sv_type = ST_string;
+    sv_mutable = true;
+    sv_initial_value = None;
+  }]});
+  sf_type = {
+    sft_params_type = [ST_string];
+    sft_return_type = ST_int;
+  };
+  sf_body = BuiltIn;
+}
+
+let concat_str = {
+  sf_name = "concat_str";
+  sf_params = Some ({
+    sp_params=[{
+    sv_name = "s1";
+    sv_type = ST_string;
+    sv_mutable = true;
+    sv_initial_value = None;
+  };
+  {
+    sv_name = "s2";
+    sv_type = ST_string;
+    sv_mutable = true;
+    sv_initial_value = None;
+  }]});
+  sf_type = {
+    sft_params_type = [ST_string];
+    sft_return_type = ST_string;
+  };
+  sf_body = BuiltIn;
+}
+
 
 let builtins_semant = [
   print_int;
   println;
+  print_str;
+  concat_str;
 ]
 
 
@@ -101,8 +141,31 @@ let trans_println
   let _ = L.build_call the_printf [| format_str |] "" the_builder in
   the_builder
 
+let trans_print_str
+  (the_builder: L.llbuilder)
+  (the_scope: ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+  
+  let the_printf =
+    match lookup "printf" (IRGlobalScope the_namespace) with
+    | Some (IRFuncEntry (IRExternFunction f)) -> f.ief_function
+    | None | _ -> bug "printf is not declared"
+  in
+  let format_str = L.build_global_stringptr "%s" "fmt" the_builder in
+  let the_param =
+    match lookup "s" (IRLocalScope the_scope) with
+    | Some (IRVarEntry v) -> v
+    | None | _ -> bug "print_str's parameter is not right in its scope"
+  in
+  
+  let s = L.build_load the_param.iv_value_addr "s" the_builder in
+  let _ = L.build_call the_printf [| format_str; s |] "" the_builder in
+  the_builder
+
 
 let builtins_map:(string, builtin_translator) Hashtbl.t = Hashtbl.create 10
 let () = Hashtbl.add builtins_map "print_int" trans_print_int
 let () = Hashtbl.add builtins_map "println" trans_println
+let () = Hashtbl.add builtins_map "print_str" trans_print_str
 
