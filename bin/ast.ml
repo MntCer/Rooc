@@ -114,31 +114,35 @@ type r_struct = {
   rs_fields : r_struct_field list;
 }
 
+type roc_trait = {
+  rt_name : string;
+  rt_methods : roc_method_signature list;
+}
+
+
 type roc_item = 
     FunctionItem of roc_function
   | StructItem of r_struct
   (* | ConstantItem of roc_constant *)
   (* | ConstantItem of roc_constant *)
-  (* | TraitItem of roc_trait *)
+  | TraitItem of roc_trait
 
 type roc_module = {
   rm_items: roc_item list;
 }
 
-(* 
+ 
 
 (* for trait *)
-type func_sig = {
-  fs_typ : typ;
-  fs_name : string;
-  fs_formals : bind list;
+(*
+type roc_func_sig = {
+  rfs_return_type : r_type;
+  rfs_name : string;
+  rfs_params : roc_params option;
 }
+*)
 
-type trait_decl = {
-  tr_name : string;
-  tr_methods : func_sig list;
-}
-
+(*
 type impl_decl = {
   i_name : string;
   i_forstruct : string;
@@ -192,6 +196,7 @@ and string_of_r_type_expr = function
 and string_of_item = function
   FunctionItem f -> string_of_function f
 | StructItem s -> string_of_struct s
+| TraitItem t -> string_of_trait t
 
 and string_of_function f = 
   let name = f.rf_name in
@@ -218,3 +223,6 @@ and string_of_stmt s =
 
 and string_of_struct s = 
   "TODO: struct str"
+
+and string_of_trait t =
+  "TODO: trait str"
