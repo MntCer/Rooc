@@ -1,0 +1,5 @@
+fun main() -> int {
+    let z:int = 2;    
+    print_int(z);
+    return 0;
+}

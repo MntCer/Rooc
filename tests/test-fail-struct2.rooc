@@ -1,0 +1,4 @@
+fun main() -> int {
+    var test:Test = Test {field1 : 1, field2 : 1.0,};
+    return 0;
+}

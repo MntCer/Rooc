@@ -1,0 +1,8 @@
+struct Test {
+    field1:float,
+}
+
+fun main() -> int {
+    var test:Test = Test {field1: 1,};
+    return 0;
+}

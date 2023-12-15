@@ -92,7 +92,7 @@ let analyse_module
         let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_int, ST_int) -> ST_int
           | (ST_float, ST_float) -> ST_float
-          | _ -> raise (type_err_failure "Arithmetic expression type mismatch")
+          | _ -> raise (type_err_failure "Arithmetic expression type mismatch and only supports int and float")
             (* ST_error   *)
             (*TODO: string concatenation as a built-in function?*)
         in
@@ -105,7 +105,7 @@ let analyse_module
         let analysed_e2 = analyse_expr e2 the_cxt in
         let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_bool, ST_bool) -> ST_bool
-          | _ -> raise (type_err_failure "Logical expression type mismatch")
+          | _ -> raise (type_err_failure "Logical expression only supports bool type")
             (* ST_error *)
         in
         { se_type = analysed_type; 
@@ -117,7 +117,7 @@ let analyse_module
       let analysed_e2 = analyse_expr e2 the_cxt in
       let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
         | (ST_int, ST_int) | (ST_float, ST_float) | (ST_bool, ST_bool) -> ST_bool (*handle string?*)
-        | _ -> raise (type_err_failure "Comparison expression type mismatch")
+        | _ -> raise (type_err_failure "Comparison expression type mismatch and only supports int, float, and bool")
           (* ST_error *)
       in
       { se_type = analysed_type; 
