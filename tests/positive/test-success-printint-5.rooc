@@ -1,5 +1,0 @@
-// Test with a large negative integer
-fun main() -> int {
-    print_int(-2147483648);  // Assuming 32-bit integers, this is the max negative value
-    return 0;
-}

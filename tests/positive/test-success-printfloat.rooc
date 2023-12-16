@@ -1,0 +1,6 @@
+fun main() -> int{
+    print_float(1.);
+    println();
+    print_float(-1.0);
+    return 0;
+}

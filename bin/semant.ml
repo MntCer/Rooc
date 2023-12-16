@@ -159,7 +159,8 @@ let analyse_module
         (* if the number of arguments matches the number of parameters *)
           if List.length expected_param_types <> List.length analysed_args then
             raise (type_err_failure "Incorrect number of arguments in function call")
-          else (* if each argument type matches the expected parameter type *)
+          else 
+            (* if each argument type matches the expected parameter type *)
             List.iter2 (fun expected_type expr ->
               if expected_type <> expr.se_type then
                 raise (type_err_failure "Argument type mismatch in function call")

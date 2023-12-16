@@ -1,6 +1,0 @@
-// Test with a large positive integer
-fun main() -> int {
-    print_int(2147483647);  // Assuming 32-bit integers, this is the max positive value
-    return 0;
-}
-

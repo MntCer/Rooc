@@ -1,5 +1,0 @@
-// Adding a positive and a negative number
-fun main() -> int {
-    print_int(10 + -5);  // Should output 5
-    return 0;
-}

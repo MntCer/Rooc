@@ -1,5 +1,0 @@
-// Test with a small negative integer
-fun main() -> int {
-    print_int(-1);
-    return 0;
-}

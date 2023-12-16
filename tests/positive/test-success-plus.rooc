@@ -1,0 +1,12 @@
+fun main() -> int {
+    print_int(10 + 5);  // Should output 15
+    println();
+    print_int(-10 + -5);  // Should output -15
+    println();
+    print_int(10 + -5);  // Should output 5
+    println();
+    print_int(0 + 15);  // Should output 15
+    println();
+    print_int(15 + 0);  // Should output 15
+    return 0;
+}

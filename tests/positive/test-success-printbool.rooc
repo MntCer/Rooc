@@ -1,0 +1,6 @@
+fun main() -> int{
+    print_bool(true);
+    println();
+    print_bool(false);
+    return 0;
+}

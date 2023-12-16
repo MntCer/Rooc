@@ -1,0 +1,15 @@
+fun main() -> int {
+    print_int(1);
+    println()
+    print_int(0);
+    println();
+    print_int(-1);
+    println();
+    print_int(2147483647);  // Assuming 32-bit integers, this is the max positive value
+    println();
+    print_int(-2147483648);  // Assuming 32-bit integers, this is the max negative value
+    println();
+    
+    return 0;
+}
+

@@ -1,4 +1,0 @@
-fun main() -> int {   
-    print_float(3.0); 
-    return 0;
-}
