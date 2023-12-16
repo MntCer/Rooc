@@ -1,6 +1,0 @@
-fun main() -> int {
-    var a:int = "This is not an integer";
-    print_int(a);
-
-    return 0;
-}
