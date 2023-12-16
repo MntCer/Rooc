@@ -120,19 +120,19 @@ let trans_module
       (match structual_e with
       (* generate a immediate number. *)
       | S_int_literal i -> 
-          L.const_int i32_t i
+        L.const_int i32_t i
       (* generate a immediate number. *)
       | S_float_literal f ->
-          L.const_float float_t f
+        L.const_float float_t f
       (* generate a immediate number. *)
       | S_bool_literal b ->
-          L.const_int i1_t (if b then 1 else 0)
+        L.const_int i1_t (if b then 1 else 0)
       (* will generate a stringptr *)
       | S_string_literal s -> 
         L.build_global_stringptr s "str" the_builder
       (* #TODO: need to test, i8_t isn't right. *)
       | S_EXPR_null ->
-        L.const_null i8_t
+        raise (LLIRError "null expr should be dealt elsewhere or denied in semantic analysis")
 
       | S_unary_expr (op, e) -> 
         let operand = trans_expr e the_builder the_scope the_cxt in
@@ -405,10 +405,17 @@ let trans_module
           the_builder)
 
     | S_STMT_return e ->
-      let the_return_value = trans_expr e the_builder the_scope the_cxt in
-      (* #TODO: null expr not right. *)
-      let _ = L.build_ret the_return_value the_builder in 
-      the_builder
+      begin
+        match e.se_type with 
+        | ST_unit -> 
+          let _ = L.build_ret_void the_builder in
+            the_builder
+        | _ ->
+          let the_return_value = trans_expr e the_builder the_scope the_cxt in
+          (* #TODO: null expr not right. *)
+          let _ = L.build_ret the_return_value the_builder in 
+            the_builder
+      end
 
     | S_STMT_block b ->
       (* #TODO: need new block? *)

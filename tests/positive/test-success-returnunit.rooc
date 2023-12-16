@@ -1,0 +1,10 @@
+fun test()->(){
+    print_str("it's here");
+    println();
+    return;
+}
+
+fun main()->int{
+    test();
+    return 0;
+}
