@@ -15,6 +15,7 @@ type semant_cxt ={
   sc_namespace: s_symbol_table;
   sc_type_env: (string, s_type_env_entry) Hashtbl.t;
   sc_current_sb: s_symbol_table;
+  sc_current_function_sig: s_function_signature option;
 }
 
 let analyse_module 
@@ -455,8 +456,15 @@ let analyse_module
 
     | Roc_return_stmt e ->
         let analysed_expr = analyse_expr e the_cxt in
-        S_STMT_return analysed_expr
-
+        let the_function_return_type = 
+          match the_cxt.sc_current_function_sig with
+            (* impossible *)
+          | None -> raise (SemanticError "return statement not in a function")
+          | Some the_function_sig -> the_function_sig.sfs_type.sft_return_type in
+          if analysed_expr.se_type <> the_function_return_type then
+            raise (type_err_failure "return type mismatch")
+          else
+            S_STMT_return analysed_expr
     
     | STMT_block b ->
         let analysed_block = analyse_block b the_cxt true in
@@ -516,7 +524,8 @@ let analyse_module
         let the_new_scope = init_symbol_table ~parent:table_in () in
         { sc_namespace = the_namesapce;
           sc_type_env = the_type_env;
-          sc_current_sb = the_new_scope; }
+          sc_current_sb = the_new_scope;
+          sc_current_function_sig = the_cxt.sc_current_function_sig;}
       else the_cxt
     in
     (* Analyse *)
@@ -853,6 +862,8 @@ let analyse_module
       sc_namespace = the_cxt.sc_namespace;
       sc_type_env = the_cxt.sc_type_env;
       sc_current_sb = func_local_scope;
+      (* have been set in `process_functions`. *)
+      sc_current_function_sig = the_cxt.sc_current_function_sig;
     } in
     let body_to_analyse = raw_func.rf_body in
     let analysed_body = UserDefined (analyse_block body_to_analyse the_new_cxt false) in
@@ -884,7 +895,17 @@ let analyse_module
       List.iter (fun item ->
         (match item with
         | FunctionItem func -> 
-          let analysed_func = analyse_function func the_cxt in
+          let the_current_func_sig = 
+            (match lookup_symbol func.rf_name the_namesapce with
+            | None -> raise (SemanticError "function signature not found")
+            | Some (FuncSigEntry fs) -> fs
+            | _ -> raise (SemanticError "function signature not found")) in
+          let the_cur_cxt = {
+            sc_namespace = the_cxt.sc_namespace;
+            sc_type_env = the_cxt.sc_type_env;
+            sc_current_sb = the_cxt.sc_current_sb;
+            sc_current_function_sig = Some the_current_func_sig; } in
+          let analysed_func = analyse_function func the_cur_cxt in
           update_symbol_table the_namesapce analysed_func.sf_name (FuncEntry analysed_func)
         (* #TODO: *)
         | _ -> ())) the_module.rm_items in 
@@ -902,6 +923,7 @@ let analyse_module
     sc_namespace = the_namespace;
     sc_type_env = the_type_env;
     sc_current_sb = the_namespace;
+    sc_current_function_sig = None;
   } in
 
   (* process struct *)
