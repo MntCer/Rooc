@@ -1,0 +1,8 @@
+// Test print_str with simple str
+fun main() -> int {
+    print_str("hello");
+    println();
+    print_str("1 2 3 4 5 Hello World () \n \t \r '' ! + - * / ");
+    return 0;
+}
+
