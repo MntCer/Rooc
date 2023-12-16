@@ -1,0 +1,5 @@
+fun main()-> int{
+    print_float(itof(1));
+    println();
+    return 0;
+}

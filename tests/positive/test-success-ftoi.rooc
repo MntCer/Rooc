@@ -1,0 +1,5 @@
+fun main()-> int{
+    print_int(ftoi(114.514));
+    println();
+    return 0;
+}

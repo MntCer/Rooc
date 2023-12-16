@@ -4,7 +4,9 @@ open Llirwrapper
 open Util
 module L = Llvm
 
-
+(**
+  author: Yuanfei   
+*)
 let print_int = {
   sf_name = "print_int";
   sf_params = Some ({
@@ -21,6 +23,9 @@ let print_int = {
   sf_body = BuiltIn;
 }
 
+(**
+  author: Yuanfei   
+*)
 let println = {
   sf_name = "println";
   sf_params = None;
@@ -31,6 +36,9 @@ let println = {
   sf_body = BuiltIn;
 }
 
+(**
+  author: Mona    
+*)
 let print_str = {
   sf_name = "print_str";
   sf_params = Some ({
@@ -47,6 +55,9 @@ let print_str = {
   sf_body = BuiltIn;
 }
 
+(**
+  author: Mona Yuanfei
+*)
 let concat_str = {
   sf_name = "concat_str";
   sf_params = Some ({
@@ -69,6 +80,9 @@ let concat_str = {
   sf_body = BuiltIn;
 }
 
+(**
+  author: Yuanfei    
+*)
 let print_bool = {
   sf_name = "print_bool";
   sf_params = Some ({
@@ -85,6 +99,9 @@ let print_bool = {
   sf_body = BuiltIn;
 }
 
+(**
+  author: Yuanfei    
+*)
 let print_float = {
   sf_name = "print_float";
   sf_params = Some ({
@@ -101,6 +118,47 @@ let print_float = {
   sf_body = BuiltIn;
 }
 
+(**
+  float to int
+  
+  author: Yuanfei
+*)
+let ftoi = {
+  sf_name = "ftoi";
+  sf_params = Some ({
+    sp_params=[{
+    sv_name = "f";
+    sv_type = ST_float;
+    sv_mutable = true;
+    sv_initial_value = None;
+  }]});
+  sf_type = {
+    sft_params_type = [ST_float];
+    sft_return_type = ST_int;
+  };
+  sf_body = BuiltIn;
+}
+
+(**
+  int to float
+  author: Yuanfei    
+*)
+let itof = {
+  sf_name = "itof";
+  sf_params = Some ({
+    sp_params=[{
+    sv_name = "i";
+    sv_type = ST_int;
+    sv_mutable = true;
+    sv_initial_value = None;
+  }]});
+  sf_type = {
+    sft_params_type = [ST_int];
+    sft_return_type = ST_float;
+  };
+  sf_body = BuiltIn;
+}
+
 let builtins_semant = [
   print_int;
   println;
@@ -108,6 +166,8 @@ let builtins_semant = [
   concat_str;
   print_bool;
   print_float;
+  ftoi;
+  itof;
 ]
 
 type builtin_translator = L.llcontext -> L.llbuilder -> ir_local_scope -> ir_global_scope -> L.llbuilder
@@ -255,6 +315,9 @@ let trans_print_bool
   let _ = L.build_call the_printf [| format_str; b |] "" the_builder in
   the_builder
 
+(**
+  author: Yuanfei    
+*)
 let trans_print_float
   (the_context:L.llcontext)
   (the_builder:L.llbuilder)
@@ -277,6 +340,40 @@ let trans_print_float
   let _ = L.build_call the_printf [| format_str; f |] "" the_builder in
   the_builder
 
+(**
+  author: Yuanfei    
+*)
+let trans_ftoi
+  (the_context:L.llcontext)
+  (the_builder:L.llbuilder)
+  (the_scope:ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+  let the_param =
+    let search_result=lookup "f" (IRLocalScope the_scope) in
+    match search_result with
+    | Some (IRVarEntry (v)) -> v
+    | None | _ -> bug "print_bool's pamameter is not right in its scope" in 
+  let f = L.build_load the_param.iv_value_addr "f" the_builder in
+  let i = L.build_fptosi f (L.i32_type the_context) "i" the_builder in
+  let _ = L.build_ret i the_builder in
+    the_builder
+
+let trans_itof
+  (the_context:L.llcontext)
+  (the_builder:L.llbuilder)
+  (the_scope:ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+  let the_param =
+    let search_result=lookup "i" (IRLocalScope the_scope) in
+    match search_result with
+    | Some (IRVarEntry (v)) -> v
+    | None | _ -> bug "print_bool's pamameter is not right in its scope" in
+  let i = L.build_load the_param.iv_value_addr "i" the_builder in
+  let f = L.build_sitofp i (L.double_type the_context) "f" the_builder in
+  let _ = L.build_ret f the_builder in
+    the_builder
 
 let builtins_map:(string, builtin_translator) Hashtbl.t = Hashtbl.create 10
 let () = Hashtbl.add builtins_map "print_int" trans_print_int
@@ -285,6 +382,8 @@ let () = Hashtbl.add builtins_map "print_str" trans_print_str
 let () = Hashtbl.add builtins_map "concat_str" trans_concat_str
 let () = Hashtbl.add builtins_map "print_bool" trans_print_bool
 let () = Hashtbl.add builtins_map "print_float" trans_print_float
+let () = Hashtbl.add builtins_map "ftoi" trans_ftoi
+let () = Hashtbl.add builtins_map "itof" trans_itof
 
 (**
   some external functions
@@ -351,7 +450,6 @@ let declare_memcpy
     ief_function = the_memcpy;
   } in
   insert_function "memcpy" (IRExternFunction wrapped_memcpy) the_scope    
-
 
 type external_function_declaration = L.llcontext->L.llmodule->ir_global_scope->unit
 
