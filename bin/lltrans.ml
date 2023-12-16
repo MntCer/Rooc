@@ -1,4 +1,8 @@
-(* Code generating for Rooc *)
+(* 
+    translate sast ir to llvm ir.
+    
+    author: Yuanfei, Mona, Xinyang
+*)
 
 open Sast
 open Util
@@ -6,8 +10,6 @@ open Llirwrapper
 open Builtins
 module L = Llvm
 module A = Ast
-
-module StringMap = Map.Make(String)
 
 type llir_cxt ={
   cur_function: L.llvalue;
@@ -62,7 +64,10 @@ let trans_module
   in
 
   (**
-    #TODO: add docstring
+    take a struct and a field name list, resolve it's recursive call and
+    get the target field's pointer, for following store and load.
+
+    author: Yuanfei
   *)
   let rec get_field_pointer 
     (the_struct:llir_struct)
@@ -97,11 +102,12 @@ let trans_module
           match lookup_struct the_new_struct_name the_global_scope with
           | Some s -> s
           | None -> raise (LLIRError "struct def info not found") in
-          get_field_pointer the_new_struct the_new_struct_ptr tl the_builder
-  in
+          get_field_pointer the_new_struct the_new_struct_ptr tl the_builder in
 
   (**
-    #TODO: add docstring
+    translate a s_expr to a LLVM IR
+
+    author: Yuanfei, Mona
   *)
   let rec trans_expr 
     (e:s_expr) 
@@ -208,25 +214,21 @@ let trans_module
           | _ -> raise (type_err_failure "Comparison expression not supported for other types than int, float, and bool") in
         op_instr operand1 operand2 "tmp" the_builder
 
-
       | S_EXPR_call call_e -> 
         let the_callee_name = call_e.sc_callee in 
         let the_wrapped_callee = 
           match lookup the_callee_name (IRGlobalScope the_global_scope) with
           | Some (IRFuncEntry (IRRoocFunction f)) -> f
-          | _ -> bug "callee not found"
-        in
+          | _ -> bug "callee not found" in
         let the_callee = the_wrapped_callee.irf_function in 
         let args = 
           Array.of_list (List.map 
-          (fun arg -> trans_expr arg the_builder the_scope the_cxt) call_e.sc_arguments )
-        in
+          (fun arg -> trans_expr arg the_builder the_scope the_cxt) call_e.sc_arguments ) in
         let the_instr_name = 
           match the_wrapped_callee.irf_return_type with
             | ST_unit -> ""
-            | _ -> the_callee_name ^ "_result"
-        in
-        L.build_call the_callee args the_instr_name the_builder
+            | _ -> the_callee_name ^ "_result" in
+          L.build_call the_callee args the_instr_name the_builder
 
       | S_grouped_expr e -> trans_expr e the_builder the_scope the_cxt
 
@@ -302,13 +304,13 @@ let trans_module
         let struct_ptr_type = L.pointer_type the_struct_type in 
           L.const_null struct_ptr_type
 
-      | _ -> todo "trans_expr"
-      )
-  in
+      | _ -> todo "trans_expr") in
 
   (**
     for any var's type `t`, generate a ptr in type `*t`, which is `alloca`
     and store the llvalue of initial value in `&alloca`.
+
+    author: Yuanfei
   *)
   let trans_var_decl 
     (v: s_variable) 
@@ -333,8 +335,7 @@ let trans_module
       iv_stype=v.sv_type;
     } in
     let () = insert_variable_local local_name local_var the_scope in 
-    the_builder
-  in
+      the_builder in
 
   (** 
     Invoke "goto_instr builder" if the current block 
@@ -345,10 +346,11 @@ let trans_module
     | Some _ -> ()
     | None -> ignore (goto_instr builder) in
 
-
   (**
     Translate the code for the given statement; 
     return the builder for the statement's successor.
+
+    author: Yuanfei, Mona and Xinyang
   *)
   let rec trans_stmt 
     (s: s_stmt) 
@@ -456,12 +458,12 @@ let trans_module
       let _ = L.build_cond_br pred_val true_bb false_bb the_builder in
       L.builder_at_end the_context merge_bb
 
-    | _ -> todo "trans_stmt"
-    )
-  in
+    | _ -> todo "trans_stmt") in
 
   (**
     take a s_function in and get a LLVM function in llvalue type
+
+    author: Yuanfei
   *)
   let trans_function 
     (key: string)
@@ -528,9 +530,7 @@ let trans_module
             with
             | Not_found -> bug "not supported built-in function" 
           in 
-          translate_builtin_func the_name the_builder the_scope the_global_scope;
-        )
-      in
+          translate_builtin_func the_name the_builder the_scope the_global_scope;) in
 
       (* add the final terminator *)
       add_terminator 
@@ -561,6 +561,8 @@ let trans_module
     from s_struct_fields to array of lltype;
     construct the mapping from field name to the type in struct body
     construcrt all the info in our ir type: llir_struct.
+
+    author: Yuanfei
   *)
   let trans_struct
     (key: string)
@@ -616,11 +618,12 @@ let trans_module
         ls_fields_index_map = the_fields_index_map;
         ls_llfields = llfields; } in
         insert_struct the_struct_name the_llir_struct the_global_scope
-    | _ -> ()
-  in
+    | _ -> () in
 
   (**
     register struct    
+
+    author: Yuanfei
   *)
   let register_struct
     (key: string)
@@ -635,15 +638,15 @@ let trans_module
 
   (**
     pre-fill `the namespace` for following code generation.
+
+    author: Yuanfei
   *)
   let register_function 
     (key: string) 
     (to_register:s_symbol_table_entry)
     : unit =
     match to_register with
-    (*
-      put the type, llvm function value and the scope into the wrapper.     
-    *)
+    (* put the type, llvm function value and the scope into the wrapper. *)
     | FuncEntry f ->         
       (* let () = print_string(string_of_stype (f.sf_type.sft_return_type)) in (* #DEBUG *) *)
       let llvm_return_type = trans_type f.sf_type.sft_return_type in
@@ -664,8 +667,8 @@ let trans_module
     declare_printf the_context the_module the_global_scope;
     (* need to register struct first. *)
     Hashtbl.iter register_struct to_trans.sm_namespace.sst_symbols;
-    Hashtbl.iter register_function to_trans.sm_namespace.sst_symbols;
-
     Hashtbl.iter trans_struct to_trans.sm_namespace.sst_symbols;
+
+    Hashtbl.iter register_function to_trans.sm_namespace.sst_symbols;
     Hashtbl.iter trans_function to_trans.sm_namespace.sst_symbols;
     the_module

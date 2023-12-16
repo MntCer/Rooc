@@ -1,4 +1,8 @@
-/* Ocamlyacc parser for Rooc */
+/* 
+  Ocamlyacc parser for Rooc
+
+  Author: Yuanfei, Mona and Xinyang
+*/
 %{
 open Ast
 open Util
@@ -71,7 +75,6 @@ roc_function:
         rf_params = None;
         rf_return_type = $6;
         rf_body = $7 } }
-
 
 roc_function_params:
     roc_params | roc_params COMMA { {
@@ -312,13 +315,11 @@ roc_if_stmt:
 roc_loop_stmt:
   | roc_while_stmt { $1 }
 
-
 roc_while_stmt:
     WHILE LPAREN expr_nonempty RPAREN roc_block { Roc_while_stmt($3, $5) }
 
 assignment_stmt:
     expr_nonempty ASSIGN expr_nonempty SEMI { STMT_assignment($1, $3) }
-
 
 r_type:
   | INT   { T_int    }

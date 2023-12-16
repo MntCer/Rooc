@@ -1,4 +1,9 @@
-(* Ocamllex scanner for Rooc *)
+
+(**
+  Ocamllex scanner for Rooc
+
+  Authors: Yuanfei, Mona
+*)
 
 { 
   open Parser 
@@ -51,15 +56,6 @@ rule token = parse
 | "trait"  { TRAIT }
 | "self"   { SELF }
 | "null"   { NULL }
-
-(* type *)
-| "int"    { INT }
-| "float"  { FLOAT }
-| "bool"   { BOOL }
-| "str"    { STR}
-(* | "list"   { LIST } *)
-
-(* *)
 | "return" { RETURN }
 | "if"     { IF }
 | "else"   { ELSE }
@@ -67,6 +63,12 @@ rule token = parse
 | "while"  { WHILE }
 | "break"  { BREAK }
 | "continue" { CONTINUE }
+(* type *)
+| "int"    { INT }
+| "float"  { FLOAT }
+| "bool"   { BOOL }
+| "str"    { STR}
+(* | "list"   { LIST } *)
 (* literals *)
 | "true"   { BLIT(true)  }
 | "false"  { BLIT(false) }

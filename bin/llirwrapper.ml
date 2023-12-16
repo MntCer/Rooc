@@ -1,5 +1,9 @@
 (*
- * 
+  To enclude some necessary info for our type design, 
+  implement this wrpper to enhance LLVM IR.
+  Incremental design, very chaos.
+
+  author: Yuanfei
  *)
 open Llvm
 open Sast
@@ -61,12 +65,15 @@ and ir_scope_entry =
   | IRFuncEntry of ir_function
   | IRVarEntry of ir_variable
 
-
 and ir_global_scope = {
   (* #TODO: keep this name for the moment, treat each kind of item separately is better. *)
   igs_items: (string, ir_scope_entry) Hashtbl.t; 
   igs_structs: (string, llir_struct) Hashtbl.t;
 }
+
+(**************************************************************
+                     Some helper functions.
+**************************************************************)
 
 let rec lookup (identifier: string) (scope: ir_scope) : ir_scope_entry option =
   match scope with

@@ -1,24 +1,32 @@
+(*
+  Semantic Process.
+
+  author: Yuanfei, Mona, Xinyang
+*)
 open Ast
 open Sast
 open Util
 open Builtins
 
-
+(**
+  some info needed when analysing.    
+*)
 type semant_cxt ={
   sc_namespace: s_symbol_table;
   sc_type_env: (string, s_type_env_entry) Hashtbl.t;
   sc_current_sb: s_symbol_table;
 }
 
-
 let analyse_module 
   (the_module:roc_module) 
   : s_module =
 
-  (**************************************************************
-     Some helper functions.
-  **************************************************************)
-
+  (**
+    First time encounter a struct, will register it as a "unresolved" type,
+    analyser will not dive deep into struct body in the first pass.
+    Second pass in analysing struct, when analyser checking the fields' type,
+    if a field's type is some struct and this struct is registered, it's good.
+  *)
   let rec analyse_type_expr
   (raw_type_expr: r_type_expr)
   (the_cxt: semant_cxt)
@@ -32,10 +40,11 @@ let analyse_module
       ST_struct name (* #NOTE: ad hoc solution, just work for struct. *)
     | Some (S_resolved the_type) -> the_type)
 
-
   (**
-    map each raw type to its corresponding semantic type
-      *)
+    map each raw type to its corresponding semantic type.
+
+    author: Yuanfei
+  *)
   and analyse_type 
   (raw_type: r_type)
   (the_cxt: semant_cxt)
@@ -47,13 +56,13 @@ let analyse_module
     | T_float -> ST_float
     | T_bool -> ST_bool
     | T_string -> ST_string
-    | T_typex typex -> analyse_type_expr typex the_cxt
-
-  in
+    | T_typex typex -> analyse_type_expr typex the_cxt in
 
   (** 
     take a ast node `roc_expr` and current scope's symbol table, 
     do the semantic analysis on it. return the analysed sast node `s_expr`.
+
+    authors: Yuanfei, Mona, Xinyang
   *)
   let rec analyse_expr 
     (raw_expr: roc_expr)
@@ -94,10 +103,9 @@ let analyse_module
           | (ST_float, ST_float) -> ST_float
           | _ -> raise (type_err_failure "Arithmetic expression type mismatch and only supports int and float")
             (* ST_error   *)
-            (*TODO: string concatenation as a built-in function?*)
-        in
-        { se_type = analysed_type; 
-          se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
+            (*TODO: string concatenation as a built-in function?*) in
+          { se_type = analysed_type; 
+            se_expr = S_arith_expr (op, analysed_e1, analysed_e2) }
 
     (* Binary Logical Expression *)
     | Roc_logical_expr (op, e1, e2) ->
@@ -106,10 +114,9 @@ let analyse_module
         let analysed_type = match (analysed_e1.se_type, analysed_e2.se_type) with
           | (ST_bool, ST_bool) -> ST_bool
           | _ -> raise (type_err_failure "Logical expression only supports bool type")
-            (* ST_error *)
-        in
-        { se_type = analysed_type; 
-          se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
+            (* ST_error *) in
+          { se_type = analysed_type; 
+            se_expr = S_logical_expr (op, analysed_e1, analysed_e2) }
 
     (* Binary Comparison Expression *)
     | Roc_comparison_expr (op, e1, e2) ->
@@ -389,8 +396,9 @@ let analyse_module
       raise (SemanticError "`null` appears in a wrong place.")
     
   (**
-    #TODO: add docstring
-      *)
+    check if a statement is legal
+    authors: Yuanfei, Mona
+  *)
   and analyse_stmt 
   (to_analyse: roc_stmt)
   (the_cxt: semant_cxt)
@@ -433,8 +441,7 @@ let analyse_module
           | _ -> raise (SemanticError "left hand side of assignment is not a lvalue"))
         (* every field is mutable*)
         | EXPR_field_access _ -> ()
-        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue")
-      in
+        | _ -> raise (SemanticError "left hand side of assignment is not a lvalue") in
       let () = check_lval e1 in
       let analysed_e1 = analyse_expr e1 the_cxt in
       let analysed_e2 = analyse_expr e2 the_cxt in
@@ -442,8 +449,7 @@ let analyse_module
         if analysed_e1.se_type = analysed_e2.se_type 
         then analysed_e1.se_type 
         else 
-          raise (type_err_failure "Assignment type mismatch")
-      in
+          raise (type_err_failure "Assignment type mismatch") in
         S_STMT_assignment (analysed_e1, analysed_e2)
 
     | Roc_return_stmt e ->
@@ -488,15 +494,13 @@ let analyse_module
         sie_condition = analysed_cond;
         sie_true_branch = analysed_then;
         sie_false_branch = analysed_else;})
-    
-    (* //TODO: redesign how to deal with this one.
-    | Roc_null_expr ->
-        { se_type = ST_unit; se_expr = S_null_expr } *)
 
   (**
     if the `init_new_table` is true, the function will create a new symbol table with current symbol table in context as its parent,
     otherwise, the function will use the current symbol table as the table for the block.
-      *)
+
+    author: Yuanfei
+  *)
   and analyse_block 
     ({rb_stmts:roc_stmt list}) 
     (the_cxt: semant_cxt)
@@ -521,6 +525,11 @@ let analyse_module
     { sb_stmts = analysed_stmts; 
       sb_scope = the_cxt.sc_current_sb; }
 
+  (**
+    analyse and register a variable in current scope.
+    
+    author: Yuanfei
+  *)
   and analyse_variable 
     (raw_variable: roc_variable) 
     (is_mutable: bool) 
@@ -547,6 +556,10 @@ let analyse_module
       sv_mutable = is_mutable;
       sv_initial_value = analysed_initial_value } in
 
+  (**
+    transfer params AST form to SAST form, 
+    register the params as variables in function scope.     
+  *)
   let analyse_params 
     (raw_params: roc_params) 
     (the_cxt: semant_cxt)
@@ -572,6 +585,8 @@ let analyse_module
   (**
     only needs to create type by struct name.
     #NOTE: no deeper type analysis, it's an ad hoc solution.
+
+    author: Yuanfei
   *)
   let register_struct 
   (raw_struct: r_struct) 
@@ -599,6 +614,8 @@ let analyse_module
 
   (**
     insert the struct into symbol table, update the type_env.
+
+    author: Yuanfei
   *)
   let analyse_struct 
     (raw_struct: r_struct) 
@@ -643,6 +660,9 @@ let analyse_module
 
   in
 
+  (**
+    the whole process of analysing structs. include 2 passes.
+  *)
   let process_structs
     (the_module: roc_module)
     (the_cxt: semant_cxt)
@@ -672,7 +692,9 @@ let analyse_module
   in
 
   (**
-    register traits 
+    register traits.
+
+    authors: Xinyang
   *)
   let analyse_method_sig
   (raw_method_sig: roc_method_signature)
@@ -703,6 +725,9 @@ let analyse_module
       sms_type = analysed_type; } 
   in
 
+  (**
+    author: Xinyang     
+  *)
   let register_trait
   (raw_trait: roc_trait)
   (the_cxt: semant_cxt)
@@ -724,6 +749,11 @@ let analyse_module
     insert_symbol the_namespace analysed_trait.st_name (TraitEntry analysed_trait)
   in
 
+  (**
+    the whole process of analysing traits. just 1 pass.
+    
+    author: Xinyang
+  *)
   let process_traits
     (the_module: roc_module)
     (the_cxt: semant_cxt)
@@ -744,6 +774,8 @@ let analyse_module
   (**
     Analyse a function's name, params and return type and construct them into a `s_function_signature` type. 
     Register this signature into symbol table for the following semantic analysis.
+
+    Author: Yuanfei
   *)
   let register_function 
   (raw_func: roc_function) 
@@ -777,6 +809,11 @@ let analyse_module
     insert_symbol the_symbol_table analysed_name (FuncSigEntry analysed_func_sig)
   in
 
+  (**
+    More deeper analysis for a function.
+    
+    Author: Yuanfei
+  *)
   let analyse_function 
     (raw_func: roc_function) 
     (the_cxt: semant_cxt)
@@ -824,6 +861,9 @@ let analyse_module
       sf_body = analysed_body; }
   in
 
+  (**
+    the whole process of analysing functions. include 2 passes.
+  *)
   let process_functions 
     (the_module:roc_module) 
     (the_cxt: semant_cxt)
@@ -890,7 +930,7 @@ let analyse_module
       | _ -> bug "main function's return type is not int")
     | _ -> raise (SemanticError "main is not a function"))
   in
-
-  { sm_namespace = the_cxt.sc_namespace;
-    sm_type_env = the_cxt.sc_type_env; }
+    
+    { sm_namespace = the_cxt.sc_namespace;
+      sm_type_env = the_cxt.sc_type_env; }
 

@@ -1,18 +1,18 @@
 (* 
- * Abstract Syntax Tree and functions for printing it 
+ * Abstract Syntax Tree and some helper functions
+ * 
+ * Author: Yuanfei, Xinyang and Mona
  *)
 
-(* type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
-          And | Or *)
+(*
+  Types and operators definitions, learnt a lot from Rust design.
 
-
+*)
 type arith_op = Add | Sub | Mult | Div
 type logical_op = And | Or
 type comparison_op = Equal | Neq | Less | Leq | Greater | Geq 
 type unary_op = Not | Neg
 
-
-(* Define the possible types in Rooc *)
 type r_type = 
   | T_unit
   | T_int
@@ -21,20 +21,18 @@ type r_type =
   | T_bool
   | T_typex of r_type_expr
 
-
 and r_type_expr =
   | R_user_defined_type of string
 
-
-(* type typ = Primitive of primitive_typ | Generic of generic_typ
+(* 
+type typ = Primitive of primitive_typ | Generic of generic_typ
 and generic_typ = List of typ
-and primitive_typ = Int | Float | String | Bool *)
-
+and primitive_typ = Int | Float | String | Bool 
+*)
 
 type roc_expr =
   | EXPR_null
 (* literal expr *)
-  (* | Roc_unit_literal #TODO *)
   | Roc_string_literal of string
   | Roc_int_literal of int
   | Roc_float_literal of float
@@ -51,13 +49,12 @@ type roc_expr =
   | EXPR_struct of roc_expr * (struct_field_expr list)
   | EXPR_nullstruct
 
-and struct_field_expr = 
-  {
+and struct_field_expr = {
     esf_name : string;
     esf_expr : roc_expr; }
 
-and roc_variable =
-  { rv_name : string;
+and roc_variable = { 
+    rv_name : string;
     rv_type : r_type;
     rv_initial_expr : roc_expr option; }
 
@@ -73,11 +70,9 @@ and roc_stmt =
   | Roc_continue_stmt
   | Roc_return_stmt of roc_expr
 
-and roc_block =
-  {
+and roc_block = {
     rb_stmts : roc_stmt list;
   }
-
 
 type roc_params = {
   rp_params : roc_variable list;
@@ -118,11 +113,9 @@ type roc_trait = {
   rt_methods : roc_method_signature list;
 }
 
-
 type roc_item = 
     FunctionItem of roc_function
   | StructItem of r_struct
-  (* | ConstantItem of roc_constant *)
   (* | ConstantItem of roc_constant *)
   | TraitItem of roc_trait
 
@@ -130,16 +123,13 @@ type roc_module = {
   rm_items: roc_item list;
 }
 
- 
-
 (* for trait *)
 (*
 type roc_func_sig = {
   rfs_return_type : r_type;
   rfs_name : string;
   rfs_params : roc_params option;
-}
-*)
+} *)
 
 (*
 type impl_decl = {
@@ -157,7 +147,6 @@ let rec string_of_module
   let items = roc_module.rm_items in
   let items_str = List.map string_of_item items in
   String.concat "\n" items_str
-
 
 and string_of_arith_op = function
     Add -> "+"

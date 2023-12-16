@@ -1,4 +1,10 @@
 
+(**
+    the whole IR design to store some semantic information and help to
+    generate LLVM IR. Plus some helper functions.  
+
+    authors: Yuanfei, Xinyang and Mona
+*)
 open Ast
 open Util
 
@@ -8,20 +14,14 @@ type s_type =
   | ST_float
   | ST_string
   | ST_bool
-
   | ST_struct of string
-
   | ST_trait of string
-
   | ST_sequence of s_sequence_type
-
   | ST_function of s_function_type
-
   | ST_error
 
 and s_sequence_type = 
   | T_list of s_type
-
 
 and s_function_type = {
   sft_params_type: s_type list;
@@ -34,7 +34,6 @@ and s_type_env_entry =
   | S_resolved of s_type
   | S_unresolved of string
 
-
 type s_expr = {
     se_type: s_type;
     se_expr: s_structual_expr;
@@ -42,14 +41,11 @@ type s_expr = {
 
 and s_structual_expr =
   | S_EXPR_null
-(* literal expr *)
   | S_string_literal of string
   | S_int_literal of int
   | S_float_literal of float
   | S_bool_literal of bool
-(* unary expr *)
   | S_unary_expr of unary_op * s_expr
-(* binary expression: arith; logical; comparison *)
   | S_arith_expr of arith_op * s_expr * s_expr
   | S_logical_expr of logical_op * s_expr * s_expr
   | S_comparison_expr of comparison_op * s_expr * s_expr
@@ -59,7 +55,6 @@ and s_structual_expr =
   | S_EXPR_path of string
   | S_EXPR_struct of string * s_variable list
   | S_EXPR_nullstruct of string
-
 
 and sexpr_call= {
   sc_callee: string;
@@ -78,11 +73,11 @@ and s_if_stmt = {
 }
 
 and s_variable = {
-    sv_name: string;
-    sv_type: s_type;
-    sv_mutable: bool;
-    sv_initial_value : s_expr option;
-  }
+  sv_name: string;
+  sv_type: s_type;
+  sv_mutable: bool;
+  sv_initial_value : s_expr option;
+}
 
 and s_stmt =
   | S_expr_stmt of s_expr
@@ -96,7 +91,6 @@ and s_stmt =
   | S_STMT_block of s_block
   | S_STMT_while of s_while_stmt
   | S_STMT_if of s_if_stmt
-
 
 and s_block = {
   sb_stmts : s_stmt list;
@@ -142,7 +136,6 @@ and s_struct_field = {
   ssf_type : s_type;
 }
 
-
 and s_struct = {
   ss_name : string;
   ss_fields : s_struct_field list;
@@ -170,9 +163,9 @@ type s_module = {
   sm_type_env: (string, s_type_env_entry) Hashtbl.t;
 }
 
-  (**************************************************************
-     Some helper functions.
-  **************************************************************)
+(**************************************************************
+                  Some helper functions.
+**************************************************************)
 
 (* helper function for symbol table *)
 
@@ -194,7 +187,6 @@ let rec lookup_symbol identifier symbol_table =
       | Some parent_table -> lookup_symbol identifier parent_table  
       | None -> None  )
 
-
 let insert_symbol symbol_table identifier entry =
   (* Check for existence in the current scope only *)
   if Hashtbl.mem symbol_table.sst_symbols identifier then
@@ -207,7 +199,6 @@ let update_symbol_table symbol_table identifier new_entry =
     Hashtbl.replace symbol_table.sst_symbols identifier new_entry
   else
     raise (SemanticError ("Symbol not found for update: " ^ identifier))
-
 
 (* helper functions for type env. *)
 
@@ -241,9 +232,9 @@ let update_type_env
   else
     raise (SemanticError ("Type not found for update: " ^ identifier))
 
-  (**************************************************************
-     pretty print functions
-  **************************************************************)
+(**************************************************************
+                   pretty print functions
+**************************************************************)
 
 let string_of_s_module = function
   _ -> "TODO"

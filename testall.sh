@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# TODO:  
 
 # Save the current value of OCAMLRUNPARAM
 old_ocamlrunparam=$OCAMLRUNPARAM
