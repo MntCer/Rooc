@@ -1,0 +1,22 @@
+fun main()->int {
+    print_int(test1());
+    return 0;
+}
+
+fun test1() -> int{
+    return test2();
+}
+
+
+fun test2() -> int{
+    return test3();
+}
+
+fun test3() -> int{
+    return test4();
+
+}
+
+fun test4() -> int {
+    return 4;
+}

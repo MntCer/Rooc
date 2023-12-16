@@ -1,0 +1,11 @@
+fun main() -> () {
+    var x:list<int> = [1,2,3,4];
+    if(x[0]==1){
+        x.append(5);
+    }
+    x.get(1);
+    x.set(1,2);
+    x.contains(5);
+    x.remove();
+    
+}

@@ -1,0 +1,6 @@
+// Test concat_str with 2 complex strings including empty string
+fun main() -> int {
+    concat_str("   ", "--- +++ ///");
+    return 0;
+}
+

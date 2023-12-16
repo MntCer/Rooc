@@ -1,14 +1,19 @@
 #!/bin/sh
 
-# Regression testing script for Rooc
-# Step through a list of files
-#  Compile, run, and check the output of each expected-to-work test
-#  Compile and check the error of each expected-to-fail test
+
+# Save the current value of OCAMLRUNPARAM
+old_ocamlrunparam=$OCAMLRUNPARAM
+
+# Unset OCAMLRUNPARAM
+unset OCAMLRUNPARAM
 
 # Path to the Rooc compiler. 
 # Try "_build/install/default/bin/Rooc" if ocamlbuild was unable to create a symbolic link.
 Rooc="Rooc"
 #Rooc="_build/install/default/bin/Rooc"
+
+LLC="llc"
+CC="cc"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -84,9 +89,16 @@ Check() {
 
     generatedfiles=""
 
-    generatedfiles="$generatedfiles ${basename}.out" &&
-    Run "dune exec $Rooc" "$1" ">" "${basename}.out" && # generate result
-    Compare ${basename}.out ${reffile} ${basename}.diff
+    # keepfiles="${basename}.ll" #keep all the .ll files automatically
+    # generatedfiles="$generatedfiles ${basename}.s ${basename}.exe ${basename}.out" &&
+
+    keepfiles="" 
+    generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
+    Run "dune exec $Rooc" "$1" ">" "${basename}.ll" && # generate result
+    Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
+    Run "$CC" "-o" "${basename}.exe" "${basename}.s" &&
+    Run "./${basename}.exe" > "${basename}.out" &&
+    Compare ${basename}.out ${reffile}.std ${basename}.diff
 
     # Report the status and clean up the generated files
     if [ $error -eq 0 ] ; then
@@ -102,6 +114,7 @@ Check() {
 }
 
 CheckFail() {
+    # %TODO: Now no check failed test. 
     error=0
     basename=`echo $1 | sed 's/.*\\///
                              s/.rooc//'`
@@ -117,7 +130,7 @@ CheckFail() {
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
     RunFail "dune exec $Rooc" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
-    Compare ${basename}.err ${reffile} ${basename}.diff
+    Compare ${basename}.err ${reffile}.std ${basename}.diff
 
     # Report the status and clean up the generated files
 
@@ -141,31 +154,31 @@ while getopts kdpsh c; do
 	h) # Help
 	    Usage
 	    ;;
-    s) 
-        SignalError
     esac
 done
 
 shift `expr $OPTIND - 1`
 
-
 if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="tests/test-*.rooc tests/fail-*.rooc"
+    files="tests/negative/test-fail-*.rooc tests/positive/test-success-*.rooc"
 fi
 
 # echo $files
+
+
+
 
 for file in $files
 do
     # echo $file
     case $file in
-	*test-*)
+	*test-success*)
 	    Check $file 2>> $globallog
 	    ;;
-	*fail-*)
+	*test-fail*)
 	    CheckFail $file 2>> $globallog
 	    ;;
 	*)
@@ -176,3 +189,6 @@ do
 done
 
 exit $globalerror
+
+# Reset OCAMLRUNPARAM to its original value
+export OCAMLRUNPARAM=$old_ocamlrunparam

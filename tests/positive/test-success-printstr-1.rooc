@@ -1,0 +1,6 @@
+// Test print_str with simple str
+fun main() -> int {
+    print_str("hello");
+    return 0;
+}
+

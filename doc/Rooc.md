@@ -1,18 +1,22 @@
 # The Rooc Language Reference
 
+## Program structure
+
+<!-- %TODO: the cross-compile part -->
+
 ## Notation
 
 ### Syntax notation
 
-The syntax grammar is specified using [Wirth syntax notation](https://en.wikipedia.org/wiki/Wirth_syntax_notation) to express the Extended Backus-Naur Form (EBNF):
+The syntax grammar is specified using [Wirth syntax notation](https://en.wikipedia.org/wiki/Wirth_syntax_notation) to express the Extended Backus-Naur Form (EBNF) in those monospaced font blocks:
 
 ```ebnf
 Syntax      = { Production } .
-Production  = production_name "=" [ Expression ] "." .
+Production  = PRODUCTION_NAME "=" [ Expression ] "." .
 Expression  = Term { "|" Term } .
 Term        = Factor { Factor } .
-Factor      = production_name
-            | literal
+Factor      = PRODUCTION_NAME
+            | LITERAL
             | Group 
             | Option 
             | Repetition
@@ -22,12 +26,11 @@ Option      = "[" Expression "]" .
 Repetition  = "{" Expression "}" .
 ```
 
-The equals sign indicates a production. 
-The element on the left is defined to be the combination of elements on the right. 
+The equals sign indicates a production. The element on the left is defined to be the combination of elements on the right. 
 
 A production is terminated by a full stop (period).
 
-Lowercase production names and elements quoted in `""` are used to identify lexical (terminal) tokens. Non-terminals are in CamelCase. 
+Elements in capitals quoted in `""` are used to identify lexical (terminal) tokens. Non-terminals are in CamelCase. 
 
 The three operators below are in increasing precedence.
 
@@ -40,27 +43,25 @@ The three operators below are in increasing precedence.
 
 ### Lexical notation
 
-The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions).
+The lexical grammar is primarily described using [POSIX extended regular expressions](https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions)(ERE) in Math box.
 
-In our notation, expressions are named to represent specific tokens, and can be referenced in other expressions as patterns by enclosing the name with `<` and `>` brackets.
-A pattern is a segment of the regular expression treated as a single unit.
+$$
+\begin{align*}
+\textbf{DIGIT}      & : \texttt{['0'-'9']} \\
+\textbf{INTEGER}    & : \textbf{DIGIT}\texttt{+} \\
+\end{align*}
+$$
 
-To match the raw "<" and ">" characters in a string, use `\<` and `\>` respectively.
+<!-- %TODO: polish this paragraph -->
+A colon indicates a lexical token's definition. The symbols in textwriter font represent operators in ERE regular expression. Strings in bold font refer to named lexical tokens. Symbol enclosed within single quotes $\texttt{''}$ denotes a single character in Rooc's alphabet.
 
-```
-token1 : (a|\<)
-token2 : <token1>(b|\>)
-```
-
-The `token2` expression expands to `(a|<)(b|>)` in standard ERE.
-
-In ERE, a raw space character is a valid element. 
-However, in most cases, Rooc will not allow to include a "space" as part of lexical tokens(not for string literal, comments, etc.) So, the spaces presented in the following regular expressions are only for readability and don't denote actual space characters.
-To represent a "space" explicitly in the following regular expressions, we will utilize `\s`.
+Worth noting, standard ERE will match space character in input expression. But in this manual, all space characters are just used for formatting and readability. Rooc will use $\backslash \texttt{s}$ to denote a space character in token's definition.
 
 ## Lexical elements
 
 ### Alphabet
+
+<!-- %TODO: rethink, there are still unclear parts. For special characters, do some expriements. -->
 
 Rooc uses the ASCII character set as its alphabet. This consists of all characters with values from 0 to 127 in the ASCII table, encompassing:
 
@@ -76,6 +77,7 @@ Rooc uses the ASCII character set as its alphabet. This consists of all characte
 
 ### Letters and Digits
 
+<!-- %TODO: rewrite -->
 ```
 digit   : [0-9]
 letter  : [a-zA-Z]
@@ -98,9 +100,9 @@ comment         : <line_comment>|<general_comment>
 ### Whitespace
 
 ```
- whitespace : [' ' '\t' '\r' '\n'] 
- separator  : whitespace {whitespace}
- ```
+whitespace : [' ' '\t' '\r' '\n'] 
+separator  : whitespace {whitespace}
+```
 
 We use whitespace, tab, carriage return, and newline character to separate tokens, otherwise ignored by the compiler. 
 
@@ -112,11 +114,12 @@ Identifiers name program entities such as variables and functions. An identifier
 identifier : <letter>(<letter>|<digit>|_)*
 ```
 
-The `production_name` referred before also follow this rule.
+The `PRODUCTION_NAME` referred before also follow this rule.
 
 ### Semicolon
 
 To allow complex statements to occupy a single line, Rooc use semicolon as the terminator of a statement or a declaration. 
+<!-- #TODO: not semicolon for block -->
 
 ```
 ;
@@ -133,47 +136,17 @@ To allow complex statements to occupy a single line, Rooc use semicolon as the t
 {       }       ,       :      ->     .
 ```
 
-
-
-<!-- ``` ;NOTE: following style is too verbose 
-assign  : =
-plus    : \+
-minus   : -
-times   : \*
-divide  : /
-lparen  : \(
-rparen  : \)
-
-eq      : ==
-neq     : !=
-lt      : <
-leq     : <=
-gt      : \>
-geq     : \>= 
-and     : &&
-or      : \|\|
-not     : !
-lbrace  : {
-rbrace  : }
-comma   : ,
-colon   : : 
-
-```
--->
-
+Note: When assigning objects, passing them to functions, or copying values, our current implementation only supports a shallow copy. This means that the objects or values involved will reference the same memory location rather than creating an entirely independent duplicate.
 
 ### Keywords
 
 The following keywords are reserved and may not be used as identifiers.
 
-```
-/*booleans*/    true        false       
-/*define*/      var         let         fun         struct      trait       
-                impl  
-/*type*/        int         float       bool        str         void        
-                list
-/*control*/     if          else        for         while       return
-/*OOP*/         this
+```      
+const       var         let         fun         struct      impl        trait  
+self        int         float       bool        str         list
+return      if          else        for         while       break       continue
+true        false
 ```
 
 ### Integer literals
@@ -224,12 +197,471 @@ Now, the supported escape sequences are:
 * `\r` : carriage return
 * `\t` : horizontal tab
 
+## Module
 
-## Types
+A file will be compiled as a `Module`. A module is a container for zero or more items. Each module has its own separate scope.
+
+```ebnf
+Module = { 
+    Item 
+} .
+```
+
+A module that contains a main function in its root scope can be compiled to an executable.
+
+```rust
+fn main() -> int {};
+```
+
+The return type of main function has to be int. We preferred a numeric value that indicates the outcome or status of the program execution.
+
+## Item
+
+<!-- %TODO:
+```ebnf
+    | UseDeclaration
+    | TypeAlias
+    | Enumeration
+    | Union
+    | StaticItem
+    | ExternBlock
+``` -->
+
+```ebnf
+Item =
+      Function
+    | ConstantValue
+    | Struct
+    | Trait
+    | Implementation .
+```
+
+Items are entirely determined at compile-time, generally remain fixed during execution, and may reside in read-only memory.
+
+### Function
+
+<!-- %TODO: FunctionQualifier -->
+<!-- %TODO: Generic params -->
+
+```ebnf
+Function = "fun" identifier "(" [ FunctionParams ] ")" "->" Type Block .
+
+FunctionParams = Param { "," Param } [ "," ] .
+
+Param = identifier ":" Type .
+
+Method = "fun" identifier "(" [ MethodParams] ")" "->" Type Block ";".
+
+MethodSignature = "fun" identifier "(" [ MethodParams] ")" "->" Type .
+
+MethodParams = "self" { "," Param } [ "," ] .
+```
+
+A function consists of a block, along with a name, a set of parameters, and an output type. 
+
+Functions may declare a set of input variables as parameters, through which the caller passes arguments into the function, and the output type of the value the function will return to its caller on completion. The parameters are optional.
+
+<!-- %TODO: revise the words -->
+Function must have a function body. 
+
+Method works like function, the only difference is the use of `self` as parameter. Method can only be defined in a `impl` block or a `trait` block.
+
+
+Functions and methods could be forward referenced, that is to say, as long as the called function or method is visiable in the called scope, this call is valid.
+
+<!-- %TODO: yield a first-class function value -->
+Example:
+
+```rust
+fun get_first (x:int,y:float) -> int {
+    return x;
+}
+```
+
+#### Function parameters
+
+<!-- %TODO: Do after the struct type is cleared -->
+If the first parameter is a `self`, this indicates that the function is a method. 
+Functions with a `self` parameter may only appear as an associated function in a trait or implementation.
+
+#### Function body
+
+The block of a function is conceptually wrapped in a block that binds the argument and then returns the value of the function's block. 
+
+#TODO: add reference to block in statements
+
+
+
+### Struct
 
 
 ```ebnf
-Type = PrimitiveType | GenericType | identifier.
+Struct =
+    "struct" IDENTIFIER "{" [ StructFields ] "}" .
+StructFields =
+    StructField {"," StructField } [","] .
+StructField =
+    IDENTIFIER ":" Type .
+```
+
+```
+struct Point {
+    m:int,
+    n:int,
+}
+```
+<!-- %TODO: ref -->
+A struct is a nominal struct type defined with the keyword `struct`.
+<!--%TODO: memory layout-->
+
+### Trait
+
+```ebnf
+Trait =
+    "trait" IDENTIFIER "{" 
+        #TODO: not decided yet.
+    "}".
+
+```
+
+A trait describes an abstract interface that types can implement.
+
+<!-- 
+#TODO
+types
+constants -->
+
+<!-- #TODO: ref -->
+Traits are implemented for specific types through separate implementations.
+
+<!-- #TODO: ref -->
+All functions are public visibility by default.
+
+Trait functions may omit the function body by replacing it with a semicolon. This indicates that the implementation must define the function. If the trait function defines a body, this definition acts as a default for any implementation which does not override it.
+
+Example:
+
+```
+trait Drawable {
+    fun draw() -> ();
+};
+```
+
+### Implementation
+
+```ebnf
+Implementation =
+    InherentImpl 
+  | TraitImpl .
+
+InherentImpl =
+    "impl" Type "{" { AssociatedItem } "}" .
+
+<!-- %TODO: not identifier, but type -->
+TraitImpl =
+    "impl" IDENTIFIER "for" IDENTIFIER
+        "{" { AssociatedItem } "}"
+```
+An implementation is an item that associates items with an implementing type. Implementations are defined with the keyword `impl` and contain methods that belong to an instance of the type that is being implemented or to the type statically.
+
+
+Example:
+
+```rust
+impl Point {
+    fun new(x:int, y:int) -> Point { 
+        self.x = x;
+        self.y = y;
+        return self;
+    }
+
+    fun getX() -> int {
+        return self.x;
+    }
+
+    fun getY() -> int {
+        return self.y;
+    }
+}
+```
+
+
+
+## Statements
+
+```ebnf
+Statements :
+     Statement { Statement } .
+```
+
+<!--%TODO: not right now  -->
+Statements serve mostly to contain and explicitly sequence expression evaluation. A statement is a component of a block, which is in turn a component of an outer expression or function.
+
+
+```ebnf
+Statement :
+      ";"
+    | DeclarationStmt
+    | ExprStmt 
+    | ForStmt
+    | WhileStmt
+    | ContinueStmt
+    | BreakStmt
+    | IfStmt 
+    | ReturnStmt 
+    | Block .
+```
+<!-- %TODO: now just allow first-level item
+   | Item 
+-->
+
+### Declaration statement
+
+A declaration statement is one that introduces one or more names into the enclosing statement block. The declared names may denote new variables.
+
+```ebnf
+DeclarationStatement = VarDeclaration
+                     | LetDeclaration .
+VarDeclaration       = "var" identifier ":" Type [ "=" Expr ] ";" .
+LetDeclaration       = "let" identifier ":" Type [ "=" Expr ] ";" .
+```
+
+A `let` or `var` statement introduce a new set of variables. A variable is a storage location for holding a value. The set of permissible values is determined by the variable's type.
+
+Any variables introduced by a variable declaration are visible from the point of declaration until the end of the enclosing block scope, except when they are shadowed by another variable declaration.
+
+The variable introduced by a `let` statement is immutable, and `var` variable is mutable.
+
+### Expression statement
+
+```ebnf
+ExprStmt = Expr ";" .
+```
+
+### Block
+
+```ebnf
+Block = "{" [ Statements ] "}" .
+```
+
+A block is a sequences of statements and anonymous namespace scope for items and variable declarations. As an anonymous namespace scope, item declarations are only in scope inside the block itself and variables declared by let statements are in scope from the next statement until the end of the block.
+
+The syntax for a block starts with a "`{`" along with any number of statements, and finally ends with "`}`".
+
+When evaluating a block each statement is executed sequentially.
+
+### Return Statement
+
+```ebnf
+ReturnExpr =
+   "return" Expr .
+```
+
+Return expressions are denoted with the keyword `return`. Evaluating a return expression moves its argument into the designated output location for the current function call, destroys the current function activation frame, and transfers control to the caller frame.
+
+
+### For Statement
+
+```ebnf
+ForStmt   = 
+    "for" "(" Expr ";" Expr ";" Expr ")" Block .
+```
+
+### While Statement
+
+```ebnf
+WhileStmt = 
+    "while" "(" Expr ")" Block .
+```
+
+<!-- ;TODO: need to support the type-inference first;--> 
+
+
+`ForStmt`'s behavior can be explained with `WhileStmt` since they are interchangeable.
+
+The following two snippets are equivalent:
+
+```rust
+start_condition;
+while(end_condition){
+    do_something();
+    step_update;
+};
+```
+
+```rust
+for(start_condition; end_condition; step_update){
+    do_something();
+};
+```
+
+
+### Break Statement
+
+```ebnf
+BreakStmt =
+   "break" ";".
+```
+
+When break is encountered, the current loop is immediately terminated, returning control to the next statement after the loop body.
+
+### Continue Statment
+
+```ebnf
+ContinueStmt =
+   "continue" ";".
+```
+
+When continue is encountered, the current iteration of the associated loop body is immediately terminated, returning control to the loop head.
+
+<!-- ``` 
+for(<id> in <list_id>){
+    <stmt_list>
+}
+``` -->
+
+### If Statment
+
+%TODO: this one could be changed into more convient form
+
+```ebnf
+IfStatement = 
+    "if" "(" Expr ")" Block 
+        "else"  Block .
+```
+
+## Expressions
+
+Most forms of value-producing or effect-causing evaluation are directed by the uniform syntax category of *expression*s in Rooc.
+
+```ebnf
+Expr =
+    LiteralExpr
+  | OperatorExpr
+  | GroupedExpr
+  | StructExpr        
+  | CallExpr
+  | MethodCallExpr    #TODO
+  | FieldAccessExpr . 
+
+```
+
+Expressions are divided into two main categories: place expressions and value expressions. Which is, the left value and the right value.
+Within each expression, operands may likewise occur in either place context or value context. The evaluation of an expression depends both on its own category and the context it occurs within.
+
+#TODO: add each category's expression.
+
+
+### Literal expression
+
+```ebnf
+LiteralExpr =
+     STRING_LITERAL
+   | INTEGER_LITERAL
+   | FLOAT_LITERAL
+   | BOOL_LITERAL .
+```
+
+A literal expression is an expression consisting of a single token, rather than a sequence of tokens, that immediately and directly denotes the value it evaluates to, rather than referring to it by name or some other evaluation rule.
+
+A literal is a form of constant expression, so is evaluated (primarily) at compile time.
+
+
+### Operator expression
+
+```ebnf
+OperatorExpr =
+    UnaryExpr
+  | ArithmeticExpr
+  | LogicalExpr
+  | ComparisonExpr
+  | AssignmentExpr .
+```
+
+#### unary expression
+
+```ebnf
+UnaryExpr =
+    "-" Expr 
+  | "!" Expr .
+```
+
+#### Arithmetic or logical expression
+
+```ebnf
+ArithmeticxExpr =
+    Expr "+" Expr
+  | Expr "-" Expr
+  | Expr "*" Expr
+  | Expr "/" Expr .
+
+LogicalExpr =
+  | Expr "&&" Expr
+  | Expr "||" Expr .
+```
+
+#### Comparison expression
+
+```ebnf
+ComparisonExpr =
+    Expr "==" Expr
+  | Expr "!=" Expr
+  | Expr ">" Expr
+  | Expr "<" Expr
+  | Expr ">=" Expr
+  | Expr "<=" Expr .
+```
+
+#### Assignment expression
+
+<!-- #TODO: Not right now -->
+
+```ebnf
+AssignmentExpr =
+    Expr "=" Expr .
+```
+
+### Grouped expression
+
+```ebnf
+GroupedExpr = 
+    "(" Expr ")" .
+```
+
+### Call expression
+
+```ebnf
+CallExpr =
+   ID "(" { CallParams } ")" .
+
+CallParams =
+   Expr { "," Expr } [ "," ] .
+```
+
+A call expression calls a function.
+
+The syntax of a call expression is an expression, called the function operand, followed by a parenthesized comma-separated list of expression, called the argument operands.
+
+### Field access expression
+
+```ebnf
+FieldAccessExpr =
+    IDENTIFIER "." IDENTIFIER .
+```
+
+A field expression is a place expression that evaluates to the location of a field of a struct. When the operand is mutable, the field expression is also mutable.
+
+The syntax for a field expression is an expression, then a `.`, and finally an identifier. 
+Field expressions cannot be followed by a parenthetical comma-separated list of expressions, as that is instead parsed as a method call expression. That is, they cannot be the function operand of a call expression.
+
+
+
+## Type
+
+```ebnf
+Type = PrimitiveType 
+    | GenericType 
+    | identifier .
 ```
 
 ### Primitive types
@@ -238,12 +670,17 @@ Type = PrimitiveType | GenericType | identifier.
 We implement common primitive types.
 
 ```ebnf
-PrimitiveType   = Int | Float | Bool | String | Void.
-Int             = "int".
-Float           = "float".
-Bool            = "bool".
-String          = "str".
-Void            = "void".   
+PrimitiveType   = 
+    Int 
+  | Float 
+  | Bool 
+  | String 
+  | Unit .
+Int             = "int" .
+Float           = "float" .
+Bool            = "bool" .
+String          = "str" .
+Unit            = "()" .
 ```
 
 ### Generic type
@@ -253,288 +690,26 @@ GenericType = List .
 List        = "list" "(" Type ")" .
 ```
 
-Elements in a list should have the same type.
+Elements in a list should have the same type. The list's implementation is similar to how C++ manages vectors, ensuring that elements are stored contiguously, facilitating easy access and traversal through iterators. When inserting new elements, if the list's size exceeds its capacity, a reallocation process is initiated. This involves allocating a new block of memory, relocating the existing elements to this new space, and subsequently releasing the old memory locations. This dynamic reallocation mechanism ensures the list can dynamically grow in size while maintaining efficient memory usage.
 
 ### Struct type
 
-Declaration of a new struct leads to a new type which appears the same as the name of the struct.
+<!-- %TODO: -->
 
-Struct type example:
+## Name analysis
 
-```
-Struct A{
-    var num: int;
-}
-
-Struct B{
-    /* Here `A` is the type of variable `a` */
-    var a: A;
-}
-```
-
-## Variables
-
-A variable is a storage location for holding a value. The set of permissible values is determined by the variable's type.
-
-```ebnf
-IdtyPair  = identifier ":" Type .
-VarDecl   = "var" IdtyPair "=" Expression ";" .
-```
-
-The type of expression and variable must be consistent.
-
-Example:
-
-```plaintext
-var a:int = 1;          
-var b:bool = true;
-var c:float = 3.0;
-var d:string = "a";
-var e:list(int) = [a,2,3];
-```
-
-### Constants
-
-Use `let` rather than `var` to declare a constant. Attempts to modify them constants result in an error.
-
-```ebnf
-LetDecl = "let" IdtyPair "=" Expression ";" .
-```
-
-Example:
-```
-let a = 1;
-a = 2; // This won't compile, instead it raises error: "`a` is unmutable"
-```
-<!-- ;TODO
-Struct types
-Function types
-trait types
- -->
-
-## Function
-
-```ebnf
-FunDecl      = FunSignature "{" Statements "}" .
-FunSignature = "fun" identifier "(" ParamList ")" "->" Type .
-ParamList    = [IdtyPair] 
-             | IdtyPair {"," IdtyPair} .
-Statements   = { Statement } .
-```
-
-Functions can be declared without a body within a `trait` where we don't expect an implementation. We call such declarations function signatures (`FunSignature`). The only difference between it and a function declaration is the latter does have a body of statements.
-
-Example:
-
-```plaintext
-/* It's a function signature */
-fun get_second (x:int,y:float) -> float
-
-/* It's a function declaration */
-fun get_second (x:int,y:float) -> float
-{
-    return y;
-};
-```
-
-
-### Control flow
-
-#### If Statement
-
-```ebnf
-IfStatement = "if" "(" Expression ")" "{" Statements "}" { "else" "{" Statements "}" }.
-```
-
-
-If `Expression` is evaluated to `true`, the execution flow goes to the first `Statements` and ignores the second `Statements`(if any). Otherwise, only execute the `Statements` after `else`(if any). "`else {Statements}`" is not required.
-
-#### While Statement and For Statement
-
-```ebnf
-ForStatement   = "for" "(" Expression ";" Expression ";" Expression ")" "{" Statements "}" .
-WhileStatement = "while" "(" Expression ")" "{" Statements "}" .
-```
-
-<!-- ;TODO: need to support the type-inference first;--> 
-
-To repeat the statements in the curly bracket, we use `while` loop to execute until the `end_condition` evaluates to `false`.
-
-```
-while(end_condition){
-    do_something();
-};
-```
-
-`ForStatement`'s behavior can be explained with `WhileStatement` since they are interchangeable.
-
-The following two blocks are equivalent:
-
-```
-start_condition;
-while(end_condition){
-    do_something();
-    step_update;
-};
-```
-
-```
-for(start_condition; end_condition; step_update){
-    do_something();
-};
-```
-
-<!-- ``` 
-for(<id> in <list_id>){
-    <stmt_list>
-}
-``` -->
-
-## Expressions
-
-Except for common expressions like in **C**, Rooc has some OO-styled expressions:
-
-```ebnf
-Member     = ("this" | identifier) "." identifier .
-CallMember = ("this" | identifier) ":" identifier "." identifier "(" ArgList ")"
-ArgList    = [Expression {"," Expression}]
-```
-
-These two expressions attempt to access members of a struct. `Member` tries to access a field of a struct instance. `MemberCall` tries to call a function of a struct instance implemented by a implmentation.
-
-Example:
-
-```
-struct Struct_name{
-    var field: int;
-}
-
-impl Impl_name for Struct_name{
-    fun Member_func() -> int{
-        return 1;
-    }
-}
-
-fun main() -> int{
-    var a: Struct_name = ...;
-    let _ = 
-      a.field                   // This is a `Member`
-    let _ = 
-      a:Impl_name.Member_func() // This is a `MemberCall`
-    return 0;
-}
-
-```
-
-
-## Struct
-
-```ebnf
-StructDecl = "struct" identifier "{" VarDecl "}" .
-```
-
-```
-struct Point {
-    var m:int;
-    var n:int;
-};
-```
-
-### Trait
-
-In Rooc, polymorphism is supported through the use of traits, rather than class inheritance.  
-
-Traits define a set of methods that multiple structs can implement. This allows for type-safe, flexible code without the complications that inheritance can bring.
-
-```ebnf
-TraitDecl = "trait" identifier "{" FunSignatures "}" .
-FunSignatures = {FunSignature ";"} .
-```
-
-Example:
-
-```
-trait Drawable {
-    public draw() -> void;
-};
-```
-
-### Impl
-
-```ebnf
-ImplDecl = "impl" identifier "{" FunDecls "}" 
-         | "impl" identifier "for" identifier "{" FunDecls "}" .
-FunDecls = {FunDecl} .
-```
-
-Example:
-
-```
-impl Point {
-    fun new(x:int, y:int) -> Point { 
-        this.x = x;
-        this.y = y;
-        return this;
-    };
-
-    fun getX() -> int {
-        return this.x;
-    };
-
-    fun getY() -> int {
-        return this.y;
-    };
-};
-```
-
-```
-// Implement the Drawable trait for the Point struct
-impl Drawable for Point {
-    fun draw() -> void {
-        // Drawing logic for Point
-    };
-};
-
-// Implement the Drawable trait for the Circle struct
-struct Circle {
-    var x:int;
-    var y:int;
-    var radius:int;
-};
-
-impl Drawable for Circle {
-    fun draw() -> void {
-        // Drawing logic for Circle
-    };
-};
-```
-
-With traits, you can write functions that operate on any type that implements a specific trait:
-
-
-```
-fun render(d: Drawable) -> void {
-    d.draw();
-};
-
-var p:Point = Point.new(1, 2);
-var c:Circle = Circle.new(3, 4, 5);
-
-render(p);  // Calls Point's draw method
-render(c);  // Calls Circle's draw method
-```
-
+### Visibility
 
 ## Built-in functions
 
-Next step: we want to develop a print function spcifically for string such that it can be used for furthur debugging.
+We want to develop a print function spcifically for string such that it can be used for furthur debugging.
 
 ```
-print_str(to_print : str) -> void
+fun print_str(to_print : str) -> ();
 ```
 
-We also want to implement a function for language user to get to know type of a expression.
+<!-- We also want to implement a function for language user to get to know type of a expression.
 
 ```
-print_typeof(...) -> void
-```
+print_typeof(...) -> ()
+``` -->

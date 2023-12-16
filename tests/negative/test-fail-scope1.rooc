@@ -1,0 +1,7 @@
+fun main()->int{
+    print_int(x);
+    var x:int=1;
+    // TODO: redesign the err report
+
+    return 0;
+}

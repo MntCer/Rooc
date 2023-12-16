@@ -1,0 +1,11 @@
+struct Circle {
+    x:int,
+    y:int,
+    radius:int,
+    area:float,
+    hasColor:bool,
+}
+
+fun main() -> int {
+    return 0;
+}

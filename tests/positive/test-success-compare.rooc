@@ -1,0 +1,36 @@
+// Testing comparison operation
+fun main() -> int {    
+    return 0;
+}
+
+fun test1() -> bool {
+    return 1==1;
+}
+
+fun test2() -> bool{
+    return 1.0!=2.0;
+}
+
+fun test3() -> bool{
+    return 1<2;
+}
+
+fun test4() -> bool{
+    return 1.0<=2.0;
+}
+
+fun test5() -> bool{
+    return 2>1;
+}
+
+fun test6() -> bool{
+    return 2.0>=1.0;
+}
+
+fun test7() -> bool{
+    return false==!true;
+}
+
+fun test8() -> bool{
+    return !false!=!true;
+}

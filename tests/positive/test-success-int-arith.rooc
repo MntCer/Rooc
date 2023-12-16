@@ -1,0 +1,46 @@
+// Test integer arithmetic and call print_int
+fun main() -> int {
+    print_int(test1());
+    println();
+    print_int(test2());
+    println();
+    print_int(test3());
+    println();
+    print_int(test4());
+    println();
+    print_int(test5());
+    println();
+    print_int(test6());
+    println();
+    print_int(test7());
+    println();
+    return 0;
+}
+
+fun test1() -> int {
+    return 10+5;
+}
+
+fun test2() -> int{
+    return 10-5;
+}
+
+fun test3() -> int{
+    return 10*5;
+}
+
+fun test4() -> int{
+    return 10/5;
+}
+
+fun test5() -> int{
+    return 10/0;
+}
+
+fun test6() -> int{
+    return 0/0;
+}
+
+fun test7() -> int{
+    return 3/2;
+}

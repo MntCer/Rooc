@@ -1,0 +1,4 @@
+fun main() -> int {
+    print_int(undefined_function());
+    //todo: redesign the error report
+}

@@ -1,0 +1,36 @@
+// Testing success unary expression
+fun main() -> int {    
+    return 0;
+}
+
+fun test1() -> float {
+    return (5.0+1.0)*2.0;
+}
+
+fun test2() -> int {
+    return (5-1)/2;
+}
+
+fun test3() -> float {
+    return -(-(-5.0));
+}
+
+fun test4() -> int{
+    return -(-(-5));
+}
+
+fun test5() -> bool{
+    return !(!(!true));
+}
+
+fun test6() -> bool{
+    return false && true || true;
+}
+
+fun test7() -> bool{
+    return (false) && true;
+}
+
+fun test8() -> bool{
+    return false && (true || true);
+}

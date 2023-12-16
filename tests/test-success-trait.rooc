@@ -1,5 +1,0 @@
-// Test trait with wrong return type (string instead of void)
-
-trait Drawable {
-    fun draw() -> void;
-};

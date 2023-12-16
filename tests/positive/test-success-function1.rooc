@@ -1,0 +1,14 @@
+fun square(x:int) -> int {
+    return x * x;
+}
+
+fun sum_of_squares(a:int, b:int) -> int {
+    return square(a) + square(b);
+}
+
+fun main() -> int {
+    var result:int = sum_of_squares(3, 4); 
+    //TODO: can add a fail-test of wrong var type here.
+    print_int(result);
+    return 0;
+}

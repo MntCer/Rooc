@@ -1,6 +1,0 @@
-// Test function without ending semicolon
-
-fun get_second (x:int,y:float) -> int
-{
-    return x;
-}
