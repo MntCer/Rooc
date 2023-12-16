@@ -1,8 +1,9 @@
 // Test concat_str with 2 simple strings
 fun main() -> int {
-    concat_str("hello ", "world");
+    print_str(concat_str("hello ", "world"));
     println();
-    concat_str("   ", "--- +++ ///");
+    print_str(concat_str("   ", "--- +++ ///"));
+    println();
     return 0;
 }
 

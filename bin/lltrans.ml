@@ -526,7 +526,7 @@ let trans_module
             the_global_scope =
             try
               let trans_func = Hashtbl.find builtins_map the_name in
-              trans_func the_builder the_scope the_global_scope
+              trans_func the_context the_builder the_scope the_global_scope
             with
             | Not_found -> bug "not supported built-in function" 
           in 
@@ -664,7 +664,7 @@ let trans_module
       in insert_function f.sf_name (IRRoocFunction the_function) the_global_scope
     | _ -> () 
   in 
-    declare_printf the_context the_module the_global_scope;
+    List.iter (fun f -> f the_context the_module the_global_scope) external_functions;
     (* need to register struct first. *)
     Hashtbl.iter register_struct to_trans.sm_namespace.sst_symbols;
     Hashtbl.iter trans_struct to_trans.sm_namespace.sst_symbols;
