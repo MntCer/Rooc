@@ -13,3 +13,25 @@ test : all testall.sh
 clean :
 	dune clean
 	rm -rf testall.log *.diff Rooc.opam *.ll
+
+# .PHONY : run
+#run : all
+#	@input=$(word 2, $(MAKECMDGOALS))
+#	@llvm_file=$(subst .rooc,.ll,$(input))
+#	@asm_file=$(subst .rooc,.s,$(input))
+#	@exec_file=$(subst .rooc,.exe,$(input))
+#	./_build/default/bin/Rooc.exe $$input > $$llvm_file
+#	llc -relocation-model=pic $$llvm_file > $$asm_file
+#	cc -o $$exec_file $$asm_file
+#	rm $$llvm_file $$asm_file
+
+.PHONY: run
+run: all
+	@input=$(word 2, $(MAKECMDGOALS)); \
+	llvm_file=$${input%.rooc}.ll; \
+	asm_file=$${input%.rooc}.s; \
+	exec_file=$${input%.rooc}.exe; \
+	./_build/default/bin/Rooc.exe $$input > $$llvm_file; \
+	llc -relocation-model=pic $$llvm_file > $$asm_file; \
+	cc -o $$exec_file $$asm_file; \
+	rm $$llvm_file $$asm_file
