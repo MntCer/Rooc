@@ -69,14 +69,47 @@ let concat_str = {
   sf_body = BuiltIn;
 }
 
+let print_bool = {
+  sf_name = "print_bool";
+  sf_params = Some ({
+    sp_params=[{
+    sv_name = "b";
+    sv_type = ST_bool;
+    sv_mutable = true;
+    sv_initial_value = None;
+  }]});
+  sf_type = {
+    sft_params_type = [ST_bool];
+    sft_return_type = ST_int;
+  };
+  sf_body = BuiltIn;
+}
+
+let print_float = {
+  sf_name = "print_float";
+  sf_params = Some ({
+    sp_params=[{
+    sv_name = "f";
+    sv_type = ST_float;
+    sv_mutable = true;
+    sv_initial_value = None;
+  }]});
+  sf_type = {
+    sft_params_type = [ST_float];
+    sft_return_type = ST_int;
+  };
+  sf_body = BuiltIn;
+}
+
 
 let builtins_semant = [
   print_int;
   println;
   print_str;
   concat_str;
+  print_bool;
+  print_float;
 ]
-
 
 let declare_printf 
   (the_context:L.llcontext)
@@ -100,15 +133,15 @@ let declare_printf
 type builtin_translator =  L.llbuilder -> ir_local_scope -> ir_global_scope -> L.llbuilder
 
 (**
-    translate the built-in print_int into LLVM IR.
+  translate the built-in print_int into LLVM IR.
 
+  Author: Yuanfei
 *)
 let trans_print_int
   (the_builder:L.llbuilder)
   (the_scope:ir_local_scope)
   (the_namespace: ir_global_scope)
   : L.llbuilder =
-
   let the_printf = 
     match lookup "printf" (IRGlobalScope the_namespace) with
     | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
@@ -126,12 +159,14 @@ let trans_print_int
   let _ = L.build_call the_printf [| format_str; i |] "" the_builder in
   the_builder
 
+(**
+  author: Yuanfei    
+*)
 let trans_println
   (the_builder:L.llbuilder)
   (the_scope:ir_local_scope)
   (the_namespace: ir_global_scope)
   : L.llbuilder =
-
   let the_printf = 
     match lookup "printf" (IRGlobalScope the_namespace) with
     | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
@@ -141,12 +176,14 @@ let trans_println
   let _ = L.build_call the_printf [| format_str |] "" the_builder in
   the_builder
 
+(**
+  author: Mona    
+*)
 let trans_print_str
   (the_builder: L.llbuilder)
   (the_scope: ir_local_scope)
   (the_namespace: ir_global_scope)
   : L.llbuilder =
-  
   let the_printf =
     match lookup "printf" (IRGlobalScope the_namespace) with
     | Some (IRFuncEntry (IRExternFunction f)) -> f.ief_function
@@ -163,7 +200,10 @@ let trans_print_str
   let _ = L.build_call the_printf [| format_str; s |] "" the_builder in
   the_builder
 
-  let trans_concat_str
+(**
+  author: Mona    
+*)
+let trans_concat_str
   (the_builder: L.llbuilder)
   (the_scope: ir_local_scope)
   (the_namespace: ir_global_scope)
@@ -189,6 +229,50 @@ let trans_print_str
   let _ = L.build_call the_printf [| format_str; s1_ptr; s2_ptr |] "" the_builder in
   the_builder
 
+(**
+  author: Yuanfei    
+*)
+let trans_print_bool
+  (the_builder:L.llbuilder)
+  (the_scope:ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+  let the_printf = 
+    match lookup "printf" (IRGlobalScope the_namespace) with
+    | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
+    | None | _ -> bug "printf is not declared"
+  in
+  let format_str = L.build_global_stringptr "%d" "fmt" the_builder in  
+  let the_param =
+    let search_result=lookup "b" (IRLocalScope the_scope) in
+    match search_result with
+    | Some (IRVarEntry (v)) -> v
+    | None | _ -> bug "print_bool's pamameter is not right in its scope"
+  in
+  let b = L.build_load the_param.iv_value_addr "b" the_builder in
+  let _ = L.build_call the_printf [| format_str; b |] "" the_builder in
+  the_builder
+
+let trans_print_float
+  (the_builder:L.llbuilder)
+  (the_scope:ir_local_scope)
+  (the_namespace: ir_global_scope)
+  : L.llbuilder =
+  let the_printf = 
+    match lookup "printf" (IRGlobalScope the_namespace) with
+    | Some (IRFuncEntry (IRExternFunction (f))) -> f.ief_function
+    | None | _ -> bug "printf is not declared"
+  in
+  let format_str = L.build_global_stringptr "%f" "fmt" the_builder in  
+  let the_param =
+    let search_result=lookup "f" (IRLocalScope the_scope) in
+    match search_result with
+    | Some (IRVarEntry (v)) -> v
+    | None | _ -> bug "print_bool's pamameter is not right in its scope"
+  in
+  let f = L.build_load the_param.iv_value_addr "f" the_builder in
+  let _ = L.build_call the_printf [| format_str; f |] "" the_builder in
+  the_builder
 
 
 
@@ -197,4 +281,6 @@ let () = Hashtbl.add builtins_map "print_int" trans_print_int
 let () = Hashtbl.add builtins_map "println" trans_println
 let () = Hashtbl.add builtins_map "print_str" trans_print_str
 let () = Hashtbl.add builtins_map "concat_str" trans_concat_str
+let () = Hashtbl.add builtins_map "print_bool" trans_print_bool
+let () = Hashtbl.add builtins_map "print_float" trans_print_float
 
