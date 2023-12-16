@@ -136,34 +136,6 @@ To allow complex statements to occupy a single line, Rooc use semicolon as the t
 {       }       ,       :      ->     .
 ```
 
-
-
-<!-- ``` ;NOTE: following style is too verbose 
-assign  : =
-plus    : \+
-minus   : -
-times   : \*
-divide  : /
-lparen  : \(
-rparen  : \)
-
-eq      : ==
-neq     : !=
-lt      : <
-leq     : <=
-gt      : \>
-geq     : \>= 
-and     : &&
-or      : \|\|
-not     : !
-lbrace  : {
-rbrace  : }
-comma   : ,
-colon   : : 
-
-```
--->
-
 Note: When assigning objects, passing them to functions, or copying values, our current implementation only supports a shallow copy. This means that the objects or values involved will reference the same memory location rather than creating an entirely independent duplicate.
 
 ### Keywords
@@ -227,8 +199,7 @@ Now, the supported escape sequences are:
 
 ## Module
 
-<!-- %TODO: same name? -->
-A file will be compiled as a `Module`. A module is a container for zero or more items. Each module has its own separate namespace.
+A file will be compiled as a `Module`. A module is a container for zero or more items. Each module has its own separate scope.
 
 ```ebnf
 Module = { 
@@ -238,11 +209,11 @@ Module = {
 
 A module that contains a main function in its root scope can be compiled to an executable.
 
-<!-- %TODO: special limitation on main function. -->
 ```rust
 fn main() -> int {};
 ```
-The return type of every main function has to be int. We preferred a numeric value that indicates the outcome or status of the program execution.
+
+The return type of main function has to be int. We preferred a numeric value that indicates the outcome or status of the program execution.
 
 ## Item
 
@@ -266,16 +237,6 @@ Item =
 ```
 
 Items are entirely determined at compile-time, generally remain fixed during execution, and may reside in read-only memory.
-
-### Constant item
-
-```ebnf
-ConstantValue =
-    "const" IDENTIFIER ":" Type "=" Expr ";" .
-```
-
-A constant value is not associated with a specific memory location in the program. Constants must be explicitly typed and initialized.
-<!-- %TODO: Constants are essentially inlined wherever they are used, meaning that they are copied directly into the relevant context when used. -->
 
 ### Function
 
@@ -693,40 +654,6 @@ A field expression is a place expression that evaluates to the location of a fie
 The syntax for a field expression is an expression, then a `.`, and finally an identifier. 
 Field expressions cannot be followed by a parenthetical comma-separated list of expressions, as that is instead parsed as a method call expression. That is, they cannot be the function operand of a call expression.
 
-
-<!-- 
-
-```ebnf
-Member     = ("this" | identifier) "." identifier .
-CallMember = ("this" | identifier) ":" identifier "." identifier "(" ArgList ")"
-ArgList    = [Expression {"," Expression}]
-```
-
-These two expressions attempt to access members of a struct. `Member` tries to access a field of a struct instance. `MemberCall` tries to call a function of a struct instance implemented by a implmentation.
-
-Example:
-
-```
-struct Struct_name{
-    var field: int;
-}
-
-impl Impl_name for Struct_name{
-    fun Member_func() -> int{
-        return 1;
-    }
-}
-
-fun main() -> int{
-    var a: Struct_name = ...;
-    let _ = 
-      a.field                   // This is a `Member`
-    let _ = 
-      a:Impl_name.Member_func() // This is a `MemberCall`
-    return 0;
-}
-
-``` -->
 
 
 ## Type
