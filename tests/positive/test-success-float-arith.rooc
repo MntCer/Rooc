@@ -1,5 +1,12 @@
 // Adding two positive numbers
-fun main() -> int {    
+fun main() -> int {  
+    print_float(test1());
+    println();
+    print_float(test2());
+    println();
+    print_float(test3());
+    println();
+    print_float(test4());  
     return 0;
 }
 
@@ -17,12 +24,4 @@ fun test3() -> float{
 
 fun test4() -> float{
     return 10.0/5.0;
-}
-
-fun test5() -> float{
-    return 0.1/0.0;
-}
-
-fun test6() -> float{
-    return 0.0/0.0;
 }
