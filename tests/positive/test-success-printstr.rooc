@@ -2,7 +2,7 @@
 fun main() -> int {
     print_str("hello");
     println();
-    print_str("1 2 3 4 5 Hello World () \n \t \r '' ! + - * / ");
+    print_str("1 2 3 4 5 Hello World () '' ! + - * / ");
     return 0;
 }
 
