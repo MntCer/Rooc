@@ -15,15 +15,24 @@ clean :
 	rm -rf testall.log *.diff Rooc.opam *.ll
 
 # compile a single "rooc" file to an executable
-# author: Xinyang
+# author: Xinyang, Yuanfei
 
-.PHONY: run
+BASE_OUTPUT_DIR = ./out
+
+# Ensure the output directory exists
+$(shell mkdir -p $(BASE_OUTPUT_DIR))
+
+.PHONY : run
 run: all
 	@input=$(word 2, $(MAKECMDGOALS)); \
-	llvm_file=$${input%.rooc}.ll; \
-	asm_file=$${input%.rooc}.s; \
-	exec_file=$${input%.rooc}.exe; \
-	./_build/default/bin/Rooc.exe $$input > $$llvm_file; \
-	llc -relocation-model=pic $$llvm_file > $$asm_file; \
-	cc -o $$exec_file $$asm_file; \
-	rm $$llvm_file $$asm_file
+    base_file=$$(basename $$input .rooc); \
+    dir=$$(dirname $$input); \
+	target_dir=$(BASE_OUTPUT_DIR)/$$base_file; \
+    mkdir -p $$target_dir; \
+    llvm_file=$$target_dir/$$base_file.ll; \
+    asm_file=$$target_dir/$$base_file.s; \
+    exec_file=$$target_dir/$$base_file.exe; \
+    ./_build/default/bin/Rooc.exe $$input > $$llvm_file && \
+    llc -relocation-model=pic $$llvm_file > $$asm_file && \
+    cc -o $$exec_file $$asm_file && \
+	$$exec_file 

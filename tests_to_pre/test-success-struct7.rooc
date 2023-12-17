@@ -1,0 +1,27 @@
+struct A {
+    i:int,
+    b:B,
+}
+
+struct B{
+    c:C,
+}
+
+struct C{
+    name:str,
+}
+
+fun change_C_of_A_name (a:A,new_name:str) -> C{
+    a.b.c.name = new_name;
+    return a.b.c;
+}
+
+fun main()->int{
+    var a:A = A{i:0,b:B{c:C{name:"a-b-c"}}};
+    var new_name_postfix:str = "_II";
+    var new_name:str = concat_str(a.b.c.name,new_name_postfix);
+    var new_ref_c:C = change_C_of_A_name(a,new_name);
+    print_str(new_ref_c.name);
+    println();
+    return 0;
+}
