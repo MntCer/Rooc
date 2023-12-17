@@ -633,6 +633,9 @@ let analyse_module
     : s_struct =
     let analysed_name = raw_struct.rs_name in
     let raw_fields = raw_struct.rs_fields in
+    let () = if List.length raw_fields = 0 then
+      raise (SemanticError "struct has no field")
+    else () in
     (* don't allow two fields with same name. *)
     let sorted_r_fields = 
       List.sort (fun f1 f2 -> compare f1.rsf_name f2.rsf_name) raw_fields in

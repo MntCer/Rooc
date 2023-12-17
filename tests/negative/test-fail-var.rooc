@@ -2,6 +2,6 @@ fun main() -> int {
     let z:int = 1;
     z=z+1;
     print_int(z);
-    
+    println();
     return 0;
 }
