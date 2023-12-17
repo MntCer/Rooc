@@ -1,42 +1,16 @@
 # Rooc
 
-> Yuanfei Wang yuanfei.wang@tufts.edu  
-> Xinyang Zhao xinyang.zhao@tufts.edu  
-> Mona Ma zhifei.ma@tufts.edu  
 
 ## how to run
 
-The project directory is like
+The basic dependencies are
 
-```bash
-./
-├── Makefile
-├── README.md
-├── bin
-│   ├── ast.ml
-│   ├── builtins.ml
-│   ├── codegen.ml
-│   ├── dune
-│   ├── parser.mly
-│   ├── rooc.ml
-│   ├── sast.ml
-│   ├── scanner.mll
-│   ├── semantic.ml
-│   ├── structualIR.ml
-│   └── util.ml
-├── doc
-│   └── Rooc.md
-├── dune-project
-├── lib
-│   └── dune
-├── testall.sh
-└── tests
-    ├── fail-function1.rooc
-    ├── ...
-    └── test-success-struct2.rooc
-```
-
-### compile
+* Opam 2.1.5
+* dune 3.10.0
+* Menheir 2.0
+* LLVM 10.0.0
+* gcc 9.4.0
+* GNU Make 4.2.1
 
 Run `make` in this root directory could build our **Rooc** compiler.
 
@@ -49,13 +23,17 @@ This script can also directly be executed by `./testall.sh`.
 
 ### compile on a specific file
 
-Use `./testall.sh -k <filename>` to compile a specific file.
+Run `make run /path/to/file.rooc` will compile the file and generate a executable file `/file.exe` in `./out/file/` directory.
+
 
 ### Clean generated files
 
 Use `make clean` to delete our **Rooc** compiler.
 
-## Tests
+
+## Tests illustration.
+
+To find the test cases used as demo, please refer to `./tests_to_pre/` directory.
 
 ### negative cases
 
@@ -106,3 +84,97 @@ test-fail-var.rooc
 
 ### positive cases
 
+```
+test-success-call.rooc
+// function call
+
+test-success-compare.rooc
+// comparision expression
+
+test-success-concatstr.rooc
+// builtin functon
+
+test-success-fib.rooc
+// fibonacci
+
+test-success-float-arith.rooc
+// basic arithmatic expression
+
+test-success-ftoi.rooc
+//builtin function
+
+test-success-function.rooc
+// recursive call
+
+test-success-grouped.rooc
+// basic parenthesis function
+
+test-success-int-arith.rooc
+// basic arithmatic expression
+
+test-success-itof.rooc
+// builtin function
+
+test-success-nested-callexpr.rooc
+// complex call expression
+
+test-success-plus.rooc
+// basic plus expression
+
+test-success-printbool.rooc
+// builtin function
+
+test-success-printfloat.rooc
+// builtin function
+
+test-success-printint.rooc
+// builtin function
+
+test-success-printstr.rooc
+// builtin function
+
+test-success-rec-callexpr.rooc
+// complex call expression
+
+test-success-returnunit.rooc
+// return empty expression
+
+test-success-scope1.rooc
+// basic scope mechanism
+
+test-success-scope2.rooc
+// forward reference
+
+test-success-struct0.rooc
+// struct def
+
+test-success-struct1.rooc
+// any order in struct expr
+
+test-success-struct2.rooc
+// field access
+
+test-success-struct3.rooc
+// recursive field access
+
+test-success-struct4.rooc
+// complex function of field access
+
+test-success-struct5.rooc
+// mutual reference
+
+test-success-struct6.rooc
+// recursive field access
+
+test-success-struct7.rooc
+// more complex example of field access and function.
+
+test-success-unary.rooc
+// basic unary
+
+test-success-var.rooc
+// let variable
+
+test-success-while.rooc
+// basic while loop
+```

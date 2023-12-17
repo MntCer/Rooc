@@ -1,6 +1,6 @@
 fun main() -> int {
     print_int(1);
-    println()
+    println();
     print_int(0);
     println();
     print_int(-1);
